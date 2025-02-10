@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.controller;
+package vn.edu.iuh.fit.roomservice.controller;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -16,27 +16,27 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.userservice.entity.User;
-import vn.edu.iuh.fit.userservice.service.UserService;
+import vn.edu.iuh.fit.roomservice.entity.Room;
+import vn.edu.iuh.fit.roomservice.service.RoomService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/rooms")
 @RequiredArgsConstructor
-public class UserController {
+public class RoomController {
 
-    private final UserService userService;
+    private final RoomService roomService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void save(@RequestBody User user) {
-        userService.saveUser(user);
+    public void save(@RequestBody Room room) {
+        roomService.saveRoom(room);
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> findAllUser() {
-        return ResponseEntity.ok(userService.findAllUsers());
+    public ResponseEntity<List<Room>> findAllRooms() {
+        return ResponseEntity.ok(roomService.findAllRooms());
     }
 
 }

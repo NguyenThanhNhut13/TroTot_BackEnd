@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.entity;
+package vn.edu.iuh.fit.roomservice.entity;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -14,9 +14,11 @@ package vn.edu.iuh.fit.userservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import vn.edu.iuh.fit.userservice.enumvalue.UserRole;
+import vn.edu.iuh.fit.roomservice.enumvalue.RoomAmenity;
+import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -24,23 +26,26 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Room {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long userId;
+    private String title;
+    private String description;
+    private double price;
+    private double area;
 
-    @Column(unique = true)
-    private String email;
-    @Column(unique = true, length = 11)
-    private String phoneNumber;
-    private String password;
-
-    private String address;
-    private LocalDateTime dob;
+    @ElementCollection
+    private List<String> images;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role;
+    private RoomStatus status;
+
+    @ElementCollection
+    @Enumerated(EnumType.STRING)
+    private List<RoomAmenity> amenities;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

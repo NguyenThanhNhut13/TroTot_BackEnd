@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>vn.edu.iuh.fit</groupId>
-	<artifactId>user-service</artifactId>
+	<artifactId>room-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user-service</name>
-	<description>user-service</description>
+	<name>room-service</name>
+	<description>room-service</description>
 	<url/>
 	<licenses>
 		<license/>
