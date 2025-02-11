@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum RoomStatus {
-    REGULAR_USER("REGULAR_USER"), LANDLORD("LANDLORD"), ADMIN("ADMIN");
+    PENDING("PENDING"), APPROVED("APPROVED"), REJECTED("REJECTED"), HIDDEN("HIDDEN");
 
     private final String value;
 

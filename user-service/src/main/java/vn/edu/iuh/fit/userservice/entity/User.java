@@ -35,6 +35,7 @@ public class User {
     @Column(unique = true, length = 11)
     private String phoneNumber;
     private String password;
+    private String fullName;
 
     private String address;
     private LocalDateTime dob;
