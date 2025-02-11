@@ -32,6 +32,7 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
+    private Long addressId;
     private String title;
     private String description;
     private double price;
