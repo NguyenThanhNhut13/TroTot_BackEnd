@@ -14,7 +14,6 @@ package vn.edu.iuh.fit.roomservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import vn.edu.iuh.fit.roomservice.enumvalue.RoomAmenity;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 
 import java.time.LocalDateTime;
@@ -39,14 +38,20 @@ public class Room {
     private double area;
 
     @ElementCollection
+    @CollectionTable(name = "room_images", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "image_url")
     private List<String> images;
 
     @Enumerated(EnumType.STRING)
     private RoomStatus status;
 
-    @ElementCollection
-    @Enumerated(EnumType.STRING)
-    private List<RoomAmenity> amenities;
+    @ManyToMany
+    @JoinTable(
+            name = "room_amenity",
+            joinColumns = @JoinColumn(name = "room_id"),
+            inverseJoinColumns = @JoinColumn(name = "amenity_id")
+    )
+    private List<Amenity> amenities;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
