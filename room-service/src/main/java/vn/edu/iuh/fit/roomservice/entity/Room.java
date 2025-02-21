@@ -52,6 +52,23 @@ public class Room {
             inverseJoinColumns = @JoinColumn(name = "amenity_id")
     )
     private List<Amenity> amenities;
+
+    @ManyToMany
+    @JoinTable(
+            name = "room_environment",
+            joinColumns = @JoinColumn(name = "room_id"),
+            inverseJoinColumns = @JoinColumn(name = "environment_id")
+    )
+    private List<Environment> environments;
+
+    @ManyToMany
+    @JoinTable(
+            name = "room_target_audience",
+            joinColumns = @JoinColumn(name = "room_id"),
+            inverseJoinColumns = @JoinColumn(name = "target_audience_id")
+    )
+    private List<TargetAudience> targetAudiences;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -16,13 +16,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.roomservice.dto.RoomDTO;
 import vn.edu.iuh.fit.roomservice.entity.Room;
 import vn.edu.iuh.fit.roomservice.service.RoomService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/rooms")
+@RequestMapping("/api/v1/rooms")
 @RequiredArgsConstructor
 public class RoomController {
 
@@ -37,6 +38,15 @@ public class RoomController {
     @GetMapping
     public ResponseEntity<List<Room>> findAllRooms() {
         return ResponseEntity.ok(roomService.findAllRooms());
+    }
+
+    @GetMapping("/by-addresses")
+    public ResponseEntity<List<RoomDTO>> findAllRooms(
+            @RequestParam(required = false) String street,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String city
+    ) {
+        return ResponseEntity.ok(roomService.findRoomsByAddress(street, district, city));
     }
 
 }

@@ -16,15 +16,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
 import vn.edu.iuh.fit.addressservice.service.AddressService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/address")
+@RequestMapping("/api/v1/addresses")
 @RequiredArgsConstructor
-public class UserController {
+public class AddressController {
 
     private final AddressService addressService;
 
@@ -37,6 +38,13 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<Address>> findAllAddress() {
         return ResponseEntity.ok(addressService.findAllAddress());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<AddressDTO>> findByDynamicFilter(@RequestParam(required = false) String street,
+                                                           @RequestParam(required = false) String district,
+                                                           @RequestParam(required = false) String city) {
+        return ResponseEntity.ok(addressService.findByDynamicFilter(street, district, city));
     }
 
 }

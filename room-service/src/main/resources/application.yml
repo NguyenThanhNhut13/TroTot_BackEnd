@@ -20,3 +20,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+application:
+  config:
+    addresses-url: http://localhost:8060/api/v1/addresses
