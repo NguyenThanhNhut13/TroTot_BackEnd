@@ -1,0 +1,20 @@
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+server:
+  port: 8060
+spring:
+  application:
+    name: address-service
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/trotot_address?createDatabaseIfNotExist=true
+    username: root
+    password: sapassword
+  jpa:
+    hibernate:
+      ddl-auto: update
