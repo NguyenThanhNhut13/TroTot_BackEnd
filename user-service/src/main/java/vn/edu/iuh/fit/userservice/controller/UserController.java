@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.userservice.dto.UserDTO;
+import vn.edu.iuh.fit.userservice.dto.request.LoginRequest;
 import vn.edu.iuh.fit.userservice.entity.User;
 import vn.edu.iuh.fit.userservice.service.UserService;
 
@@ -37,6 +39,19 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<User>> findAllUser() {
         return ResponseEntity.ok(userService.findAllUsers());
+    }
+
+    @PostMapping("/authenticate")
+    public ResponseEntity<UserDTO> validateUser(@RequestBody LoginRequest request) {
+        boolean isAuthenticated = userService.authenticate(request.getCredential(), request.getPassword());
+        System.out.println(request.getPassword());
+
+        if (isAuthenticated) {
+            UserDTO userDto = userService.findByEmailOrPhone(request.getCredential());
+            return ResponseEntity.ok(userDto);
+        }
+
+        return ResponseEntity.ok(null);
     }
 
 }
