@@ -30,7 +30,7 @@ import java.util.function.Function;
 public class JwtService {
 
     @Value("${jwt.secret}")
-    private static String secret;
+    private String secret;
 
     public String generateToken(String credential ) {
         Map<String, Object> claims = new HashMap<>();

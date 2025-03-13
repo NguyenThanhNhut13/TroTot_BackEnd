@@ -10,3 +10,7 @@ server:
 spring:
   application:
     name: auth-service
+
+application:
+  config:
+    users-url: http://localhost:8222/api/v1/users

@@ -22,9 +22,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.edu.iuh.fit.authservice.client.UserClient;
+import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.authservice.dto.UserDTO;
 import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
 import vn.edu.iuh.fit.authservice.entity.response.JwtResponse;
+import vn.edu.iuh.fit.authservice.service.AuthService;
 import vn.edu.iuh.fit.authservice.service.JwtService;
 
 @RestController
@@ -34,13 +36,17 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserClient userClient;
+    private final AuthService authService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        loginRequest.setCredential(passwordEncoder.encode(loginRequest.getPassword()));
-        UserDTO user = userClient.validateUser(loginRequest).getBody();
+        UserAuthDTO user = userClient.getAuthInfo(loginRequest.getCredential()).getBody();
 
         if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+
+        if (!authService.authenticate(loginRequest, user)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
 

@@ -1,14 +1,14 @@
 /*
- * @ (#) LoginRequest.java       1.0     09/03/2025
+ * @ (#) UserAuthDTO.java       1.0     13/03/2025
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.dto.request;
+package vn.edu.iuh.fit.authservice.dto;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
- * @date: 09/03/2025
+ * @date: 13/03/2025
  * @version:    1.0
  */
 
@@ -17,9 +17,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class LoginRequest {
+@AllArgsConstructor
+public class UserAuthDTO {
     private String credential;
-    private String password;
+    private String hashedPassword;
 }
