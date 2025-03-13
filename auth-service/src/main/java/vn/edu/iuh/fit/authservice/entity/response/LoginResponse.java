@@ -14,10 +14,11 @@ package vn.edu.iuh.fit.authservice.entity.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import vn.edu.iuh.fit.authservice.dto.UserDTO;
 
 @Data
 @AllArgsConstructor
-public class JwtResponse {
+public class LoginResponse {
     private final String jwt;
+    private UserDTO user;
 }

@@ -53,4 +53,12 @@ public class UserService {
         }
         return new UserAuthDTO(user.getEmail(), user.getPassword());
     }
+
+    public UserDTO getUserByCredential(String credential) {
+        User user = userRepository.findUserByEmailOrPhoneNumber(credential);
+        if (user == null) {
+            return null;
+        }
+        return userMapper.toDTO(user);
+    }
 }

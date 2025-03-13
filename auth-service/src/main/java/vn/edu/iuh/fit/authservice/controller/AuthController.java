@@ -15,42 +15,24 @@ package vn.edu.iuh.fit.authservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.authservice.dto.UserDTO;
 import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
-import vn.edu.iuh.fit.authservice.entity.response.JwtResponse;
+import vn.edu.iuh.fit.authservice.entity.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.service.AuthService;
-import vn.edu.iuh.fit.authservice.service.JwtService;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final UserClient userClient;
     private final AuthService authService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        UserAuthDTO user = userClient.getAuthInfo(loginRequest.getCredential()).getBody();
-
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
-
-        if (!authService.authenticate(loginRequest, user)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
-
-        final String jwt = jwtService.generateToken(loginRequest.getCredential());
-        return ResponseEntity.ok(new JwtResponse(jwt));
+        return ResponseEntity.ok(authService.login(loginRequest));
     }
 }
