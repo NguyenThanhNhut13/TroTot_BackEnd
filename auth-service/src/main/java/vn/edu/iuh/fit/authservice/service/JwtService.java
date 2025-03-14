@@ -12,6 +12,7 @@ package vn.edu.iuh.fit.authservice.service;
  * @version:    1.0
  */
 
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -28,9 +29,16 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
+    private final String secret;
 
-    @Value("${jwt.secret}")
-    private String secret;
+    public JwtService() {
+        Dotenv dotenv = Dotenv.load();
+        this.secret = dotenv.get("JWT_SECRET");
+
+        if (this.secret == null || this.secret.isEmpty()) {
+            throw new IllegalStateException("JWT_SECRET is not set in .env file");
+        }
+    }
 
     public String generateToken(String credential ) {
         Map<String, Object> claims = new HashMap<>();
