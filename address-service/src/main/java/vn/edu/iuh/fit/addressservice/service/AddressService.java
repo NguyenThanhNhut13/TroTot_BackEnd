@@ -20,6 +20,7 @@ import vn.edu.iuh.fit.addressservice.repository.AddressRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,4 +53,30 @@ public class AddressService {
                         .build()
                 ).toList();
     }
+
+    public Optional<Address> findById(Long id) {
+        return addressRepository.findById(id);
+    }
+
+    public Address updateAddress(Long id, Address newAddress) {
+        return addressRepository.findById(id)
+                .map(existingAddress -> {
+                    existingAddress.setProvince(newAddress.getProvince());
+                    existingAddress.setDistrict(newAddress.getDistrict());
+                    existingAddress.setWard(newAddress.getWard());
+                    existingAddress.setStreet(newAddress.getStreet());
+                    existingAddress.setHouseNumber(newAddress.getHouseNumber());
+                    existingAddress.setLatitude(newAddress.getLatitude());
+                    existingAddress.setLongitude(newAddress.getLongitude());
+                    return addressRepository.save(existingAddress);
+                }).orElseThrow(() -> new RuntimeException("Address not found with id: " + id));
+    }
+
+    public void deleteAddress(Long id) {
+        if (!addressRepository.existsById(id)) {
+            throw new RuntimeException("Address not found with id: " + id);
+        }
+        addressRepository.deleteById(id);
+    }
+
 }
