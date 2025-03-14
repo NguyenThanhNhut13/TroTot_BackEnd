@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### SECRECT_KEY ###
+src/main/resources/.env

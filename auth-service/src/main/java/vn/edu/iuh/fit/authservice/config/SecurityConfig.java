@@ -38,7 +38,9 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/api/v1/addresses/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**",
+                                "/api/v1/addresses/**",
+                                "/api/v1/geocode/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
