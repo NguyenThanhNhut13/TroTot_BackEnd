@@ -32,22 +32,8 @@ public class RedisConfig {
         String redisUsername = dotenv.get("REDIS_USERNAME");
         String redisPassword = dotenv.get("REDIS_PASSWORD");
 
-        // Log kiểm tra giá trị
-        log.info("🔍 Redis Config: REDIS_HOST = {}", redisHost);
-        log.info("🔍 Redis Config: REDIS_PORT = {}", redisPortStr);
-        log.info("🔍 Redis Config: REDIS_USERNAME = {}", redisUsername);
-        log.info("🔍 Redis Config: REDIS_PASSWORD = {}", redisPassword);
-
-        if (redisHost == null || redisPortStr == null || redisUsername == null || redisPassword == null) {
-            throw new RuntimeException("❌ Một trong các biến môi trường Redis bị null!");
-        }
-
         int redisPort;
-        try {
-            redisPort = Integer.parseInt(redisPortStr);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("❌ Lỗi: REDIS_PORT không hợp lệ! Giá trị nhận được: " + redisPortStr);
-        }
+        redisPort = Integer.parseInt(redisPortStr);
 
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
         redisConfig.setHostName(redisHost);
