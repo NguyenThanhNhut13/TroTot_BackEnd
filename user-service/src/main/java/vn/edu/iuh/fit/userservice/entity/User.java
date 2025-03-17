@@ -14,9 +14,12 @@ package vn.edu.iuh.fit.userservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import vn.edu.iuh.fit.userservice.enumvalue.UserRole;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -40,9 +43,23 @@ public class User {
     private String address;
     private LocalDateTime dob;
 
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
+
+    @Column(nullable = false)
+    private boolean verified = false;
+
+    private String verificationToken;
+
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
 }
