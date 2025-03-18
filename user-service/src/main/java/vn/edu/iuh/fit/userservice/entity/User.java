@@ -43,7 +43,13 @@ public class User {
     private String address;
     private LocalDateTime dob;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(
+            fetch = FetchType.EAGER,
+            cascade = {
+                    CascadeType.DETACH,
+                    CascadeType.MERGE,
+                    CascadeType.PERSIST,
+                    CascadeType.REFRESH})
     @JoinTable(
             name = "user_role",
             joinColumns = @JoinColumn(name = "user_id"),

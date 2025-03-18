@@ -1,0 +1,33 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: sapassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_user_data:/var/lib/mysql
+    networks:
+      - microservices-net
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    ports:
+    - "6379:6379"
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data:/data
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  mariadb_user_data:
+  redis_data:
