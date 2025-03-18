@@ -60,8 +60,6 @@ public class User {
     @Column(nullable = false)
     private boolean verified = false;
 
-    private String verificationToken;
-
     @CreationTimestamp
     private LocalDateTime createdAt;
 
