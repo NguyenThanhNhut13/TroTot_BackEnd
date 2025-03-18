@@ -12,6 +12,7 @@ package vn.edu.iuh.fit.authservice.service;
  * @version:    1.0
  */
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,11 @@ import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.authservice.dto.UserDTO;
 import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
+import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
+import vn.edu.iuh.fit.authservice.entity.request.VerifyOtpRequest;
 import vn.edu.iuh.fit.authservice.entity.response.LoginResponse;
+import vn.edu.iuh.fit.authservice.exception.PasswordMismatchException;
+import vn.edu.iuh.fit.authservice.exception.UserAlreadyExistsException;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserClient userClient;
     private final PasswordEncoder passwordEncoder;
+    private final OtpService otpService;
 
     public LoginResponse login(LoginRequest loginRequest) {
         ResponseEntity<UserAuthDTO> response = userClient.getAuthInfo(loginRequest.getCredential());
@@ -58,4 +64,27 @@ public class AuthService {
     }
 
 
+    public void register(RegisterRequest request) {
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordMismatchException("Passwords do not match");
+        }
+
+        try {
+            userClient.createUser(request);
+        } catch (FeignException.Conflict ex) {
+            throw new UserAlreadyExistsException("User already exists");
+        }
+
+        otpService.sendOtp(request.getCredential());
+    }
+
+    public void verifyOtp(VerifyOtpRequest request) {
+
+        // Verify OTP
+        if (!otpService.verifyOtp(request.getCredential(), request.getOtp())) {
+            throw new IllegalArgumentException("Invalid OTP");
+        }
+
+
+    }
 }

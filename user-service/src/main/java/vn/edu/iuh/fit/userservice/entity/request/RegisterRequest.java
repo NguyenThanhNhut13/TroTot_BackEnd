@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.authservice.entity.request;
+package vn.edu.iuh.fit.userservice.entity.request;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut

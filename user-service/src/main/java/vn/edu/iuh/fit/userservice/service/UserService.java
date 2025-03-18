@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.userservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.userservice.dto.UserDTO;
 import vn.edu.iuh.fit.userservice.entity.User;
+import vn.edu.iuh.fit.userservice.entity.request.RegisterRequest;
+import vn.edu.iuh.fit.userservice.exception.UserAlreadyExistsException;
 import vn.edu.iuh.fit.userservice.mapper.UserMapper;
 import vn.edu.iuh.fit.userservice.repository.UserRepository;
 
@@ -60,5 +62,22 @@ public class UserService {
             return null;
         }
         return userMapper.toDTO(user);
+    }
+
+    public void createUser(RegisterRequest request) {
+        if (userRepository.existsByEmailOrPhoneNumber(request.getCredential())) {
+            throw new UserAlreadyExistsException("User already exists");
+        }
+
+        User user = new User();
+        if (request.getCredential().contains("@")) {
+            user.setEmail(request.getCredential());
+        } else {
+            user.setPhoneNumber(request.getCredential());
+        }
+        user.setFullName(request.getFullName());
+        user.setPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
+        user.setVerified(false);
+        userRepository.save(user);
     }
 }

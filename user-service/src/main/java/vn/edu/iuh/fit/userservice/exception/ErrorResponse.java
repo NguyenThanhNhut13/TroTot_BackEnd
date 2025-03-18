@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.authservice.exception;
+package vn.edu.iuh.fit.userservice.exception;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -12,7 +12,10 @@ package vn.edu.iuh.fit.authservice.exception;
  * @version:    1.0
  */
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter

@@ -13,16 +13,15 @@ package vn.edu.iuh.fit.authservice.controller;
  */
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
-import vn.edu.iuh.fit.authservice.dto.UserDTO;
 import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
-import vn.edu.iuh.fit.authservice.entity.response.LoginResponse;
+import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
+import vn.edu.iuh.fit.authservice.entity.request.VerifyOtpRequest;
 import vn.edu.iuh.fit.authservice.service.AuthService;
 
 @RestController
@@ -35,4 +34,18 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         return ResponseEntity.ok(authService.login(loginRequest));
     }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Validated @RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ResponseEntity.ok("Login successful! Please check your email or phone to receive OTP");
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        authService.verifyOtp(request);
+        return ResponseEntity.ok("Authentication successful!");
+    }
+
+
 }

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.userservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.userservice.dto.UserDTO;
 import vn.edu.iuh.fit.userservice.entity.User;
+import vn.edu.iuh.fit.userservice.entity.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.service.UserService;
 
 import java.util.List;
@@ -30,10 +31,10 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public void save(@RequestBody User user) {
-        userService.saveUser(user);
+    @PostMapping("/create")
+    public ResponseEntity<?> createUser(@RequestBody RegisterRequest request) {
+        userService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping
