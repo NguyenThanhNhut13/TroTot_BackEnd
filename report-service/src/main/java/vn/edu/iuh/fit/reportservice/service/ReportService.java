@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.reportservice.dto.ReportDTO;
 import vn.edu.iuh.fit.reportservice.entity.Report;
-import vn.edu.iuh.fit.reportservice.entity.ReportStatus;
+import vn.edu.iuh.fit.reportservice.enums.ReportStatus;
 import vn.edu.iuh.fit.reportservice.repository.ReportRepository;
 
 @Service

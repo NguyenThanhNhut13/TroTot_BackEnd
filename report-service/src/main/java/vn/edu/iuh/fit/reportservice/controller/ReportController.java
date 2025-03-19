@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.reportservice.dto.ReportDTO;
-import vn.edu.iuh.fit.reportservice.entity.ReportStatus;
+import vn.edu.iuh.fit.reportservice.enums.ReportStatus;
 import vn.edu.iuh.fit.reportservice.service.EmailService;
 import vn.edu.iuh.fit.reportservice.service.ReportService;
 

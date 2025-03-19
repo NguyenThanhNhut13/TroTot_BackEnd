@@ -1,4 +1,4 @@
-package vn.edu.iuh.fit.reportservice.entity;
+package vn.edu.iuh.fit.reportservice.enums;
 
 public enum ReportStatus {
     PENDING,

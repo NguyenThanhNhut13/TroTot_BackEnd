@@ -1,8 +1,8 @@
 package vn.edu.iuh.fit.reportservice.dto;
 
 import java.time.LocalDateTime;
-import vn.edu.iuh.fit.reportservice.entity.ReportStatus;
-import vn.edu.iuh.fit.reportservice.entity.ReportType;
+import vn.edu.iuh.fit.reportservice.enums.ReportStatus;
+import vn.edu.iuh.fit.reportservice.enums.ReportType;
 
 public class ReportDTO {
     private Long id;
