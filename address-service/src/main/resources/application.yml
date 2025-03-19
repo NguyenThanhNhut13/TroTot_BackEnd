@@ -3,3 +3,6 @@ spring:
     name: address-service
   config:
     import: optional:configserver:http://localhost:8888
+
+  cache:
+    type: redis

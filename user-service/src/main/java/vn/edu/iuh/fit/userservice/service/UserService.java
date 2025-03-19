@@ -13,8 +13,12 @@ package vn.edu.iuh.fit.userservice.service;
  */
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.userservice.dto.UserAuthDTO;
+import vn.edu.iuh.fit.userservice.dto.UserDTO;
 import vn.edu.iuh.fit.userservice.entity.User;
+import vn.edu.iuh.fit.userservice.mapper.UserMapper;
 import vn.edu.iuh.fit.userservice.repository.UserRepository;
 
 import java.util.List;
@@ -24,6 +28,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public void saveUser(User user) {
         userRepository.save(user);
@@ -35,5 +40,25 @@ public class UserService {
 
     public List<User> findAllUsers() {
         return userRepository.findAll();
+    }
+
+    public UserDTO findByEmailOrPhone(String credential) {
+        return userMapper.toDTO(userRepository.findUserByEmailOrPhoneNumber(credential));
+    }
+
+    public UserAuthDTO getAuthInfoByCredential(String credential) {
+        User user = userRepository.findUserByEmailOrPhoneNumber(credential);
+        if (user == null) {
+            return null;
+        }
+        return new UserAuthDTO(user.getEmail(), user.getPassword());
+    }
+
+    public UserDTO getUserByCredential(String credential) {
+        User user = userRepository.findUserByEmailOrPhoneNumber(credential);
+        if (user == null) {
+            return null;
+        }
+        return userMapper.toDTO(user);
     }
 }

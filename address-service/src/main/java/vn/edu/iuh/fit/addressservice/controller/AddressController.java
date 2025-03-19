@@ -1,24 +1,14 @@
-/*
- * @ (#) UserController.java       1.0     10/02/2025
- *
- * Copyright (c) 2025 IUH. All rights reserved.
- */
-
 package vn.edu.iuh.fit.addressservice.controller;
-/*
- * @description:
- * @author: Nguyen Thanh Nhut
- * @date: 11/02/2025
- * @version:    1.0
- */
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
-import vn.edu.iuh.fit.addressservice.entity.Address;
-import vn.edu.iuh.fit.addressservice.service.AddressService;
+import vn.edu.iuh.fit.addressservice.entity.District;
+import vn.edu.iuh.fit.addressservice.entity.Province;
+import vn.edu.iuh.fit.addressservice.entity.Ward;
+import vn.edu.iuh.fit.addressservice.repository.DistrictRepository;
+import vn.edu.iuh.fit.addressservice.repository.ProvinceRepository;
+import vn.edu.iuh.fit.addressservice.repository.WardRepository;
 
 import java.util.List;
 
@@ -26,25 +16,37 @@ import java.util.List;
 @RequestMapping("/api/v1/addresses")
 @RequiredArgsConstructor
 public class AddressController {
+    private final ProvinceRepository provinceRepository;
+    private final DistrictRepository districtRepository;
+    private final WardRepository wardRepository;
 
-    private final AddressService addressService;
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public void save(@RequestBody Address address) {
-        addressService.saveAddress(address);
+    @GetMapping("/provinces/getAll")
+    public ResponseEntity<List<Province>> getAllProvinces() {
+        List<Province> provinces = provinceRepository.findAll();
+        return ResponseEntity.ok(provinces);
     }
 
-    @GetMapping
-    public ResponseEntity<List<Address>> findAllAddress() {
-        return ResponseEntity.ok(addressService.findAllAddress());
+    @GetMapping("/districts/getAll")
+    public ResponseEntity<List<District>> getAllDistricts() {
+        List<District> districts = districtRepository.findAll();
+        return ResponseEntity.ok(districts);
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<AddressDTO>> findByDynamicFilter(@RequestParam(required = false) String street,
-                                                           @RequestParam(required = false) String district,
-                                                           @RequestParam(required = false) String city) {
-        return ResponseEntity.ok(addressService.findByDynamicFilter(street, district, city));
+    @GetMapping("/districts/getByProvince")
+    public ResponseEntity<List<District>> getDistrictsByProvince(@RequestParam String provinceCode) {
+        List<District> districts = districtRepository.findByProvince_Code(provinceCode);
+        return ResponseEntity.ok(districts);
     }
 
+    @GetMapping("/wards/getAll")
+    public ResponseEntity<List<Ward>> getAllWards() {
+        List<Ward> wards = wardRepository.findAll();
+        return ResponseEntity.ok(wards);
+    }
+
+    @GetMapping("/wards/getByDistrict")
+    public ResponseEntity<List<Ward>> getWardsByDistrict(@RequestParam String districtCode) {
+        List<Ward> wards = wardRepository.findByDistrict_Code(districtCode);
+        return ResponseEntity.ok(wards);
+    }
 }
