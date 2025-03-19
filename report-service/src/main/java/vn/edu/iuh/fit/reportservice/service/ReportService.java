@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 public class ReportService {
     @Autowired
     private ReportRepository reportRepository;
+    @Autowired
+    private EmailService emailService;
 
     public List<ReportDTO> getAllReports() {
         return reportRepository.findAll()
@@ -39,6 +41,11 @@ public class ReportService {
         report.setUpdateAt(LocalDateTime.now());
 
         report = reportRepository.save(report);
+
+        // Gửi email thông báo cho người dùng
+        emailService.sendEmail("toananhyeu12@gmail.com", "New Violation Report",
+                "A new report has been submitted. Please review it.");
+
         return new ReportDTO(report.getId(), report.getRoomId(), report.getUserId(),
                 report.getType(), report.getDescription(), report.getStatus(), report.getCreateAt());
     }
@@ -50,6 +57,10 @@ public class ReportService {
         report.setStatus(status);
         report.setUpdateAt(LocalDateTime.now());
         reportRepository.save(report);
+
+        // Gửi email thông báo cho người dùng
+        emailService.sendEmail("user@example.com", "Report Status Updated",
+                "Your report status has been updated to: " + status);
 
         return new ReportDTO(report.getId(), report.getRoomId(), report.getUserId(),
                 report.getType(), report.getDescription(), report.getStatus(), report.getCreateAt());
@@ -64,7 +75,7 @@ public class ReportService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
-        report.resolve(); // Gọi phương thức resolve()
+        report.setStatus(ReportStatus.RESOLVED); // Gọi phương thức resolve()
         reportRepository.save(report);
 
         return new ReportDTO(report.getId(), report.getRoomId(), report.getUserId(),
