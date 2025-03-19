@@ -42,7 +42,7 @@ public class ReportService {
 
         report = reportRepository.save(report);
 
-        // Gửi email thông báo cho người dùng
+        // Gửi email thông báo cho người dùng (admin)
         emailService.sendEmail("toananhyeu12@gmail.com", "New Violation Report",
                 "A new report has been submitted. Please review it.");
 
@@ -59,6 +59,7 @@ public class ReportService {
         reportRepository.save(report);
 
         // Gửi email thông báo cho người dùng
+//        String userEmail = userService.getUserEmail(report.getUserId()); // Lấy email từ userId
         emailService.sendEmail("user@example.com", "Report Status Updated",
                 "Your report status has been updated to: " + status);
 
