@@ -15,6 +15,7 @@
     <bytecodeTargetLevel>
       <module name="address-service" target="17" />
       <module name="report-service" target="17" />
+      <module name="reportservice" target="17" />
       <module name="room-service" target="17" />
       <module name="user-service" target="17" />
     </bytecodeTargetLevel>
