@@ -11,6 +11,15 @@
         <module name="config-server" />
         <module name="discovery" />
       </profile>
+      <profile name="Annotation profile for report service" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/unknown/lombok-unknown.jar" />
+        </processorPath>
+        <module name="report-service" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="address-service" target="17" />
@@ -28,6 +37,7 @@
       <module name="discovery" options="-parameters" />
       <module name="room-service" options="-parameters" />
       <module name="user-service" options="-parameters" />
+      <module name="report-service" options="-parameters" />
     </option>
   </component>
 </project>
