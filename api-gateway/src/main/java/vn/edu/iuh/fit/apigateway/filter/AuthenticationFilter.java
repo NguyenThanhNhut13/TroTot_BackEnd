@@ -25,16 +25,22 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import vn.edu.iuh.fit.apigateway.client.UserClient;
 
 import javax.crypto.SecretKey;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
     private final String secret;
+    private final UserClient userClient;
 
-    public AuthenticationFilter() {
+    public AuthenticationFilter(UserClient userClient) {
         super(Config.class);
+        this.userClient = userClient;
+
         Dotenv dotenv = Dotenv.load();
         this.secret = dotenv.get("JWT_SECRET");
 
@@ -76,12 +82,22 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                         .getPayload();
 
                 String userId = claims.getSubject();
-                String roles = claims.get("roles", String.class);
+                String rolesString = claims.get("roles", String.class);
+                List<String> roles = Arrays.asList(rolesString.split(",")); // Convert roles to List
 
-                // Thêm thông tin user vào header để các service sử dụng
+                // Get URL and method from request
+                String url = request.getURI().getPath();
+                String method = request.getMethod().name();
+
+                // Call `user-microservice` to check permission
+                if (!userClient.checkPermission(url, method, roles)) {
+                    return forbiddenResponse(exchange.getResponse());
+                }
+
+                // If user have permission, add information to request header
                 ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                         .header("X-User-Id", userId)
-                        .header("X-User-Roles", roles)
+                        .header("X-User-Roles", rolesString)
                         .build();
 
                 return chain.filter(exchange.mutate().request(mutatedRequest).build());
@@ -93,6 +109,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
     private Mono<Void> unauthorizedResponse(ServerHttpResponse response) {
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
+        return response.setComplete();
+    }
+
+    private Mono<Void> forbiddenResponse(ServerHttpResponse response) {
+        response.setStatusCode(HttpStatus.FORBIDDEN);
         return response.setComplete();
     }
 }
