@@ -58,4 +58,14 @@ public class UserController {
         return ResponseEntity.ok(userDTO);
     }
 
+    @GetMapping("/check-permission")
+    public ResponseEntity<Boolean> checkPermission(
+            @RequestParam String url,
+            @RequestParam String method,
+            @RequestParam List<String> roles) {
+
+        boolean hasPermission = userService.hasPermission(url, method, roles);
+        return ResponseEntity.ok(hasPermission);
+    }
+
 }

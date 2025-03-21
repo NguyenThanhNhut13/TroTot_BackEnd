@@ -17,10 +17,12 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.userservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.userservice.dto.UserDTO;
+import vn.edu.iuh.fit.userservice.entity.Permission;
 import vn.edu.iuh.fit.userservice.entity.User;
 import vn.edu.iuh.fit.userservice.entity.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.exception.UserAlreadyExistsException;
 import vn.edu.iuh.fit.userservice.mapper.UserMapper;
+import vn.edu.iuh.fit.userservice.repository.PermissionRepository;
 import vn.edu.iuh.fit.userservice.repository.UserRepository;
 
 import java.util.List;
@@ -31,6 +33,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PermissionRepository permissionRepository;
 
     public void saveUser(User user) {
         userRepository.save(user);
@@ -79,5 +82,11 @@ public class UserService {
         user.setPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
         user.setVerified(false);
         userRepository.save(user);
+    }
+
+    public boolean hasPermission(String url, String method, List<String> roles) {
+        List<Permission> permissions = permissionRepository.findPermissionsByRoles(roles);
+        return permissions.stream()
+                .anyMatch(p -> p.getUrl().equals(url) && p.getMethod().equalsIgnoreCase(method));
     }
 }
