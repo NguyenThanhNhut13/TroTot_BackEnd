@@ -26,8 +26,10 @@ import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
 import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
 import vn.edu.iuh.fit.authservice.entity.request.VerifyOtpRequest;
 import vn.edu.iuh.fit.authservice.entity.response.LoginResponse;
+import vn.edu.iuh.fit.authservice.exception.InvalidCredentialsException;
 import vn.edu.iuh.fit.authservice.exception.PasswordMismatchException;
 import vn.edu.iuh.fit.authservice.exception.UserAlreadyExistsException;
+import vn.edu.iuh.fit.authservice.exception.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -41,23 +43,23 @@ public class AuthService {
         ResponseEntity<UserAuthDTO> response = userClient.getAuthInfo(loginRequest.getCredential());
 
         if (response == null || response.getBody() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
         UserAuthDTO userAuth = response.getBody();
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), userAuth.getHashedPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
         // Tạo JWT
         String jwt = jwtService.generateToken(userAuth.getCredential());
+        System.out.println(jwt);
 
         // Lấy thông tin user
         ResponseEntity<UserDTO> userResponse = userClient.getUserInfo(userAuth.getCredential());
-
         if (userResponse == null || userResponse.getBody() == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User not found");
+            throw new UserNotFoundException("User not found with credential: " + loginRequest.getCredential());
         }
 
         return new LoginResponse(jwt, userResponse.getBody());

@@ -20,15 +20,15 @@ import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.authservice.dto.UserDTO;
 import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
 
-@FeignClient(name = "user-service", url = "${application.config.users-url}")
+@FeignClient(name = "user-service")
 public interface UserClient {
 
-    @GetMapping("/auth-info")
+    @GetMapping("/api/v1/users/auth-info")
     ResponseEntity<UserAuthDTO> getAuthInfo(@RequestParam String credential);
 
-    @GetMapping("/info")
+    @GetMapping("/api/v1/users/info")
     ResponseEntity<UserDTO> getUserInfo(@RequestParam String credential);
 
-    @PostMapping("/create")
+    @PostMapping("/api/v1/users/create")
     ResponseEntity<?> createUser(@RequestBody RegisterRequest request);
 }
