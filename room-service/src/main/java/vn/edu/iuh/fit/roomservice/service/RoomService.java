@@ -38,6 +38,10 @@ public class RoomService {
         return roomRepository.findAll();
     }
 
+    public Room findRoomById(Long id) {
+        return roomRepository.findAllById(id);
+    }
+
     public List<RoomDTO> findRoomsByAddress(String street, String district, String city) {
         List<AddressDTO> addressDTOS = addressClient.search(street, district, city).getBody();
 

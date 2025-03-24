@@ -61,4 +61,8 @@ public class UserService {
         }
         return userMapper.toDTO(user);
     }
+
+    public UserDTO getUserById(Long id) {
+        return userMapper.toDTO(userRepository.findAllById(id));
+    }
 }

@@ -21,4 +21,5 @@ import java.util.List;
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Long> {
     List<Room> findByAddressIdIn(List<Long> addressIds);
+    Room findAllById(Long id);
 }

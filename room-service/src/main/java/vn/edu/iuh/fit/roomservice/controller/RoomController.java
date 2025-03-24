@@ -49,4 +49,9 @@ public class RoomController {
         return ResponseEntity.ok(roomService.findRoomsByAddress(street, district, city));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Room> findRoomById(@PathVariable Long id) {
+        return ResponseEntity.ok(roomService.findRoomById(id));
+    }
+
 }
