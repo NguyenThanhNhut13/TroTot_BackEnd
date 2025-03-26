@@ -13,7 +13,6 @@ package vn.edu.iuh.fit.authservice.controller;
  */
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,47 +22,43 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
 import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
 import vn.edu.iuh.fit.authservice.entity.request.VerifyOtpRequest;
+import vn.edu.iuh.fit.authservice.entity.response.BaseResponse;
 import vn.edu.iuh.fit.authservice.entity.response.LoginResponse;
-import vn.edu.iuh.fit.authservice.exception.ErrorResponse;
-import vn.edu.iuh.fit.authservice.exception.InvalidCredentialsException;
-import vn.edu.iuh.fit.authservice.exception.UserNotFoundException;
 import vn.edu.iuh.fit.authservice.service.AuthService;
+import vn.edu.iuh.fit.authservice.service.JwtService;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final JwtService jwtService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        try {
-            LoginResponse loginResponse = authService.login(loginRequest);
-            return ResponseEntity.ok(loginResponse);
-        } catch (InvalidCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ErrorResponse("INVALID_CREDENTIALS", e.getMessage()));
-        } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("USER_NOT_FOUND", e.getMessage()));
-        }
-
-//        catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(new ErrorResponse("SERVER_ERROR", "An unexpected error occurred"));
-//        }
+        LoginResponse loginResponse = authService.login(loginRequest);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Login successful", loginResponse));
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Validated @RequestBody RegisterRequest request) {
         authService.register(request);
-        return ResponseEntity.ok("Login successful! Please check your email or phone to receive OTP");
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Register successful! Please check your email or phone to receive OTP", null)
+        );
     }
+
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request);
         return ResponseEntity.ok("Authentication successful!");
+    }
+
+    @PostMapping("/internal-token")
+    public ResponseEntity<?> getInternalToken() {
+        String internalJwt = jwtService.generateInternalJwt();
+        return ResponseEntity.ok(internalJwt);
     }
 
 

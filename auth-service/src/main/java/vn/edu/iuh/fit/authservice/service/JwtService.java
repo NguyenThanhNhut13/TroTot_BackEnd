@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -40,8 +41,9 @@ public class JwtService {
         }
     }
 
-    public String generateToken(String credential ) {
+    public String generateToken(String credential, List<String> roles ) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", String.join(",", roles));
         return createToken(claims, credential);
     }
 
@@ -94,5 +96,15 @@ public class JwtService {
     private boolean validateToken(String token, UserDetails userDetails) {
         final String credential = extractCredential(token);
         return (credential.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    public String generateInternalJwt() {
+        return Jwts.builder()
+                .subject("internal-service")
+                .claim("service", true)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600000)) // 1 hour
+                .signWith(getSecretKey())
+                .compact();
     }
 }

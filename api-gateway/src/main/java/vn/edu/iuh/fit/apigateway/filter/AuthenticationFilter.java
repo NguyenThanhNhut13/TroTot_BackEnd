@@ -25,21 +25,19 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import vn.edu.iuh.fit.apigateway.client.UserClient;
 
 import javax.crypto.SecretKey;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
     private final String secret;
-    private final UserClient userClient;
 
-    public AuthenticationFilter(UserClient userClient) {
+    public AuthenticationFilter() {
         super(Config.class);
-        this.userClient = userClient;
 
         Dotenv dotenv = Dotenv.load();
         this.secret = dotenv.get("JWT_SECRET");
@@ -58,10 +56,19 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    private static final Map<String, List<String>> PUBLIC_ENDPOINTS = Map.of(
+            "GET", List.of("/api/v1/rooms", "/api/v1/auth/**"),
+            "POST", List.of("/api/v1/auth/**")
+    );
+
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+
+            if (isPublicEndpoint(request.getMethod().name(), request.getURI().getPath())) {
+                return chain.filter(exchange);
+            }
 
             // Check header Authorization
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
@@ -81,23 +88,14 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                         .parseSignedClaims(token)
                         .getPayload();
 
-                String userId = claims.getSubject();
+                String credential = claims.getSubject();
                 String rolesString = claims.get("roles", String.class);
                 List<String> roles = Arrays.asList(rolesString.split(",")); // Convert roles to List
 
-                // Get URL and method from request
-                String url = request.getURI().getPath();
-                String method = request.getMethod().name();
-
-                // Call `user-microservice` to check permission
-                if (!userClient.checkPermission(url, method, roles)) {
-                    return forbiddenResponse(exchange.getResponse());
-                }
-
-                // If user have permission, add information to request header
                 ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                        .header("X-User-Id", userId)
-                        .header("X-User-Roles", rolesString)
+                        .header("X-User-Credential", credential)
+                        .header("X-User-Roles", String.join(",", roles))
+                        .header("X-User-Roles-List", roles.toString())
                         .build();
 
                 return chain.filter(exchange.mutate().request(mutatedRequest).build());
@@ -107,13 +105,15 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         };
     }
 
+    private boolean isPublicEndpoint(String method, String path) {
+        return PUBLIC_ENDPOINTS.getOrDefault(method, List.of())
+                .stream()
+                .anyMatch(path::matches);
+    }
+
     private Mono<Void> unauthorizedResponse(ServerHttpResponse response) {
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
         return response.setComplete();
     }
 
-    private Mono<Void> forbiddenResponse(ServerHttpResponse response) {
-        response.setStatusCode(HttpStatus.FORBIDDEN);
-        return response.setComplete();
-    }
 }

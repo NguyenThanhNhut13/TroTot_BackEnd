@@ -14,11 +14,9 @@ package vn.edu.iuh.fit.authservice.service;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
 import vn.edu.iuh.fit.authservice.dto.UserDTO;
@@ -52,17 +50,17 @@ public class AuthService {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        // Tạo JWT
-        String jwt = jwtService.generateToken(userAuth.getCredential());
-        System.out.println(jwt);
-
-        // Lấy thông tin user
+        // Get user information
         ResponseEntity<UserDTO> userResponse = userClient.getUserInfo(userAuth.getCredential());
+
         if (userResponse == null || userResponse.getBody() == null) {
             throw new UserNotFoundException("User not found with credential: " + loginRequest.getCredential());
         }
 
-        return new LoginResponse(jwt, userResponse.getBody());
+        // Create JWT
+        String jwt = jwtService.generateToken(userAuth.getCredential(), userResponse.getBody().getRoles());
+
+        return new LoginResponse(jwt);
     }
 
 
@@ -89,4 +87,6 @@ public class AuthService {
 
 
     }
+
+
 }
