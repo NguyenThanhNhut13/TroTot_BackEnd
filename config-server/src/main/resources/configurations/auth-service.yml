@@ -10,6 +10,11 @@ server:
 spring:
   application:
     name: auth-service
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3307/trotot_auth?createDatabaseIfNotExist=true
+    username: root
+    password: sapassword
 
   redis:
     host: redis
