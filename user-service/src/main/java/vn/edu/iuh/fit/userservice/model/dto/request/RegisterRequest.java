@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.entity.request;
+package vn.edu.iuh.fit.userservice.model.dto.request;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -16,8 +16,6 @@ import lombok.Data;
 
 @Data
 public class RegisterRequest {
-    private String credential;
+    private Long id;
     private String fullName;
-    private String password;
-    private String confirmPassword;
 }

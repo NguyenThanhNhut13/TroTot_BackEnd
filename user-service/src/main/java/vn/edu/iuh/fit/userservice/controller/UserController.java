@@ -16,10 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.userservice.dto.UserAuthDTO;
-import vn.edu.iuh.fit.userservice.dto.UserDTO;
-import vn.edu.iuh.fit.userservice.entity.User;
-import vn.edu.iuh.fit.userservice.entity.request.RegisterRequest;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
+import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.service.UserService;
 
 import java.util.List;
@@ -32,30 +31,17 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createUser(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> createUserInfo(@RequestBody RegisterRequest request) {
         userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Add user profile success!", null)
+        );
     }
 
-    @GetMapping
-    public ResponseEntity<List<User>> findAllUser() {
-        return ResponseEntity.ok(userService.findAllUsers());
-    }
-
-    @GetMapping("/auth-info")
-    public ResponseEntity<UserAuthDTO> getAuthInfo(@RequestParam String credential) {
-        UserAuthDTO user = userService.getAuthInfoByCredential(credential);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        return ResponseEntity.ok(user);
-    }
-
-    @GetMapping("/info")
-    public ResponseEntity<UserDTO> getUserInfo(@RequestParam String credential) {
-        UserDTO userDTO = userService.getUserByCredential(credential);
-        return ResponseEntity.ok(userDTO);
-    }
+//    @GetMapping("/info")
+//    public ResponseEntity<UserProfileResponse> getUserInfo(@RequestParam String credential) {
+//        UserProfileResponse userDTO = userService.getUserByCredential(credential);
+//        return ResponseEntity.ok(userDTO);
+//    }
 
 }

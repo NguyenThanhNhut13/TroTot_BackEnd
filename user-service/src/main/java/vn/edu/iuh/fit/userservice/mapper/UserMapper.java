@@ -12,15 +12,11 @@ package vn.edu.iuh.fit.userservice.mapper;
  * @version:    1.0
  */
 
-import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import vn.edu.iuh.fit.userservice.dto.UserDTO;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
 import vn.edu.iuh.fit.userservice.entity.Role;
-import vn.edu.iuh.fit.userservice.entity.User;
-import vn.edu.iuh.fit.userservice.service.RoleService;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,11 +25,11 @@ import java.util.stream.Collectors;
 public interface UserMapper {
     @Mapping(target = "id", source = "id")
     @Mapping(target = "roles", expression = "java(mapRoles(user.getRoles()))")
-    UserDTO toDTO(User user);
+    UserProfileResponse toDTO(User user);
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "roles", expression = "java(mapRolesFromDTO(userDTO.getRoles()))")
-    User toEntity(UserDTO userDTO);
+    User toEntity(UserProfileResponse userDTO);
 
     default List<String> mapRoles(Set<Role> roles) {
         if (roles == null) {

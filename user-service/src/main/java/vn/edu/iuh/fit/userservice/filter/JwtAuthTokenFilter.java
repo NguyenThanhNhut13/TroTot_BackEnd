@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.authservice.config.filter;
+package vn.edu.iuh.fit.userservice.filter;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -23,7 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import vn.edu.iuh.fit.authservice.service.JwtService;
+import vn.edu.iuh.fit.userservice.jwt.JwtService;
 
 import java.io.IOException;
 import java.util.List;

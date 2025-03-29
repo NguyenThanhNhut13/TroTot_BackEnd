@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.authservice.service;
+package vn.edu.iuh.fit.userservice.jwt;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -17,8 +17,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -36,22 +34,6 @@ public class JwtService {
         if (this.secret == null || this.secret.isEmpty()) {
             throw new IllegalStateException("JWT_SECRET is not set in .env file");
         }
-    }
-
-    public String generateToken(String credential, List<String> roles ) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", String.join(",", roles));
-        return createToken(claims, credential);
-    }
-
-    private String createToken(Map<String, Object> claims, String credential) {
-        return Jwts.builder()
-                .claims(claims)
-                .subject(credential)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // 30 minutes
-                .signWith(getSecretKey())
-                .compact();
     }
 
     // Get secret key

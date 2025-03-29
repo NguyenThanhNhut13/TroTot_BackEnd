@@ -18,24 +18,40 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import vn.edu.iuh.fit.userservice.filter.JwtAuthTokenFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final JwtAuthTokenFilter jwtAuthTokenFilter;
+
+    public SecurityConfig(JwtAuthTokenFilter jwtAuthTokenFilter) {
+        this.jwtAuthTokenFilter = jwtAuthTokenFilter;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users/auth-info").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users/create").hasAuthority( "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/info").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/create").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 }
