@@ -13,7 +13,6 @@ package vn.edu.iuh.fit.apigateway.filter;
  */
 
 import io.github.cdimascio.dotenv.Dotenv;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -82,23 +80,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             String token = authHeader.substring(7);
             try {
-                Claims claims = Jwts.parser()
+                Jwts.parser()
                         .verifyWith(getSecretKey())
                         .build()
-                        .parseSignedClaims(token)
-                        .getPayload();
+                        .parseSignedClaims(token);
 
-                String credential = claims.getSubject();
-                String rolesString = claims.get("roles", String.class);
-                List<String> roles = Arrays.asList(rolesString.split(",")); // Convert roles to List
-
-                ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                        .header("X-User-Credential", credential)
-                        .header("X-User-Roles", String.join(",", roles))
-                        .header("X-User-Roles-List", roles.toString())
-                        .build();
-
-                return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                return chain.filter(exchange);
             } catch (Exception e) {
                 return unauthorizedResponse(exchange.getResponse());
             }
@@ -108,7 +95,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     private boolean isPublicEndpoint(String method, String path) {
         return PUBLIC_ENDPOINTS.getOrDefault(method, List.of())
                 .stream()
-                .anyMatch(path::matches);
+                .anyMatch(pattern -> path.matches(pattern.replace("**", ".*")));
     }
 
     private Mono<Void> unauthorizedResponse(ServerHttpResponse response) {
