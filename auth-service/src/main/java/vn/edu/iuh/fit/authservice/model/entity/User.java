@@ -1,14 +1,14 @@
 /*
- * @ (#) User.java       1.0     10/02/2025
+ * @ (#) User.java       1.0     29/03/2025
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.entity;
+package vn.edu.iuh.fit.authservice.model.entity;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
- * @date: 10/02/2025
+ * @date: 29/03/2025
  * @version:    1.0
  */
 
@@ -35,13 +35,11 @@ public class User {
 
     @Column(unique = true)
     private String email;
+
     @Column(unique = true, length = 11)
     private String phoneNumber;
-    private String password;
-    private String fullName;
 
-    private String address;
-    private LocalDateTime dob;
+    private String password;
 
     @ManyToMany(
             fetch = FetchType.EAGER,
@@ -65,5 +63,4 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
 }

@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.service;
+package vn.edu.iuh.fit.authservice.service;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -14,8 +14,8 @@ package vn.edu.iuh.fit.userservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import vn.edu.iuh.fit.userservice.entity.Role;
-import vn.edu.iuh.fit.userservice.repository.RoleRepository;
+import vn.edu.iuh.fit.authservice.model.entity.Role;
+import vn.edu.iuh.fit.authservice.repository.RoleRepository;
 
 @Service
 @RequiredArgsConstructor

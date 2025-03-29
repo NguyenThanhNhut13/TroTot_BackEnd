@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.authservice.entity.response;
+package vn.edu.iuh.fit.authservice.model.dto.response;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -14,6 +14,8 @@ package vn.edu.iuh.fit.authservice.entity.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor

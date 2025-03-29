@@ -14,51 +14,51 @@ package vn.edu.iuh.fit.authservice.service;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import vn.edu.iuh.fit.authservice.client.UserClient;
-import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
-import vn.edu.iuh.fit.authservice.dto.UserDTO;
-import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
-import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
-import vn.edu.iuh.fit.authservice.entity.request.VerifyOtpRequest;
-import vn.edu.iuh.fit.authservice.entity.response.LoginResponse;
-import vn.edu.iuh.fit.authservice.exception.InvalidCredentialsException;
-import vn.edu.iuh.fit.authservice.exception.PasswordMismatchException;
-import vn.edu.iuh.fit.authservice.exception.UserAlreadyExistsException;
-import vn.edu.iuh.fit.authservice.exception.UserNotFoundException;
+import vn.edu.iuh.fit.authservice.exception.*;
+import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
+import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
+import vn.edu.iuh.fit.authservice.model.entity.Role;
+import vn.edu.iuh.fit.authservice.model.entity.User;
+import vn.edu.iuh.fit.authservice.repository.UserRepository;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
     private final JwtService jwtService;
-    private final UserClient userClient;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
 
     public LoginResponse login(LoginRequest loginRequest) {
-        ResponseEntity<UserAuthDTO> response = userClient.getAuthInfo(loginRequest.getCredential());
+        User user = userRepository.findUserByEmailOrPhoneNumber(loginRequest.getCredential());
 
-        if (response == null || response.getBody() == null) {
-            throw new InvalidCredentialsException("Invalid credentials");
-        }
-
-        UserAuthDTO userAuth = response.getBody();
-
-        if (!passwordEncoder.matches(loginRequest.getPassword(), userAuth.getHashedPassword())) {
-            throw new InvalidCredentialsException("Invalid credentials");
-        }
-
-        // Get user information
-        ResponseEntity<UserDTO> userResponse = userClient.getUserInfo(userAuth.getCredential());
-
-        if (userResponse == null || userResponse.getBody() == null) {
+        if (user == null) {
             throw new UserNotFoundException("User not found with credential: " + loginRequest.getCredential());
         }
 
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Invalid credentials");
+        }
+
+        if (!user.isVerified()) {
+            throw new UserNotVerifiedException("User account is not verified. Please verify your email before logging in.");
+        }
+
+        List<String> roleNames = user.getRoles().stream()
+                .map(Role::getRoleName)
+                .toList();
+
         // Create JWT
-        String jwt = jwtService.generateToken(userAuth.getCredential(), userResponse.getBody().getRoles());
+        String jwt = jwtService.generateToken(loginRequest.getCredential(), roleNames);
 
         return new LoginResponse(jwt);
     }
@@ -69,11 +69,21 @@ public class AuthService {
             throw new PasswordMismatchException("Passwords do not match");
         }
 
-        try {
-            userClient.createUser(request);
-        } catch (FeignException.Conflict ex) {
+        if (userRepository.existsByEmailOrPhoneNumber(request.getCredential())) {
             throw new UserAlreadyExistsException("User already exists");
         }
+
+        User user = new User();
+        if (request.getCredential().contains("@")) {
+            user.setEmail(request.getCredential());
+        } else {
+            user.setPhoneNumber(request.getCredential());
+        }
+
+        user.setFullName(request.getFullName());
+        user.setPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
+        user.setVerified(false);
+        userRepository.save(user);
 
         otpService.sendOtp(request.getCredential());
     }
@@ -87,6 +97,22 @@ public class AuthService {
 
 
     }
+
+//    public UserResponse getUserDTOById(Long userId) {
+//        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        // Chuyển danh sách role name thành Set<Role> tại đây
+//        List<String> roleNames = userMapper.mapRoles(user.getRoles());
+//        Set<Role> roles = roleNames.stream()
+//                .map(roleService::getRoleByName)  // Lấy Role từ tên
+//                .collect(Collectors.toSet());
+//
+//        // Tạo UserDTO từ User và cung cấp roles
+//        UserProfileResponse userDTO = userMapper.toDTO(user);
+//        userDTO.setRoles(roleNames);  // Set lại roles ở đây hoặc trực tiếp chuyển roles vào DTO.
+//
+//        return userDTO;
+//    }
 
 
 }

@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.edu.iuh.fit.authservice.entity.request.LoginRequest;
-import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
-import vn.edu.iuh.fit.authservice.entity.request.VerifyOtpRequest;
-import vn.edu.iuh.fit.authservice.entity.response.BaseResponse;
-import vn.edu.iuh.fit.authservice.entity.response.LoginResponse;
+import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
+import vn.edu.iuh.fit.authservice.model.dto.response.BaseResponse;
+import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.service.AuthService;
 import vn.edu.iuh.fit.authservice.service.JwtService;
 
@@ -48,17 +48,10 @@ public class AuthController {
         );
     }
 
-
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request);
         return ResponseEntity.ok("Authentication successful!");
-    }
-
-    @PostMapping("/internal-token")
-    public ResponseEntity<?> getInternalToken() {
-        String internalJwt = jwtService.generateInternalJwt();
-        return ResponseEntity.ok(internalJwt);
     }
 
 

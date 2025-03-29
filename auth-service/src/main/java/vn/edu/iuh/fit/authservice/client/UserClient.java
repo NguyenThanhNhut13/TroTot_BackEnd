@@ -13,21 +13,12 @@ package vn.edu.iuh.fit.authservice.client;
  */
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.authservice.dto.UserAuthDTO;
-import vn.edu.iuh.fit.authservice.dto.UserDTO;
-import vn.edu.iuh.fit.authservice.entity.request.RegisterRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
 
 @FeignClient(name = "user-service")
 public interface UserClient {
-
-    @GetMapping("/api/v1/users/auth-info")
-    ResponseEntity<UserAuthDTO> getAuthInfo(@RequestParam String credential);
-
-    @GetMapping("/api/v1/users/info")
-    ResponseEntity<UserDTO> getUserInfo(@RequestParam String credential);
 
     @PostMapping("/api/v1/users/create")
     ResponseEntity<?> createUser(@RequestBody RegisterRequest request);

@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.entity;
+package vn.edu.iuh.fit.authservice.model.entity;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -14,10 +14,6 @@ package vn.edu.iuh.fit.userservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter

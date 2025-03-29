@@ -50,6 +50,11 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("USER_NOT_FOUND", ex.getMessage()));
     }
 
+    @ExceptionHandler(UserNotVerifiedException.class)
+    public ResponseEntity<String> handleUserNotVerifiedException(UserNotVerifiedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
 //        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

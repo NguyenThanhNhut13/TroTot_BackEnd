@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.userservice.entity;
+package vn.edu.iuh.fit.authservice.model.entity;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -34,11 +34,7 @@ public class Permission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String url;
-
-    @Column(nullable = false)
-    private String method;
+    private String name;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
