@@ -15,11 +15,13 @@ package vn.edu.iuh.fit.authservice.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.authservice.model.dto.request.RegisterProfileRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
 
 @FeignClient(name = "user-service")
 public interface UserClient {
 
     @PostMapping("/api/v1/users/create")
-    ResponseEntity<?> createUser(@RequestBody RegisterRequest request);
+    ResponseEntity<?> createUserInfo(@RequestBody RegisterProfileRequest request);
+
 }

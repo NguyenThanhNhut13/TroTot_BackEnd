@@ -17,8 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.exception.*;
 import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.RegisterProfileRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
@@ -37,6 +39,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
+    private final UserClient userClient;
 
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findUserByEmailOrPhoneNumber(loginRequest.getCredential());
@@ -80,10 +83,11 @@ public class AuthService {
             user.setPhoneNumber(request.getCredential());
         }
 
-        user.setFullName(request.getFullName());
         user.setPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
         user.setVerified(false);
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        userClient.createUserInfo(new RegisterProfileRequest(savedUser.getId(), request.getFullName()));
 
         otpService.sendOtp(request.getCredential());
     }
