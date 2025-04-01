@@ -12,7 +12,7 @@ spring:
     name: room-service
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: "jdbc:mariadb://localhost:3306/trotot_room?createDatabaseIfNotExist=true"
+    url: "jdbc:mariadb://localhost:3307/trotot_room?createDatabaseIfNotExist=true"
     username: root
     password: sapassword
   jpa:
