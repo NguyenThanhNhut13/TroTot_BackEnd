@@ -20,10 +20,10 @@ import vn.edu.iuh.fit.roomservice.dto.AddressDTO;
 
 import java.util.List;
 
-@FeignClient(name = "address-service", url = "${application.config.addresses-url}")
+@FeignClient(name = "address-service")
 public interface AddressClient {
 
-    @GetMapping("/search")
+    @GetMapping("/api/v1/addresses/search")
     public ResponseEntity<List<AddressDTO>> search(@RequestParam(required = false) String street,
                                                    @RequestParam(required = false) String district,
                                                    @RequestParam(required = false) String city);

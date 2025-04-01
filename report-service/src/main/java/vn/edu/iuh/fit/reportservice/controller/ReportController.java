@@ -12,7 +12,7 @@ import vn.edu.iuh.fit.reportservice.service.ReportService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
 public class ReportController {
     @Autowired
