@@ -1,14 +1,15 @@
 package vn.edu.iuh.fit.addressservice.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.addressservice.dto.LocationDTO;
 import vn.edu.iuh.fit.addressservice.entity.District;
 import vn.edu.iuh.fit.addressservice.entity.Province;
 import vn.edu.iuh.fit.addressservice.entity.Ward;
-import vn.edu.iuh.fit.addressservice.repository.DistrictRepository;
-import vn.edu.iuh.fit.addressservice.repository.ProvinceRepository;
-import vn.edu.iuh.fit.addressservice.repository.WardRepository;
+import vn.edu.iuh.fit.addressservice.service.*;
+import vn.edu.iuh.fit.addressservice.util.ApiResponse;
 
 import java.util.List;
 
@@ -16,37 +17,44 @@ import java.util.List;
 @RequestMapping("/api/v1/addresses")
 @RequiredArgsConstructor
 public class AddressController {
-    private final ProvinceRepository provinceRepository;
-    private final DistrictRepository districtRepository;
-    private final WardRepository wardRepository;
+    private final ProvinceService provinceService;
+    private final DistrictService districtService;
+    private final WardService wardService;
+    private final AddressService addressService;
 
     @GetMapping("/provinces/getAll")
     public ResponseEntity<List<Province>> getAllProvinces() {
-        List<Province> provinces = provinceRepository.findAll();
-        return ResponseEntity.ok(provinces);
+        return ResponseEntity.ok(provinceService.getAllProvinces());
     }
 
     @GetMapping("/districts/getAll")
     public ResponseEntity<List<District>> getAllDistricts() {
-        List<District> districts = districtRepository.findAll();
-        return ResponseEntity.ok(districts);
+        return ResponseEntity.ok(districtService.getAllDistricts());
     }
 
     @GetMapping("/districts/getByProvince")
     public ResponseEntity<List<District>> getDistrictsByProvince(@RequestParam String provinceCode) {
-        List<District> districts = districtRepository.findByProvince_Code(provinceCode);
-        return ResponseEntity.ok(districts);
+        return ResponseEntity.ok(districtService.getDistrictsByProvinceCode(provinceCode));
     }
 
     @GetMapping("/wards/getAll")
     public ResponseEntity<List<Ward>> getAllWards() {
-        List<Ward> wards = wardRepository.findAll();
-        return ResponseEntity.ok(wards);
+        return ResponseEntity.ok(wardService.getAllWards());
     }
 
     @GetMapping("/wards/getByDistrict")
     public ResponseEntity<List<Ward>> getWardsByDistrict(@RequestParam String districtCode) {
-        List<Ward> wards = wardRepository.findByDistrict_Code(districtCode);
-        return ResponseEntity.ok(wards);
+        return ResponseEntity.ok(wardService.getWardsByDistrictCode(districtCode));
+    }
+
+    @Operation(summary = "Tìm kiếm địa chỉ", description = "Tìm kiếm theo tên tỉnh, quận, phường")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<LocationDTO>>> searchAddresses(
+            @RequestParam(required = false) String province,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String ward) {
+
+        List<LocationDTO> result = addressService.searchLocations(ward, district, province);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

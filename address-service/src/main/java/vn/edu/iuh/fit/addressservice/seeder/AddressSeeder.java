@@ -1,4 +1,4 @@
-package vn.edu.iuh.fit.addressservice.service;
+package vn.edu.iuh.fit.addressservice.seeder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
