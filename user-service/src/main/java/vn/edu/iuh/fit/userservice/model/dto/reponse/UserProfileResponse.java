@@ -26,6 +26,4 @@ public class UserProfileResponse {
     private String fullName;
     private String address;
     private LocalDateTime dob;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

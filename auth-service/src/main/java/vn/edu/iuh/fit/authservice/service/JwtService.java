@@ -38,16 +38,16 @@ public class JwtService {
         }
     }
 
-    public String generateToken(String credential, List<String> roles ) {
+    public String generateToken(Long userId, List<String> roles ) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", String.join(",", roles));
-        return createToken(claims, credential);
+        return createToken(claims, userId);
     }
 
-    private String createToken(Map<String, Object> claims, String credential) {
+    private String createToken(Map<String, Object> claims, Long userId) {
         return Jwts.builder()
                 .claims(claims)
-                .subject(credential)
+                .subject(userId.toString())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // 30 minutes
                 .signWith(getSecretKey())

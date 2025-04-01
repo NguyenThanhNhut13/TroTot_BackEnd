@@ -29,8 +29,6 @@ import vn.edu.iuh.fit.authservice.model.entity.User;
 import vn.edu.iuh.fit.authservice.repository.UserRepository;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +59,7 @@ public class AuthService {
                 .toList();
 
         // Create JWT
-        String jwt = jwtService.generateToken(loginRequest.getCredential(), roleNames);
+        String jwt = jwtService.generateToken(user.getId(), roleNames);
 
         return new LoginResponse(jwt);
     }
