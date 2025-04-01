@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.exception.UserAlreadyExistsException;
-import vn.edu.iuh.fit.userservice.mapper.UserMapper;
 import vn.edu.iuh.fit.userservice.model.entity.UserProfile;
 import vn.edu.iuh.fit.userservice.repository.UserProfileRepository;
 
@@ -25,7 +24,6 @@ import vn.edu.iuh.fit.userservice.repository.UserProfileRepository;
 public class UserService {
 
     private final UserProfileRepository userRepository;
-    private final UserMapper userMapper;
 
     public void saveUser(UserProfile user) {
         userRepository.save(user);

@@ -64,6 +64,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
+            System.out.println("I'm here");
+
             if (isPublicEndpoint(request.getMethod().name(), request.getURI().getPath())) {
                 return chain.filter(exchange);
             }

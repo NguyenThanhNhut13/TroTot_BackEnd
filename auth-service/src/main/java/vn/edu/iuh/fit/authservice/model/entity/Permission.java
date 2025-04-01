@@ -28,7 +28,6 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EntityListeners(AuditingEntityListener.class) // Enable Auditing
 public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,19 +43,11 @@ public class Permission {
     )
     private Set<Role> roles;
 
-    @CreatedDate
-    @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @CreatedBy
-    @Column(updatable = false, nullable = false)
     private String createdBy;
 
-    @LastModifiedBy
-    @Column(nullable = false)
     private String updatedBy;
 }
