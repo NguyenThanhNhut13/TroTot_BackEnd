@@ -22,9 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 @Service
@@ -40,15 +38,16 @@ public class JwtService {
         }
     }
 
-    public String generateToken(String credential ) {
+    public String generateToken(Long userId, List<String> roles ) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, credential);
+        claims.put("roles", String.join(",", roles));
+        return createToken(claims, userId);
     }
 
-    private String createToken(Map<String, Object> claims, String credential) {
+    private String createToken(Map<String, Object> claims, Long userId) {
         return Jwts.builder()
                 .claims(claims)
-                .subject(credential)
+                .subject(userId.toString())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // 30 minutes
                 .signWith(getSecretKey())
@@ -71,6 +70,17 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
+    public List<String> extractRoles(String token) {
+        Claims claims = extractAllClaims(token);
+        String roles = (String) claims.get("roles");
+
+        if (roles != null && !roles.isEmpty()) {
+            return Arrays.asList(roles.split(","));
+        }
+
+        return Collections.emptyList();
+    }
+
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
         final Claims claims = extractAllClaims(token);
         return claimResolver.apply(claims);
@@ -91,8 +101,12 @@ public class JwtService {
     }
 
     // Valid token
-    private boolean validateToken(String token, UserDetails userDetails) {
-        final String credential = extractCredential(token);
-        return (credential.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public boolean validateToken(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
+
 }

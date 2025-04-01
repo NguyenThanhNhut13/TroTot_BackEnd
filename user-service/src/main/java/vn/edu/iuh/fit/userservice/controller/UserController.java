@@ -13,48 +13,38 @@ package vn.edu.iuh.fit.userservice.controller;
  */
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.userservice.dto.UserAuthDTO;
-import vn.edu.iuh.fit.userservice.dto.UserDTO;
-import vn.edu.iuh.fit.userservice.entity.User;
-import vn.edu.iuh.fit.userservice.service.UserService;
-
-import java.util.List;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
+import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
+import vn.edu.iuh.fit.userservice.service.UserProfileService;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
+    private final UserProfileService userService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public void save(@RequestBody User user) {
-        userService.saveUser(user);
+    @PostMapping("/create")
+    public ResponseEntity<?> createUserInfo(@RequestBody RegisterRequest request) {
+        userService.createUser(request);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Add user profile success!", null)
+        );
     }
 
-    @GetMapping
-    public ResponseEntity<List<User>> findAllUser() {
-        return ResponseEntity.ok(userService.findAllUsers());
-    }
+    @GetMapping("/profile")
+    public ResponseEntity<?> getUserInfo() {
+        String principal = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = Long.parseLong(principal);
 
-    @GetMapping("/auth-info")
-    public ResponseEntity<UserAuthDTO> getAuthInfo(@RequestParam String credential) {
-        UserAuthDTO user = userService.getAuthInfoByCredential(credential);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        return ResponseEntity.ok(user);
-    }
-
-    @GetMapping("/info")
-    public ResponseEntity<UserDTO> getUserInfo(@RequestParam String credential) {
-        UserDTO userDTO = userService.getUserByCredential(credential);
-        return ResponseEntity.ok(userDTO);
+        UserProfileResponse userDTO = userService.getUserProfile(userId);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "User profile retrieved successfully!", userDTO)
+        );
     }
 
 }
