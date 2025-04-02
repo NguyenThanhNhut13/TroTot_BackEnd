@@ -30,7 +30,10 @@ public class JwtService {
     private final String secret;
 
     public JwtService() {
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = Dotenv.configure()
+                .directory("./auth-service")
+                .ignoreIfMissing()
+                .load();
         this.secret = dotenv.get("JWT_SECRET");
 
         if (this.secret == null || this.secret.isEmpty()) {

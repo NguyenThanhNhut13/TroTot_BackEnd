@@ -26,7 +26,10 @@ public class RedisConfig {
 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = Dotenv.configure()
+                .directory("./address-service")
+                .ignoreIfMissing()
+                .load();
         String redisHost = dotenv.get("REDIS_HOST");
         String redisPortStr = dotenv.get("REDIS_PORT");
         String redisUsername = dotenv.get("REDIS_USERNAME");
