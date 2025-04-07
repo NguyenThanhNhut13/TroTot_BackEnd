@@ -47,6 +47,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/info").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/create").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/v2/api-docs",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-resources",
+                                "/swagger-sources/**",
+                                "/configuration/ui",
+                                "/configuration/security",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
