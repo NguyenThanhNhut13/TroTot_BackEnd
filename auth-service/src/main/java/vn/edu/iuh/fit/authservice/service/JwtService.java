@@ -27,19 +27,9 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-    private final String secret;
 
-    public JwtService() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory("./auth-service")
-                .ignoreIfMissing()
-                .load();
-        this.secret = dotenv.get("JWT_SECRET");
-
-        if (this.secret == null || this.secret.isEmpty()) {
-            throw new IllegalStateException("JWT_SECRET is not set in .env file");
-        }
-    }
+    @Value("${JWT_SECRET}")
+    private String secret;
 
     public String generateToken(Long userId, List<String> roles ) {
         Map<String, Object> claims = new HashMap<>();

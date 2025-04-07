@@ -17,6 +17,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -28,19 +29,8 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-    private final String secret;
-
-    public JwtService() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory("./report-service")
-                .ignoreIfMissing()
-                .load();
-        this.secret = dotenv.get("JWT_SECRET");
-
-        if (this.secret == null || this.secret.isEmpty()) {
-            throw new IllegalStateException("JWT_SECRET is not set in .env file");
-        }
-    }
+    @Value("${JWT_SECRET}")
+    private String secret;
 
     // Get secret key
     private SecretKey getSecretKey() {
