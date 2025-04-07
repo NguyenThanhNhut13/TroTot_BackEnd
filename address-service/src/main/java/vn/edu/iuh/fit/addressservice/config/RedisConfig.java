@@ -1,6 +1,7 @@
 package vn.edu.iuh.fit.addressservice.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -24,19 +25,25 @@ import java.time.Duration;
 @EnableCaching
 public class RedisConfig {
 
+    @Value("${spring.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.redis.port}")
+    private int redisPort;
+
+    @Value("${spring.redis.username}")
+    private String redisUsername;
+
+    @Value("${spring.redis.password}")
+    private String redisPassword;
+
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         Dotenv dotenv = Dotenv.configure()
                 .directory("./address-service")
                 .ignoreIfMissing()
                 .load();
-        String redisHost = dotenv.get("REDIS_HOST");
-        String redisPortStr = dotenv.get("REDIS_PORT");
-        String redisUsername = dotenv.get("REDIS_USERNAME");
-        String redisPassword = dotenv.get("REDIS_PASSWORD");
-
-        int redisPort;
-        redisPort = Integer.parseInt(redisPortStr);
 
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
         redisConfig.setHostName(redisHost);

@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.addressservice.jwt;
+package vn.edu.iuh.fit.reviewservice.jwt;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -12,7 +12,6 @@ package vn.edu.iuh.fit.addressservice.jwt;
  * @version:    1.0
  */
 
-import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -29,6 +28,7 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
+
     @Value("${JWT_SECRET}")
     private String secret;
 

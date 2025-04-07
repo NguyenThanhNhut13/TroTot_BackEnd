@@ -16,6 +16,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
@@ -30,27 +31,10 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
+public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
 
-    private final String secret;
-
-    public AuthenticationFilter() {
-        super(Config.class);
-
-        Dotenv dotenv = Dotenv.configure()
-                .directory("./user-service")
-                .ignoreIfMissing()
-                .load();
-        this.secret = dotenv.get("JWT_SECRET");
-
-        if (this.secret == null || this.secret.isEmpty()) {
-            throw new IllegalStateException("JWT_SECRET is not set in .env file");
-        }
-    }
-
-    public static class Config {
-
-    }
+    @Value("${JWT_SECRET}")
+    private String secret;
 
     private SecretKey getSecretKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
@@ -58,12 +42,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     }
 
     private static final Map<String, List<String>> PUBLIC_ENDPOINTS = Map.of(
-            "GET", List.of("/api/v1/rooms", "/api/v1/auth/**"),
+            "GET", List.of("/api/v1/rooms/**", "/api/v1/auth/**"),
             "POST", List.of("/api/v1/auth/**")
     );
 
     @Override
-    public GatewayFilter apply(Config config) {
+    public GatewayFilter apply(Object config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
