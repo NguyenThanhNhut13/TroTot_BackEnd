@@ -42,7 +42,17 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
     }
 
     private static final Map<String, List<String>> PUBLIC_ENDPOINTS = Map.of(
-            "GET", List.of("/api/v1/rooms/**", "/api/v1/auth/**"),
+            "GET", List.of("/api/v1/rooms/**", "/api/v1/auth/**",
+                    "/v2/api-docs",
+                    "/v3/api-docs",
+                    "/v3/api-docs/**",
+                    "/swagger-resources",
+                    "/swagger-sources/**",
+                    "/configuration/ui",
+                    "/configuration/security",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/webjars/**"),
             "POST", List.of("/api/v1/auth/**")
     );
 
