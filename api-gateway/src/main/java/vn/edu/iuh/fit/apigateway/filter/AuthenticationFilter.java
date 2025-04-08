@@ -19,14 +19,17 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -61,7 +64,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
-            System.out.println("I'm here");
+            System.out.println("In api-gateway");
 
             if (isPublicEndpoint(request.getMethod().name(), request.getURI().getPath())) {
                 return chain.filter(exchange);
@@ -83,9 +86,10 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
                         .verifyWith(getSecretKey())
                         .build()
                         .parseSignedClaims(token);
-
+                System.out.println("Request ok");
                 return chain.filter(exchange);
             } catch (Exception e) {
+                System.out.println("Request invalid");
                 return unauthorizedResponse(exchange.getResponse());
             }
         };
@@ -99,7 +103,17 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
 
     private Mono<Void> unauthorizedResponse(ServerHttpResponse response) {
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
-        return response.setComplete();
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        String body = """
+            {
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired token"
+            }
+        """;
+        DataBuffer buffer = response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
+
+        return response.writeWith(Mono.just(buffer));
     }
 
 }
