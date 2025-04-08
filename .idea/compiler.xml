@@ -25,7 +25,7 @@
         <module name="payment-service" />
         <module name="user-service" />
       </profile>
-      <profile name="Annotation profile for address-service" enabled="true">
+      <profile name="Annotation profile for report service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -38,6 +38,9 @@
         <module name="address-service" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="recommendation-service" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
