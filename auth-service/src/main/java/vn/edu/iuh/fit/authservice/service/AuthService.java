@@ -27,10 +27,10 @@ import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
 import vn.edu.iuh.fit.authservice.model.entity.User;
+import vn.edu.iuh.fit.authservice.repository.RoleRepository;
 import vn.edu.iuh.fit.authservice.repository.UserRepository;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +40,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final UserClient userClient;
+    private final RoleService roleService;
 
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findUserByEmailOrPhoneNumber(loginRequest.getCredential());
@@ -90,11 +91,16 @@ public class AuthService {
     }
 
     public void verifyOtp(VerifyOtpRequest request) {
-
-        // Verify OTP
-        if (!otpService.verifyOtp(request.getCredential(), request.getOtp())) {
-            throw new IllegalArgumentException("Invalid OTP");
+        otpService.verifyOtp(request.getCredential(), request.getOtp());
+        User user = userRepository.findUserByEmailOrPhoneNumber(request.getCredential());
+        if (user == null) {
+            throw new UnauthorizedException("Invalid credential");
         }
+        user.setVerified(true);
+        Role role = roleService.getRoleByName("USER");
+
+        user.setRoles(new HashSet<>(List.of(role)));
+        userRepository.save(user);
     }
 
     public TokenResponse refreshAccessToken(String refreshToken) {

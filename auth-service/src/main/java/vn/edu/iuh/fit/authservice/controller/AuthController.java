@@ -54,7 +54,9 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request);
-        return ResponseEntity.ok("Authentication successful!");
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Authentication successful!", null)
+        );
     }
 
     @PostMapping("/refresh")
