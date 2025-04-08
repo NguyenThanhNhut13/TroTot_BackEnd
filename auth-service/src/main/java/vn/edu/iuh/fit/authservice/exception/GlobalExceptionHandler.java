@@ -20,6 +20,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> badRequestException(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("BAD_REQUEST", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> unauthorizedException(UnauthorizedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("UNAUTHORIZED", ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

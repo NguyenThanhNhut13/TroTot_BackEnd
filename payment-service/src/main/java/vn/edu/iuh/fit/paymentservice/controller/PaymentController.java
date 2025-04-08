@@ -16,7 +16,7 @@ import vn.edu.iuh.fit.paymentservice.dto.BaseResponse;
 import vn.edu.iuh.fit.paymentservice.service.PaymentService;
 
 @RestController
-@RequestMapping("${spring.application.api-prefix}/payment")
+@RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 @Tag(name = "Payment Controller", description = "Quản lý thanh toán qua VNPay")
 public class PaymentController {

@@ -24,8 +24,11 @@ import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
 import vn.edu.iuh.fit.authservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
+import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.service.AuthService;
 import vn.edu.iuh.fit.authservice.service.JwtService;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -52,6 +55,13 @@ public class AuthController {
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request);
         return ResponseEntity.ok("Authentication successful!");
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        TokenResponse tokenResponse = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Refresh token successful", tokenResponse));
     }
 
 
