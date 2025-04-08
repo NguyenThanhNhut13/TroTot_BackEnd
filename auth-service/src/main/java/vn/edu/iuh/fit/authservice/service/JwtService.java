@@ -12,14 +12,14 @@ package vn.edu.iuh.fit.authservice.service;
  * @version:    1.0
  */
 
-import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.authservice.model.entity.Role;
+import vn.edu.iuh.fit.authservice.model.entity.User;
 
 import javax.crypto.SecretKey;
 import java.util.*;
@@ -31,10 +31,18 @@ public class JwtService {
     @Value("${JWT_SECRET}")
     private String secret;
 
-    public String generateToken(Long userId, List<String> roles ) {
+    public String generateToken(User user, boolean isRefreshToken ) {
+        if (isRefreshToken) {
+            return createRefreshToken(user.getId());
+        }
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", String.join(",", roles));
-        return createToken(claims, userId);
+
+        List<String> roleNames = user.getRoles().stream()
+                .map(Role::getRoleName)
+                .toList();
+        claims.put("roles", String.join(",", roleNames));
+
+        return createToken(claims, user.getId());
     }
 
     private String createToken(Map<String, Object> claims, Long userId) {
@@ -42,7 +50,16 @@ public class JwtService {
                 .claims(claims)
                 .subject(userId.toString())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // 30 minutes
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15)) // 15 minutes
+                .signWith(getSecretKey())
+                .compact();
+    }
+
+    private String createRefreshToken(Long userId) {
+        return Jwts.builder()
+                .subject(userId.toString())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 7))
                 .signWith(getSecretKey())
                 .compact();
     }
@@ -51,6 +68,11 @@ public class JwtService {
     private SecretKey getSecretKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    // Get subject
+    public String extractSubject(String token) {
+        return extractClaim(token, Claims::getSubject);
     }
 
     // Get credential
@@ -96,7 +118,7 @@ public class JwtService {
     // Valid token
     public boolean validateToken(String token) {
         try {
-            return !isTokenExpired(token);
+            return !isTokenExpired(token) ;
         } catch (Exception e) {
             return false;
         }

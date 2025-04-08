@@ -15,19 +15,26 @@ public class VNPAYConfig {
     @Getter
     @Value("${payment.vnPay.url}")
     private String vnp_PayUrl;
+
     @Value("${payment.vnPay.returnUrl}")
     private String vnp_ReturnUrl;
+
     @Value("${payment.vnPay.tmnCode}")
-    private String vnp_TmnCode ;
+    private String vnp_TmnCode;
+
     @Getter
     @Value("${payment.vnPay.secretKey}")
     private String secretKey;
+
     @Value("${payment.vnPay.version}")
     private String vnp_Version;
+
     @Value("${payment.vnPay.command}")
     private String vnp_Command;
+
     @Value("${payment.vnPay.orderType}")
     private String orderType;
+
 
     public Map<String, String> getVNPayConfig() {
         Map<String, String> vnpParamsMap = new HashMap<>();
