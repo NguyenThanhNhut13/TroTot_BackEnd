@@ -1,11 +1,10 @@
 package vn.edu.iuh.fit.paymentservice.exception.handler;
-
-
 import vn.edu.iuh.fit.paymentservice.exception.code.ErrorCode;
 import vn.edu.iuh.fit.paymentservice.exception.custom.CustomException;
-import vn.edu.iuh.fit.paymentservice.response.ResponseObject;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import vn.edu.iuh.fit.paymentservice.model.BaseResponse;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -21,18 +20,26 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ExceptionResponseHandler extends ResponseEntityExceptionHandler {
+
     @ExceptionHandler(value = { CustomException.class })
-    protected ResponseEntity<?> handle(CustomException ex, WebRequest request) {
-        return new ResponseObject<>(ex.getHttpStatusCode(), ex.getMessage(), ex.getDetails());
+    protected ResponseEntity<BaseResponse<?>> handleCustomException(CustomException ex, WebRequest request) {
+        BaseResponse<?> response = new BaseResponse<>(false, ex.getMessage(), ex.getDetails());
+        return new ResponseEntity<>(response, ex.getHttpStatusCode());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public final ResponseObject<?> handleConstraintViolationException(ConstraintViolationException ex ) {
+    public ResponseEntity<BaseResponse<?>> handleConstraintViolationException(ConstraintViolationException ex) {
         Map<String, Object> details = ex.getConstraintViolations().stream()
-                .collect(Collectors.toMap(violation ->
-                        violation.getPropertyPath().toString(), ConstraintViolation::getMessage));
-        return new ResponseObject<>(HttpStatus.BAD_REQUEST,
-                ErrorCode.INVALID_PARAMETER.getCode() +
-                ErrorCode.INVALID_PARAMETER.getMessage(), details);
+                .collect(Collectors.toMap(
+                        violation -> violation.getPropertyPath().toString(),
+                        ConstraintViolation::getMessage
+                ));
+
+        BaseResponse<?> response = new BaseResponse<>(
+                false,
+                ErrorCode.INVALID_PARAMETER.getCode() + ": " + ErrorCode.INVALID_PARAMETER.getMessage(),
+                details
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }

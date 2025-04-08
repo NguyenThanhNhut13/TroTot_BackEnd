@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.edu.iuh.fit.paymentservice.dto.PaymentDTO;
-import vn.edu.iuh.fit.paymentservice.response.ResponseObject;
+import vn.edu.iuh.fit.paymentservice.model.BaseResponse;
 import vn.edu.iuh.fit.paymentservice.service.PaymentService;
 
 @RestController
@@ -40,35 +40,20 @@ public class PaymentController {
             }
     )
     @GetMapping("/vn-pay")
-    public ResponseObject<PaymentDTO.VNPayResponse> pay(
+    public BaseResponse<PaymentDTO.VNPayResponse> pay(
             @Parameter(hidden = true) HttpServletRequest request
     ) {
-        return new ResponseObject<>(HttpStatus.OK, "Success", paymentService.createVnPayPayment(request));
+        PaymentDTO.VNPayResponse data = paymentService.createVnPayPayment(request);
+        return new BaseResponse<>(true, "Tạo link VNPay thành công", data);
     }
 
-    @Operation(
-            summary = "Xử lý callback từ VNPay",
-            description = "Xử lý kết quả thanh toán sau khi người dùng hoàn tất tại VNPay và được chuyển hướng về",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Thanh toán thành công"
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Thanh toán thất bại"
-                    )
-            }
-    )
     @GetMapping("/vn-pay-callback")
-    public ResponseObject<PaymentDTO.VNPayResponse> payCallbackHandler(
-            @Parameter(hidden = true) HttpServletRequest request
-    ) {
-        String status = request.getParameter("vnp_ResponseCode");
-        if (status.equals("00")) {
-            return new ResponseObject<>(HttpStatus.OK, "Success", new PaymentDTO.VNPayResponse("00", "Success", ""));
-        } else {
-            return new ResponseObject<>(HttpStatus.BAD_REQUEST, "Failed", null);
+    public BaseResponse<PaymentDTO.VNPayResponse> payCallbackHandler(HttpServletRequest request) {
+        try {
+            PaymentDTO.VNPayResponse data = paymentService.handleVNPayCallback(request);
+            return new BaseResponse<>(true, "Thanh toán thành công", data);
+        } catch (Exception e) {
+            return new BaseResponse<>(false, "Thanh toán thất bại: " + e.getMessage(), null);
         }
     }
 }
