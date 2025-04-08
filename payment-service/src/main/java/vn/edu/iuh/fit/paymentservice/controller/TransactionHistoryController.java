@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("${spring.application.api-prefix}/transaction-history")
+@RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 @Tag(name = "Transaction History Controller", description = "Quản lý lịch sử giao dịch người dùng")
 public class TransactionHistoryController {
