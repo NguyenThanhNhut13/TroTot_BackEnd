@@ -119,7 +119,11 @@ public class PaymentService {
         transaction.setUserId(request.getUserId());
         transaction.setAmount(amount);
         transaction.setTransactionType(TransactionType.PURCHASE);
-        transaction.setDescription("Trừ tiền khi đăng bài trọ"); // mặc định, không cần client truyền
+
+        String description = request.getDescription() != null && !request.getDescription().isBlank()
+                ? request.getDescription()
+                : "Trừ tiền khi đăng bài trọ";
+        transaction.setDescription(description);
         transactionHistoryRepository.save(transaction);
 
         return new BaseResponse<>(true, "Trừ tiền thành công", null);

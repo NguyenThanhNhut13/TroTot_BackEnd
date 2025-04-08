@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class DeductRequest {
     private Long userId;
-    private Long amount; // số tiền cần trừ (VND)
+    private Long amount;
+    private String description;
 }
 

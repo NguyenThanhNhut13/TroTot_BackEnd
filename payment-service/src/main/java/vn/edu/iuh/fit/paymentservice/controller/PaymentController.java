@@ -6,13 +6,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import vn.edu.iuh.fit.paymentservice.service.WalletService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.paymentservice.dto.DeductRequest;
 import vn.edu.iuh.fit.paymentservice.dto.PaymentDTO;
 import vn.edu.iuh.fit.paymentservice.dto.BaseResponse;
+import vn.edu.iuh.fit.paymentservice.dto.WalletBalanceResponse;
 import vn.edu.iuh.fit.paymentservice.service.PaymentService;
 
 @RestController
@@ -22,6 +24,7 @@ import vn.edu.iuh.fit.paymentservice.service.PaymentService;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final WalletService walletService;
 
     @Operation(
             summary = "Tạo yêu cầu thanh toán VNPay",
@@ -37,6 +40,8 @@ public class PaymentController {
                     )
             }
     )
+
+    @Transactional
     @GetMapping("/vn-pay")
     public BaseResponse<PaymentDTO.VNPayResponse> pay(
             @Parameter(hidden = true) HttpServletRequest request
@@ -68,6 +73,7 @@ public class PaymentController {
             }
     )
 
+    @Transactional
     @GetMapping("/vn-pay-callback")
     public BaseResponse<PaymentDTO.VNPayResponse> payCallbackHandler(HttpServletRequest request) {
         try {
@@ -116,9 +122,36 @@ public class PaymentController {
             }
     )
 
+    @Transactional
     @PostMapping("/deduct")
     public BaseResponse<String> deduct(@RequestBody DeductRequest request) {
         return paymentService.deductFromWallet(request);
+    }
+
+    @Operation(
+            summary = "Lấy số dư ví người dùng",
+            description = "API trả về số dư hiện tại của ví theo userId",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Lấy số dư thành công",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = WalletBalanceResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Không tìm thấy ví người dùng",
+                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/wallet/{userId}")
+    public BaseResponse<WalletBalanceResponse> getWalletBalance(
+            @Parameter(description = "ID của người dùng") @PathVariable Long userId) {
+        WalletBalanceResponse data = walletService.getBalance(userId);
+        return new BaseResponse<>(true, "Lấy số dư thành công", data);
     }
 
 }
