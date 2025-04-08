@@ -24,11 +24,13 @@ import vn.edu.iuh.fit.authservice.model.dto.request.RegisterProfileRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
+import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
 import vn.edu.iuh.fit.authservice.model.entity.User;
 import vn.edu.iuh.fit.authservice.repository.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -54,14 +56,11 @@ public class AuthService {
             throw new UserNotVerifiedException("User account is not verified. Please verify your email before logging in.");
         }
 
-        List<String> roleNames = user.getRoles().stream()
-                .map(Role::getRoleName)
-                .toList();
-
         // Create JWT
-        String jwt = jwtService.generateToken(user.getId(), roleNames);
+        String accessToken = jwtService.generateToken(user, false);
+        String refreshToken = jwtService.generateToken(user, true);
 
-        return new LoginResponse(jwt);
+        return new LoginResponse(accessToken, refreshToken);
     }
 
 
@@ -96,8 +95,27 @@ public class AuthService {
         if (!otpService.verifyOtp(request.getCredential(), request.getOtp())) {
             throw new IllegalArgumentException("Invalid OTP");
         }
+    }
 
+    public TokenResponse refreshAccessToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new BadRequestException("Refresh token is missing");
+        }
 
+        if (!jwtService.validateToken(refreshToken)) {
+            throw new UnauthorizedException("Invalid or expired refresh token");
+        }
+
+        String userId = jwtService.extractSubject(refreshToken);
+        Optional<User> user = userRepository.findById(Long.parseLong(userId));
+
+        if (user.isEmpty()) {
+            throw new UnauthorizedException("Invalid refresh token");
+        }
+
+        String newAccessToken = jwtService.generateToken(user.get(), false);
+        String newRefreshToken = jwtService.generateToken(user.get(), true);
+        return new TokenResponse(newAccessToken, newRefreshToken);
     }
 
 //    public UserResponse getUserDTOById(Long userId) {

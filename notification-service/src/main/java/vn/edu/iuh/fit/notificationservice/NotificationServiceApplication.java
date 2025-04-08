@@ -1,14 +1,13 @@
-package vn.edu.iuh.fit.paymentservice;
+package vn.edu.iuh.fit.notificationservice;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PaymentServiceApplication {
+public class NotificationServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PaymentServiceApplication.class, args);
+        SpringApplication.run(NotificationServiceApplication.class, args);
     }
 
 }
