@@ -9,12 +9,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.paymentservice.dto.DeductRequest;
 import vn.edu.iuh.fit.paymentservice.dto.PaymentDTO;
-import vn.edu.iuh.fit.paymentservice.model.BaseResponse;
+import vn.edu.iuh.fit.paymentservice.dto.BaseResponse;
 import vn.edu.iuh.fit.paymentservice.service.PaymentService;
 
 @RestController
@@ -46,6 +44,29 @@ public class PaymentController {
         PaymentDTO.VNPayResponse data = paymentService.createVnPayPayment(request);
         return new BaseResponse<>(true, "Tạo link VNPay thành công", data);
     }
+    @Operation(
+            summary = "Xử lý callback từ VNPay",
+            description = "Sau khi người dùng hoàn tất thanh toán trên VNPay, hệ thống sẽ xử lý callback từ VNPay để xác nhận " +
+                    "giao dịch thành công. Nếu thành công, tiền sẽ được cộng vào ví người dùng và lưu lịch sử giao dịch.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thanh toán thành công, tiền đã được cộng vào ví",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = PaymentDTO.VNPayResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Giao dịch không thành công hoặc lỗi xử lý",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = BaseResponse.class)
+                            )
+                    )
+            }
+    )
 
     @GetMapping("/vn-pay-callback")
     public BaseResponse<PaymentDTO.VNPayResponse> payCallbackHandler(HttpServletRequest request) {
@@ -56,4 +77,48 @@ public class PaymentController {
             return new BaseResponse<>(false, "Thanh toán thất bại: " + e.getMessage(), null);
         }
     }
+    @Operation(
+            summary = "Trừ tiền ví người dùng",
+            description = "API dùng để trừ tiền trong ví của người dùng khi thực hiện các hành động như đăng bài trọ. " +
+                    "Nếu người dùng không đủ tiền hoặc chưa có ví, sẽ trả về lỗi.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = DeductRequest.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Trừ tiền thành công",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = BaseResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Số dư ví không đủ hoặc lỗi đầu vào",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = BaseResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Không tìm thấy ví người dùng",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = BaseResponse.class)
+                            )
+                    )
+            }
+    )
+
+    @PostMapping("/deduct")
+    public BaseResponse<String> deduct(@RequestBody DeductRequest request) {
+        return paymentService.deductFromWallet(request);
+    }
+
 }

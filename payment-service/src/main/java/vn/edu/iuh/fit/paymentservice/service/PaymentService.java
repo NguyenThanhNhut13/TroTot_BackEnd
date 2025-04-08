@@ -1,9 +1,13 @@
 package vn.edu.iuh.fit.paymentservice.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.paymentservice.config.VNPAYConfig;
+import vn.edu.iuh.fit.paymentservice.dto.BaseResponse;
+import vn.edu.iuh.fit.paymentservice.dto.DeductRequest;
 import vn.edu.iuh.fit.paymentservice.dto.PaymentDTO;
+import vn.edu.iuh.fit.paymentservice.exception.custom.CustomException;
 import vn.edu.iuh.fit.paymentservice.model.TransactionHistory;
 import vn.edu.iuh.fit.paymentservice.model.TransactionType;
 import vn.edu.iuh.fit.paymentservice.model.Wallet;
@@ -95,5 +99,31 @@ public class PaymentService {
                 .paymentUrl("")
                 .build();
     }
+
+    public BaseResponse<String> deductFromWallet(DeductRequest request) {
+        Wallet wallet = walletRepository.findByUserId(request.getUserId())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Ví chưa được tạo"));
+
+        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "Số dư ví không đủ");
+        }
+
+        // Trừ tiền
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+        wallet.setUpdatedAt(LocalDateTime.now());
+        walletRepository.save(wallet);
+
+        // Ghi log
+        TransactionHistory transaction = new TransactionHistory();
+        transaction.setUserId(request.getUserId());
+        transaction.setAmount(amount);
+        transaction.setTransactionType(TransactionType.PURCHASE);
+        transaction.setDescription("Trừ tiền khi đăng bài trọ"); // mặc định, không cần client truyền
+        transactionHistoryRepository.save(transaction);
+
+        return new BaseResponse<>(true, "Trừ tiền thành công", null);
+    }
+
 
 }

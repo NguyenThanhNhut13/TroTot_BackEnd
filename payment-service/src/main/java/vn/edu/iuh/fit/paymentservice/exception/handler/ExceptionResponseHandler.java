@@ -4,7 +4,7 @@ import vn.edu.iuh.fit.paymentservice.exception.custom.CustomException;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import vn.edu.iuh.fit.paymentservice.model.BaseResponse;
+import vn.edu.iuh.fit.paymentservice.dto.BaseResponse;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;

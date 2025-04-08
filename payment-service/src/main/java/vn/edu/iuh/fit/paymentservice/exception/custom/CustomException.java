@@ -14,4 +14,20 @@ public class CustomException extends RuntimeException{
     private String errorCode;
     private String message;
     private Map<String, Object> details;
+
+    public CustomException(HttpStatusCode status, String message) {
+        super(message);
+        this.httpStatusCode = status;
+        this.message = message;
+        this.errorCode = null;
+        this.details = null;
+    }
+
+    public CustomException(HttpStatusCode status, String message, String errorCode) {
+        super(message);
+        this.httpStatusCode = status;
+        this.message = message;
+        this.errorCode = errorCode;
+        this.details = null;
+    }
 }

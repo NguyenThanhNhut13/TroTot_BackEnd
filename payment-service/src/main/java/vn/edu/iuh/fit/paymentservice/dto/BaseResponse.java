@@ -1,4 +1,4 @@
-package vn.edu.iuh.fit.paymentservice.model;
+package vn.edu.iuh.fit.paymentservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
