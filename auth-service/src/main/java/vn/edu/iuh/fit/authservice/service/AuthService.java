@@ -57,9 +57,17 @@ public class AuthService {
             throw new UserNotVerifiedException("User account is not verified. Please verify your email before logging in.");
         }
 
+        if (tokenRedisService.getRefreshTokenIdByUser(user.getId()) != null) {
+            throw new UnauthorizedException("You are already logged in.");
+        }
+
         // Create JWT
-        String accessToken = jwtService.generateToken(user, false);
-        String refreshToken = jwtService.generateToken(user, true);
+        String jit = UUID.randomUUID().toString();
+        String accessToken = jwtService.generateToken(user, false, jit);
+        String refreshToken = jwtService.generateToken(user, true, jit);
+
+        tokenRedisService.saveRefreshToken(jit, refreshToken, 7, TimeUnit.DAYS);
+        tokenRedisService.saveRefreshTokenIdByUser(user.getId(), jit, 7, TimeUnit.DAYS);
 
         return new LoginResponse(accessToken, refreshToken);
     }
@@ -112,7 +120,8 @@ public class AuthService {
             throw new BadRequestException("Access token is missing");
         }
 
-        if (!jwtService.validateToken(refreshToken)) {
+        if (!jwtService.validateToken(refreshToken) ||
+                !tokenRedisService.isRefreshTokenSaved(jwtService.extractId(refreshToken))) {
             throw new UnauthorizedException("Invalid or expired refresh token");
         }
 
@@ -137,8 +146,14 @@ public class AuthService {
         // Remove old refreshToken
         tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
 
-        String newAccessToken = jwtService.generateToken(user.get(), false);
-        String newRefreshToken = jwtService.generateToken(user.get(), true);
+        // Create new token
+        String jit = UUID.randomUUID().toString();
+        String newAccessToken = jwtService.generateToken(user.get(), false, jit);
+        String newRefreshToken = jwtService.generateToken(user.get(), true, jit);
+
+        tokenRedisService.saveRefreshToken(jit, refreshToken, 7, TimeUnit.DAYS);
+        tokenRedisService.saveRefreshTokenIdByUser(user.get().getId(), jit, 7, TimeUnit.DAYS);
+
         return new TokenResponse(newAccessToken, newRefreshToken);
     }
 
@@ -147,14 +162,14 @@ public class AuthService {
             throw new BadRequestException("Refresh token is missing!");
         }
 
+        if (tokenRedisService.isAccessTokenBlacklisted(jwtService.extractId(accessToken))) {
+            throw new UnauthorizedException("You are logged out!");
+        }
+
         // Check refreshToken
         if (!jwtService.validateToken(refreshToken) ||
                 !tokenRedisService.isRefreshTokenSaved(jwtService.extractId(refreshToken))) {
             throw new UnauthorizedException("Invalid or expired refresh token!");
-        }
-
-        if (tokenRedisService.isAccessTokenBlacklisted(accessToken)) {
-            throw new UnauthorizedException("You are logged out!");
         }
 
         String jit = jwtService.extractId(accessToken);
@@ -163,6 +178,7 @@ public class AuthService {
 
         // Remove refreshToken
         tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
+        tokenRedisService.deleteRefreshTokenIdByUser(Long.parseLong(jwtService.extractId(refreshToken)));
     }
 
 //    public UserResponse getUserDTOById(Long userId) {

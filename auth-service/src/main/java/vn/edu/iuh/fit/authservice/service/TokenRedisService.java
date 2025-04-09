@@ -25,6 +25,7 @@ public class TokenRedisService {
 
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
     private static final String BLACKLIST_ACCESS_TOKEN_PREFIX = "blacklist:access_token:";
+    private static final String REFRESH_USER_PREFIX = "refresh_user:";
 
     // Save refresh token with TTL
     public void saveRefreshToken(String tokenId, String tokenValue, long ttl, TimeUnit unit) {
@@ -56,6 +57,22 @@ public class TokenRedisService {
     public boolean isRefreshTokenSaved(String tokenId) {
         String key = REFRESH_TOKEN_PREFIX + tokenId;
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
+
+    public void saveRefreshTokenIdByUser(Long userId, String tokenId, long ttl, TimeUnit unit) {
+        String key = REFRESH_USER_PREFIX + userId;
+        redisTemplate.opsForValue().set(key, tokenId);
+        redisTemplate.expire(key, ttl, unit);
+    }
+
+    public String getRefreshTokenIdByUser(Long userId) {
+        String key = REFRESH_USER_PREFIX + userId;
+        return redisTemplate.opsForValue().get(key);
+    }
+
+    public void deleteRefreshTokenIdByUser(Long userId) {
+        String key = REFRESH_USER_PREFIX + userId;
+        redisTemplate.delete(key);
     }
 
 }

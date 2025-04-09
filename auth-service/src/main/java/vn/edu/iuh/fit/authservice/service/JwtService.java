@@ -34,14 +34,9 @@ public class JwtService {
     @Value("${JWT_SECRET}")
     private String secret;
 
-    private final TokenRedisService tokenRedisService;
-
-    public String generateToken(User user, boolean isRefreshToken ) {
-        String jit = UUID.randomUUID().toString();
+    public String generateToken(User user, boolean isRefreshToken, String jit ) {
         if (isRefreshToken) {
-            String refreshToken = createRefreshToken(user.getId(), jit);
-            tokenRedisService.saveRefreshToken(jit, refreshToken, 7, TimeUnit.DAYS);
-            return refreshToken;
+            return createRefreshToken(user.getId(), jit);
         }
         Map<String, Object> claims = new HashMap<>();
 
