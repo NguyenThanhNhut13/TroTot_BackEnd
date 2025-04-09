@@ -47,6 +47,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
     private static final Map<String, List<String>> PUBLIC_ENDPOINTS = Map.of(
             "GET", List.of(
                     "/api/v1/payments/vn-pay-callback",
+                    "/api/v1/rooms",
                     "/api/v1/auth/login",
                     "/api/v1/auth/register",
                     "/api/v1/auth/verify-otp",
