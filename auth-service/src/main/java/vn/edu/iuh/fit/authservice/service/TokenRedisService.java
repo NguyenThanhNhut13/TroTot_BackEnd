@@ -52,4 +52,10 @@ public class TokenRedisService {
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
+    // Check if refresh token saved
+    public boolean isRefreshTokenSaved(String tokenId) {
+        String key = REFRESH_TOKEN_PREFIX + tokenId;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
+
 }

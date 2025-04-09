@@ -12,7 +12,6 @@ package vn.edu.iuh.fit.authservice.service;
  * @version:    1.0
  */
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,7 +26,6 @@ import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
 import vn.edu.iuh.fit.authservice.model.entity.User;
-import vn.edu.iuh.fit.authservice.repository.RoleRepository;
 import vn.edu.iuh.fit.authservice.repository.UserRepository;
 
 import java.util.*;
@@ -146,11 +144,17 @@ public class AuthService {
 
     public void logout(String accessToken, String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new BadRequestException("Refresh token is missing");
+            throw new BadRequestException("Refresh token is missing!");
         }
 
-        if (!jwtService.validateToken(refreshToken)) {
-            throw new UnauthorizedException("Invalid or expired refresh token");
+        // Check refreshToken
+        if (!jwtService.validateToken(refreshToken) ||
+                !tokenRedisService.isRefreshTokenSaved(jwtService.extractId(refreshToken))) {
+            throw new UnauthorizedException("Invalid or expired refresh token!");
+        }
+
+        if (tokenRedisService.isAccessTokenBlacklisted(accessToken)) {
+            throw new UnauthorizedException("You are logged out!");
         }
 
         String jit = jwtService.extractId(accessToken);
