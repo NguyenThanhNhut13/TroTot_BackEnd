@@ -15,10 +15,7 @@ package vn.edu.iuh.fit.authservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
@@ -54,14 +51,28 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request);
-        return ResponseEntity.ok("Authentication successful!");
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Authentication successful!", null)
+        );
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");
-        TokenResponse tokenResponse = authService.refreshAccessToken(refreshToken);
+        String accessToken = request.get("accessToken");
+        TokenResponse tokenResponse = authService.refreshAccessToken(accessToken, refreshToken);
         return ResponseEntity.ok(new BaseResponse<>(true, "Refresh token successful", tokenResponse));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader,
+                                    @RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        String accessToken = authHeader.replace("Bearer ", "");
+        authService.logout(accessToken, refreshToken);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Logout successful!", null)
+        );
     }
 
 

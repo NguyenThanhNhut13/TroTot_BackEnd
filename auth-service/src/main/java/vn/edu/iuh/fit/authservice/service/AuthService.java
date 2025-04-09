@@ -12,7 +12,6 @@ package vn.edu.iuh.fit.authservice.service;
  * @version:    1.0
  */
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,8 +28,8 @@ import vn.edu.iuh.fit.authservice.model.entity.Role;
 import vn.edu.iuh.fit.authservice.model.entity.User;
 import vn.edu.iuh.fit.authservice.repository.UserRepository;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +39,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final UserClient userClient;
+    private final RoleService roleService;
+    private final TokenRedisService tokenRedisService;
 
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findUserByEmailOrPhoneNumber(loginRequest.getCredential());
@@ -56,9 +57,17 @@ public class AuthService {
             throw new UserNotVerifiedException("User account is not verified. Please verify your email before logging in.");
         }
 
+        if (tokenRedisService.getRefreshTokenIdByUser(user.getId()) != null) {
+            throw new UnauthorizedException("You are already logged in.");
+        }
+
         // Create JWT
-        String accessToken = jwtService.generateToken(user, false);
-        String refreshToken = jwtService.generateToken(user, true);
+        String jit = UUID.randomUUID().toString();
+        String accessToken = jwtService.generateToken(user, false, jit);
+        String refreshToken = jwtService.generateToken(user, true, jit);
+
+        tokenRedisService.saveRefreshToken(jit, refreshToken, 7, TimeUnit.DAYS);
+        tokenRedisService.saveRefreshTokenIdByUser(user.getId(), jit, 7, TimeUnit.DAYS);
 
         return new LoginResponse(accessToken, refreshToken);
     }
@@ -90,19 +99,29 @@ public class AuthService {
     }
 
     public void verifyOtp(VerifyOtpRequest request) {
-
-        // Verify OTP
-        if (!otpService.verifyOtp(request.getCredential(), request.getOtp())) {
-            throw new IllegalArgumentException("Invalid OTP");
+        otpService.verifyOtp(request.getCredential(), request.getOtp());
+        User user = userRepository.findUserByEmailOrPhoneNumber(request.getCredential());
+        if (user == null) {
+            throw new UnauthorizedException("Invalid credential");
         }
+        user.setVerified(true);
+        Role role = roleService.getRoleByName("USER");
+
+        user.setRoles(new HashSet<>(List.of(role)));
+        userRepository.save(user);
     }
 
-    public TokenResponse refreshAccessToken(String refreshToken) {
+    public TokenResponse refreshAccessToken(String accessToken, String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new BadRequestException("Refresh token is missing");
         }
 
-        if (!jwtService.validateToken(refreshToken)) {
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new BadRequestException("Access token is missing");
+        }
+
+        if (!jwtService.validateToken(refreshToken) ||
+                !tokenRedisService.isRefreshTokenSaved(jwtService.extractId(refreshToken))) {
             throw new UnauthorizedException("Invalid or expired refresh token");
         }
 
@@ -113,9 +132,53 @@ public class AuthService {
             throw new UnauthorizedException("Invalid refresh token");
         }
 
-        String newAccessToken = jwtService.generateToken(user.get(), false);
-        String newRefreshToken = jwtService.generateToken(user.get(), true);
+        // Check access token
+        if (jwtService.validateToken(accessToken)) {
+            String jit = jwtService.extractId(accessToken);
+
+            // If not in blacklist then save
+            if (!tokenRedisService.isAccessTokenBlacklisted(jit)) {
+                long ttl = jwtService.extractExpiration(accessToken).getTime() - System.currentTimeMillis();
+                tokenRedisService.blacklistAccessToken(jit, ttl, TimeUnit.MILLISECONDS);
+            }
+        }
+
+        // Remove old refreshToken
+        tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
+
+        // Create new token
+        String jit = UUID.randomUUID().toString();
+        String newAccessToken = jwtService.generateToken(user.get(), false, jit);
+        String newRefreshToken = jwtService.generateToken(user.get(), true, jit);
+
+        tokenRedisService.saveRefreshToken(jit, refreshToken, 7, TimeUnit.DAYS);
+        tokenRedisService.saveRefreshTokenIdByUser(user.get().getId(), jit, 7, TimeUnit.DAYS);
+
         return new TokenResponse(newAccessToken, newRefreshToken);
+    }
+
+    public void logout(String accessToken, String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new BadRequestException("Refresh token is missing!");
+        }
+
+        if (tokenRedisService.isAccessTokenBlacklisted(jwtService.extractId(accessToken))) {
+            throw new UnauthorizedException("You are logged out!");
+        }
+
+        // Check refreshToken
+        if (!jwtService.validateToken(refreshToken) ||
+                !tokenRedisService.isRefreshTokenSaved(jwtService.extractId(refreshToken))) {
+            throw new UnauthorizedException("Invalid or expired refresh token!");
+        }
+
+        String jit = jwtService.extractId(accessToken);
+        long ttl = jwtService.extractExpiration(accessToken).getTime() - System.currentTimeMillis();
+        tokenRedisService.blacklistAccessToken(jit, ttl, TimeUnit.MILLISECONDS);
+
+        // Remove refreshToken
+        tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
+        tokenRedisService.deleteRefreshTokenIdByUser(Long.parseLong(jwtService.extractId(refreshToken)));
     }
 
 //    public UserResponse getUserDTOById(Long userId) {
