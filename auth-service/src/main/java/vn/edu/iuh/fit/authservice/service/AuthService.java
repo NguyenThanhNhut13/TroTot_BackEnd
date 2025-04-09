@@ -31,6 +31,7 @@ import vn.edu.iuh.fit.authservice.repository.RoleRepository;
 import vn.edu.iuh.fit.authservice.repository.UserRepository;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +42,7 @@ public class AuthService {
     private final OtpService otpService;
     private final UserClient userClient;
     private final RoleService roleService;
+    private final TokenRedisService tokenRedisService;
 
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findUserByEmailOrPhoneNumber(loginRequest.getCredential());
@@ -103,9 +105,13 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    public TokenResponse refreshAccessToken(String refreshToken) {
+    public TokenResponse refreshAccessToken(String accessToken, String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new BadRequestException("Refresh token is missing");
+        }
+
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new BadRequestException("Access token is missing");
         }
 
         if (!jwtService.validateToken(refreshToken)) {
@@ -118,6 +124,20 @@ public class AuthService {
         if (user.isEmpty()) {
             throw new UnauthorizedException("Invalid refresh token");
         }
+
+        // Check access token
+        if (jwtService.validateToken(accessToken)) {
+            String jit = jwtService.extractId(accessToken);
+
+            // If not in blacklist then save
+            if (!tokenRedisService.isAccessTokenBlacklisted(jit)) {
+                long ttl = jwtService.extractExpiration(accessToken).getTime() - System.currentTimeMillis();
+                tokenRedisService.blacklistAccessToken(jit, ttl, TimeUnit.MILLISECONDS);
+            }
+        }
+
+        // Remove old refreshToken
+        tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
 
         String newAccessToken = jwtService.generateToken(user.get(), false);
         String newRefreshToken = jwtService.generateToken(user.get(), true);
