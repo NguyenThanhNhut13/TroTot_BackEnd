@@ -144,6 +144,23 @@ public class AuthService {
         return new TokenResponse(newAccessToken, newRefreshToken);
     }
 
+    public void logout(String accessToken, String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new BadRequestException("Refresh token is missing");
+        }
+
+        if (!jwtService.validateToken(refreshToken)) {
+            throw new UnauthorizedException("Invalid or expired refresh token");
+        }
+
+        String jit = jwtService.extractId(accessToken);
+        long ttl = jwtService.extractExpiration(accessToken).getTime() - System.currentTimeMillis();
+        tokenRedisService.blacklistAccessToken(jit, ttl, TimeUnit.MILLISECONDS);
+
+        // Remove refreshToken
+        tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
+    }
+
 //    public UserResponse getUserDTOById(Long userId) {
 //        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 //
