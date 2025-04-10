@@ -59,18 +59,18 @@ public class TokenRedisService {
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
-    public void saveRefreshTokenIdByUser(Long userId, String tokenId, long ttl, TimeUnit unit) {
+    public void saveRefreshTokenByUserId(Long userId, String tokenId, long ttl, TimeUnit unit) {
         String key = REFRESH_USER_PREFIX + userId;
         redisTemplate.opsForValue().set(key, tokenId);
         redisTemplate.expire(key, ttl, unit);
     }
 
-    public String getRefreshTokenIdByUser(Long userId) {
+    public String getRefreshTokenByUserId(Long userId) {
         String key = REFRESH_USER_PREFIX + userId;
         return redisTemplate.opsForValue().get(key);
     }
 
-    public void deleteRefreshTokenIdByUser(Long userId) {
+    public void deleteRefreshTokenByUserId(Long userId) {
         String key = REFRESH_USER_PREFIX + userId;
         redisTemplate.delete(key);
     }

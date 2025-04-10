@@ -14,6 +14,7 @@ package vn.edu.iuh.fit.mediaservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -56,7 +57,9 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-//                        .requestMatchers()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/medias/upload").hasAnyAuthority("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/medias/uploads").hasAnyAuthority("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/medias").hasAnyAuthority("LANDLORD", "ADMIN")
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

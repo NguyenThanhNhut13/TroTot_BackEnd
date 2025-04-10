@@ -21,7 +21,6 @@ import vn.edu.iuh.fit.mediaservice.model.dto.response.ImageUploadResponse;
 import vn.edu.iuh.fit.mediaservice.service.CloudinaryService;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/medias")
