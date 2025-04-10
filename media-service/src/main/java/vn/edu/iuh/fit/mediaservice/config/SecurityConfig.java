@@ -12,6 +12,7 @@ package vn.edu.iuh.fit.mediaservice.config;
  * @version:    1.0
  */
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,17 +24,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import vn.edu.iuh.fit.mediaservice.config.security.CustomAccessDeniedHandler;
+import vn.edu.iuh.fit.mediaservice.config.security.CustomAuthenticationEntryPoint;
 import vn.edu.iuh.fit.mediaservice.filter.JwtAuthTokenFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthTokenFilter jwtAuthTokenFilter;
-
-    public SecurityConfig(JwtAuthTokenFilter jwtAuthTokenFilter) {
-        this.jwtAuthTokenFilter = jwtAuthTokenFilter;
-    }
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -59,11 +61,15 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/medias/upload").hasAnyAuthority("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/medias/uploads").hasAnyAuthority("LANDLORD", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/medias").hasAnyAuthority("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/medias/**").hasAnyAuthority("LANDLORD", "ADMIN")
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .build();
     }
 
