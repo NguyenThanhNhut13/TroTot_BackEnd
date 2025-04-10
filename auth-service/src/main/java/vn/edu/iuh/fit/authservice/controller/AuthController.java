@@ -18,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.ResetPasswordRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
 import vn.edu.iuh.fit.authservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
@@ -40,13 +41,13 @@ public class AuthController {
         return ResponseEntity.ok(new BaseResponse<>(true, "Login successful", loginResponse));
     }
 
-        @PostMapping("/register")
-        public ResponseEntity<?> register(@Validated @RequestBody RegisterRequest request) {
-            authService.register(request);
-            return ResponseEntity.ok(
-                    new BaseResponse<>(true, "Register successful! Please check your email or phone to receive OTP", null)
-            );
-        }
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Validated @RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Register successful! Please check your email or phone to receive OTP", null)
+        );
+    }
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
@@ -74,6 +75,27 @@ public class AuthController {
                 new BaseResponse<>(true, "Logout successful!", null)
         );
     }
+
+    @PostMapping("/forgot-password/request/{credential}")
+    public ResponseEntity<?> forgotPasswordRequest(@PathVariable("credential") String credential) {
+        authService.forgotPasswordRequest(credential);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Create request successful! Please check your email or phone to receive OTP", null)
+        );
+    }
+
+    @PostMapping("/forgot-password/verify-otp")
+    public ResponseEntity<?> forgotPasswordVerifyOtp(@RequestBody VerifyOtpRequest request) {
+        String token = authService.verifyOtpAndGenerateToken(request);
+        return ResponseEntity.ok(new BaseResponse<>(true, "OTP verified.", token));
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Password reset successful.", null));
+    }
+
 
 
 }

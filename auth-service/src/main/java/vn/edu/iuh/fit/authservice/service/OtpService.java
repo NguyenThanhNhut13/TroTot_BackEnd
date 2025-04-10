@@ -48,4 +48,10 @@ public class OtpService {
     public void deleteOtp(String credential) {
         redisTemplate.delete(key + credential);
     }
+
+    public void forgotPassword(String credential) {
+        String otp = generateOtp();
+        redisTemplate.opsForValue().set(key + credential, otp, OTP_EXPIRATION, TimeUnit.MINUTES);
+        System.out.println("OTP for " + credential + ": " + otp);
+    }
 }

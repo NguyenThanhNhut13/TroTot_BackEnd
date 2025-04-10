@@ -48,11 +48,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
             "GET", List.of(
                     "/api/v1/payments/vn-pay-callback",
                     "/api/v1/rooms",
-                    "/api/v1/auth/login",
-                    "/api/v1/auth/register",
-                    "/api/v1/auth/verify-otp",
-                    "/api/v1/auth/refresh",
-                    "/api/v1/auth/**",
                     "/v2/api-docs",
                     "/v3/api-docs",
                     "/v3/api-docs/**",
@@ -63,7 +58,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/webjars/**"),
-            "POST", List.of("/api/v1/auth/**")
+            "POST", List.of(
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/register",
+                    "/api/v1/auth/verify-otp",
+                    "/api/v1/auth/refresh",
+                    "forgot-password/**")
     );
 
     @Override

@@ -18,10 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.exception.*;
-import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.RegisterProfileRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.*;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
@@ -303,6 +300,53 @@ public class AuthService {
                 !trimmedName.contains("  ") &&
                 !trimmedName.contains("--") &&
                 !trimmedName.contains("''");
+    }
+
+    public void forgotPasswordRequest(String credential) {
+        if (credential == null || credential.isEmpty()) {
+            throw new InvalidCredentialException("Credential cannot be empty!");
+        }
+
+        // Check credential
+        if (credential.contains("@")) {
+            if (!isValidEmail(credential)) {
+                throw new InvalidCredentialException("Invalid email format!");
+            }
+        } else {
+            if (!isValidPhone(credential)) {
+                throw new InvalidCredentialException("Invalid phone number format!");
+            }
+        }
+
+        if (!userRepository.existsByEmailOrPhoneNumber(credential)) {
+            throw new UserNotFoundException("User not found!");
+        }
+
+        otpService.forgotPassword(credential);
+    }
+
+    public String verifyOtpAndGenerateToken(VerifyOtpRequest request) {
+        otpService.verifyOtp(request.getCredential(), request.getOtp());
+        String token = UUID.randomUUID().toString();
+        tokenRedisService.saveResetPasswordToken(token, request.getCredential(), 5, TimeUnit.MINUTES);
+        return token;
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!request.getNewPassword().equalsIgnoreCase(request.getConfirmPassword())) {
+            throw new PasswordMismatchException("Passwords do not match!");
+        }
+        String credential = tokenRedisService.getCredentialByResetPasswordToken(request.getToken());
+
+        if (credential == null) {
+            throw new UnauthorizedException("Invalid token!");
+        }
+
+        User user = userRepository.findUserByEmailOrPhoneNumber(credential);
+        user.setPassword(BCrypt.hashpw(request.getNewPassword(), BCrypt.gensalt()));
+        userRepository.save(user);
+
+        tokenRedisService.deleteResetPasswordToken(request.getToken());
     }
 
 //    public UserResponse getUserDTOById(Long userId) {
