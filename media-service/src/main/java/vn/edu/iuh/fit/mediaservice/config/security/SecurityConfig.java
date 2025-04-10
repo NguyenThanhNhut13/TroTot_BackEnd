@@ -1,20 +1,21 @@
 /*
- * @ (#) SecurityConfig.java       1.0     09/03/2025
+ * @ (#) SecurityConfig.java       1.0     26/03/2025
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.authservice.config;
+package vn.edu.iuh.fit.mediaservice.config.security;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
- * @date: 09/03/2025
+ * @date: 26/03/2025
  * @version:    1.0
  */
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -23,9 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import vn.edu.iuh.fit.authservice.config.security.CustomAccessDeniedHandler;
-import vn.edu.iuh.fit.authservice.config.security.CustomAuthenticationEntryPoint;
-import vn.edu.iuh.fit.authservice.filter.JwtAuthTokenFilter;
+import vn.edu.iuh.fit.mediaservice.filter.JwtAuthTokenFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -46,8 +45,6 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/logout").authenticated()
-                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(
                                 "/v2/api-docs",
                                 "/v3/api-docs",
@@ -57,14 +54,18 @@ public class SecurityConfig {
                                 "/configuration/ui",
                                 "/configuration/security",
                                 "/swagger-ui/**",
+                                "/webjars/**",
                                 "/swagger-ui.html",
-                                "/webjars/**"
+                                "/error"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/medias/upload").hasAnyAuthority("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/medias/uploads").hasAnyAuthority("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/medias/**").hasAnyAuthority("LANDLORD", "ADMIN")
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling( exception -> exception
+                .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )

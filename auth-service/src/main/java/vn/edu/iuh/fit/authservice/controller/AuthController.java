@@ -40,13 +40,13 @@ public class AuthController {
         return ResponseEntity.ok(new BaseResponse<>(true, "Login successful", loginResponse));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Validated @RequestBody RegisterRequest request) {
-        authService.register(request);
-        return ResponseEntity.ok(
-                new BaseResponse<>(true, "Register successful! Please check your email or phone to receive OTP", null)
-        );
-    }
+        @PostMapping("/register")
+        public ResponseEntity<?> register(@Validated @RequestBody RegisterRequest request) {
+            authService.register(request);
+            return ResponseEntity.ok(
+                    new BaseResponse<>(true, "Register successful! Please check your email or phone to receive OTP", null)
+            );
+        }
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {

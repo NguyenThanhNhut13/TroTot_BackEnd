@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.mediaservice.controller;
+package vn.edu.iuh.fit.authservice.controller;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.edu.iuh.fit.mediaservice.exception.ErrorResponse;
+import vn.edu.iuh.fit.authservice.exception.ErrorResponse;
 
 @RestController
 @RequestMapping("/error")
