@@ -17,6 +17,7 @@ import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import vn.edu.iuh.fit.mediaservice.exception.NoResourceFoundException;
 import vn.edu.iuh.fit.mediaservice.model.dto.response.ImageUploadResponse;
 
 import java.io.IOException;
@@ -51,6 +52,9 @@ public class CloudinaryService {
     }
 
     public void deleteImage(String publicId) {
+        if (publicId == null || publicId.isEmpty()) {
+            throw new NoResourceFoundException("Not found public id!");
+        }
         try {
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
         } catch (IOException e) {

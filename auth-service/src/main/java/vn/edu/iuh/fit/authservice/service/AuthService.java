@@ -18,10 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.exception.*;
-import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.RegisterProfileRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.*;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
@@ -50,7 +47,7 @@ public class AuthService {
         }
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new InvalidCredentialsException("Invalid credentials");
+            throw new InvalidCredentialException("Invalid credentials");
         }
 
         if (!user.isVerified()) {
@@ -74,28 +71,90 @@ public class AuthService {
 
 
     public void register(RegisterRequest request) {
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new PasswordMismatchException("Passwords do not match");
-        }
 
+        // Validate data
+        validateRegistrationData(request);
+
+        // Check user if exists
         if (userRepository.existsByEmailOrPhoneNumber(request.getCredential())) {
             throw new UserAlreadyExistsException("User already exists");
         }
 
+        // Create and save new user
+        User savedUser = createAndSaveUser(request);
+
+        try {
+            userClient.createUserInfo(new RegisterProfileRequest(savedUser.getId(), request.getFullName()));
+        } catch (Exception ex) {
+            userRepository.deleteById(savedUser.getId());
+            throw new RuntimeException("Failed to create user profile", ex);
+        }
+
+        otpService.sendOtp(request.getCredential());
+    }
+
+    /**
+     * Validate register data
+     */
+    private void validateRegistrationData(RegisterRequest request) {
+        String credential = request.getCredential();
+        String fullName = request.getFullName();
+        String password = request.getPassword();
+        String confirmPassword = request.getConfirmPassword();
+
+        // Check null or empty
+        if (credential == null || credential.isEmpty()) {
+            throw new InvalidCredentialException("Credential cannot be empty");
+        }
+
+        if (fullName == null || fullName.isEmpty()) {
+            throw new InvalidCredentialException("Full name cannot be empty");
+        }
+
+        if (password == null || password.isEmpty()) {
+            throw new InvalidCredentialException("Password cannot be empty");
+        }
+
+        // Check password match
+        if (!password.equals(confirmPassword)) {
+            throw new PasswordMismatchException("Passwords do not match");
+        }
+
+        // Check credential
+        if (credential.contains("@")) {
+            if (!isValidEmail(credential)) {
+                throw new InvalidCredentialException("Invalid email format");
+            }
+        } else {
+            if (!isValidPhone(credential)) {
+                throw new InvalidCredentialException("Invalid phone number format");
+            }
+        }
+
+        // Check fullName
+        if (!isValidName(fullName)) {
+            throw new InvalidCredentialException("Invalid full name format");
+        }
+    }
+
+    /**
+     * Create and save new user
+     */
+    private User createAndSaveUser(RegisterRequest request) {
         User user = new User();
+
+        // Set up email or phone number
         if (request.getCredential().contains("@")) {
             user.setEmail(request.getCredential());
         } else {
             user.setPhoneNumber(request.getCredential());
         }
 
+        // Encrypt passwords and set authentication status
         user.setPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
         user.setVerified(false);
-        User savedUser = userRepository.save(user);
 
-        userClient.createUserInfo(new RegisterProfileRequest(savedUser.getId(), request.getFullName()));
-
-        otpService.sendOtp(request.getCredential());
+        return userRepository.save(user);
     }
 
     public void verifyOtp(VerifyOtpRequest request) {
@@ -179,6 +238,115 @@ public class AuthService {
         // Remove refreshToken
         tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
         tokenRedisService.deleteRefreshTokenByUserId(Long.parseLong(jwtService.extractSubject(refreshToken)));
+    }
+
+
+    /**
+     * Check the validity of the email address according to RFC 5322
+     * @param email The email address to check
+     * @return true if the email is valid, false if not valid
+     */
+    private boolean isValidEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return false;
+        }
+
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        return email.matches(emailRegex);
+    }
+
+    /**
+     * Check the validity of the phone number
+     * Support international and Vietnamese formats
+     * @param phone The phone number to check
+     * @return true if the phone number is valid, false if invalid
+     */
+    private boolean isValidPhone(String phone) {
+        if (phone == null || phone.isEmpty()) return false;
+
+        String cleanPhone = phone.replaceAll("[\\s\\-()]", "");
+
+        // International format with + sign
+        if (cleanPhone.startsWith("+"))
+            return cleanPhone.substring(1).matches("\\d{9,15}");
+
+        // Vietnam phone number: 10 digits, starting with 0
+        if (cleanPhone.startsWith("0") && cleanPhone.length() == 10)
+            return true;
+
+        // International Vietnam phone number: 84 + 9 digits
+        if (cleanPhone.startsWith("84") && cleanPhone.length() == 11)
+            return true;
+
+        // Other cases: 9-15 numbers
+        return cleanPhone.matches("\\d{9,15}");
+    }
+
+    /**
+     * Check the validity of the username
+     * Support Vietnamese names with accents and other languages
+     * @param name The username to check
+     * @return true if the name is valid, false if invalid
+     */
+    private boolean isValidName(String name) {
+        if (name == null || name.isEmpty()) return false;
+
+        String trimmedName = name.trim();
+
+        // Check length and format
+        return trimmedName.length() >= 2 &&
+                trimmedName.length() <= 50 &&
+                trimmedName.matches("^[\\p{L}\\s'-]+$") &&
+                !trimmedName.contains("  ") &&
+                !trimmedName.contains("--") &&
+                !trimmedName.contains("''");
+    }
+
+    public void forgotPasswordRequest(String credential) {
+        if (credential == null || credential.isEmpty()) {
+            throw new InvalidCredentialException("Credential cannot be empty!");
+        }
+
+        // Check credential
+        if (credential.contains("@")) {
+            if (!isValidEmail(credential)) {
+                throw new InvalidCredentialException("Invalid email format!");
+            }
+        } else {
+            if (!isValidPhone(credential)) {
+                throw new InvalidCredentialException("Invalid phone number format!");
+            }
+        }
+
+        if (!userRepository.existsByEmailOrPhoneNumber(credential)) {
+            throw new UserNotFoundException("User not found!");
+        }
+
+        otpService.forgotPassword(credential);
+    }
+
+    public String verifyOtpAndGenerateToken(VerifyOtpRequest request) {
+        otpService.verifyOtp(request.getCredential(), request.getOtp());
+        String token = UUID.randomUUID().toString();
+        tokenRedisService.saveResetPasswordToken(token, request.getCredential(), 5, TimeUnit.MINUTES);
+        return token;
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!request.getNewPassword().equalsIgnoreCase(request.getConfirmPassword())) {
+            throw new PasswordMismatchException("Passwords do not match!");
+        }
+        String credential = tokenRedisService.getCredentialByResetPasswordToken(request.getToken());
+
+        if (credential == null) {
+            throw new UnauthorizedException("Invalid token!");
+        }
+
+        User user = userRepository.findUserByEmailOrPhoneNumber(credential);
+        user.setPassword(BCrypt.hashpw(request.getNewPassword(), BCrypt.gensalt()));
+        userRepository.save(user);
+
+        tokenRedisService.deleteResetPasswordToken(request.getToken());
     }
 
 //    public UserResponse getUserDTOById(Long userId) {
