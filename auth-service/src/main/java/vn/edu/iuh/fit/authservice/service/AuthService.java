@@ -57,7 +57,7 @@ public class AuthService {
             throw new UserNotVerifiedException("User account is not verified. Please verify your email before logging in.");
         }
 
-        if (tokenRedisService.getRefreshTokenIdByUser(user.getId()) != null) {
+        if (tokenRedisService.getRefreshTokenByUserId(user.getId()) != null) {
             throw new UnauthorizedException("You are already logged in.");
         }
 
@@ -67,7 +67,7 @@ public class AuthService {
         String refreshToken = jwtService.generateToken(user, true, jit);
 
         tokenRedisService.saveRefreshToken(jit, refreshToken, 7, TimeUnit.DAYS);
-        tokenRedisService.saveRefreshTokenIdByUser(user.getId(), jit, 7, TimeUnit.DAYS);
+        tokenRedisService.saveRefreshTokenByUserId(user.getId(), jit, 7, TimeUnit.DAYS);
 
         return new LoginResponse(accessToken, refreshToken);
     }
@@ -152,7 +152,7 @@ public class AuthService {
         String newRefreshToken = jwtService.generateToken(user.get(), true, jit);
 
         tokenRedisService.saveRefreshToken(jit, refreshToken, 7, TimeUnit.DAYS);
-        tokenRedisService.saveRefreshTokenIdByUser(user.get().getId(), jit, 7, TimeUnit.DAYS);
+        tokenRedisService.saveRefreshTokenByUserId(user.get().getId(), jit, 7, TimeUnit.DAYS);
 
         return new TokenResponse(newAccessToken, newRefreshToken);
     }
@@ -178,7 +178,7 @@ public class AuthService {
 
         // Remove refreshToken
         tokenRedisService.deleteRefreshToken(jwtService.extractId(refreshToken));
-        tokenRedisService.deleteRefreshTokenIdByUser(Long.parseLong(jwtService.extractId(refreshToken)));
+        tokenRedisService.deleteRefreshTokenByUserId(Long.parseLong(jwtService.extractSubject(refreshToken)));
     }
 
 //    public UserResponse getUserDTOById(Long userId) {
