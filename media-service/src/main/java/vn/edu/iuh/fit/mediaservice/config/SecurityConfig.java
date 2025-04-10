@@ -57,7 +57,8 @@ public class SecurityConfig {
                                 "/configuration/security",
                                 "/swagger-ui/**",
                                 "/webjars/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/error"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/medias/upload").hasAnyAuthority("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/medias/uploads").hasAnyAuthority("LANDLORD", "ADMIN")

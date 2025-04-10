@@ -32,9 +32,15 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("USER_NOT_FOUND", ex.getMessage()));
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("NOT_FOUND", ex.getMessage()));
+    }
+
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
 //        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(new ErrorResponse("INTERNAL_ERROR", "Lỗi hệ thống, vui lòng thử lại sau."));
+//                .body(new ErrorResponse("INTERNAL_ERROR", "An internal error occurred. Please try again later."));
 //    }
 }
