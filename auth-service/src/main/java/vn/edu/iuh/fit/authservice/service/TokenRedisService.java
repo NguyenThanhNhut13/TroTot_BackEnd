@@ -27,6 +27,7 @@ public class TokenRedisService {
     private static final String BLACKLIST_ACCESS_TOKEN_PREFIX = "blacklist:access_token:";
     private static final String REFRESH_USER_PREFIX = "refresh_user:";
     private static final String RESET_PASSWORD_TOKEN_PREFIX = "reset_password_token:";
+    private static final String CREDENTIAL_UPDATE_PREFIX = "pending_credential_update:";
 
     // Save refresh token with TTL
     public void saveRefreshToken(String tokenId, String tokenValue, long ttl, TimeUnit unit) {
@@ -91,6 +92,23 @@ public class TokenRedisService {
         String key = RESET_PASSWORD_TOKEN_PREFIX + token;
         redisTemplate.delete(key);
     }
+
+    public void savePendingCredentialUpdate(Long userId, String type, String credential, long ttl, TimeUnit unit) {
+        String key = CREDENTIAL_UPDATE_PREFIX + userId;
+        redisTemplate.opsForHash().put(key, type, credential);
+        redisTemplate.expire(key, ttl, unit);
+    }
+
+    public String getPendingCredential(Long userId, String type) {
+        String key = CREDENTIAL_UPDATE_PREFIX + userId;
+        return (String) redisTemplate.opsForHash().get(key, type);
+    }
+
+    public void deletePendingCredential(Long userId, String type) {
+        String key = CREDENTIAL_UPDATE_PREFIX + userId;
+        redisTemplate.opsForHash().delete(key, type);
+    }
+
 
 
 

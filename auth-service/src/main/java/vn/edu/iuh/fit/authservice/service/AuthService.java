@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.exception.*;
 import vn.edu.iuh.fit.authservice.model.dto.request.*;
+import vn.edu.iuh.fit.authservice.model.dto.response.AccountInfoResponse;
+import vn.edu.iuh.fit.authservice.model.dto.response.CredentialStatus;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
@@ -77,7 +79,7 @@ public class AuthService {
 
         // Check user if exists
         if (userRepository.existsByEmailOrPhoneNumber(request.getCredential())) {
-            throw new UserAlreadyExistsException("User already exists");
+            throw new UserAlreadyExistException("User already exists");
         }
 
         // Create and save new user
@@ -347,6 +349,85 @@ public class AuthService {
         userRepository.save(user);
 
         tokenRedisService.deleteResetPasswordToken(request.getToken());
+    }
+
+    public AccountInfoResponse getAccountInfo(String authHeader) {
+        Long userId = Long.parseLong(jwtService.extractSubject(authHeader.replace("Bearer ", "")));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found!"));
+
+        CredentialStatus email = buildCredentialStatus(user.getEmail(), tokenRedisService.getPendingCredential(userId, "email"));
+        CredentialStatus phone = buildCredentialStatus(user.getPhoneNumber(), tokenRedisService.getPendingCredential(userId, "phone"));
+
+        return AccountInfoResponse.builder()
+                .userId(userId)
+                .email(email)
+                .phoneNumber(phone)
+                .build();
+    }
+
+    private CredentialStatus buildCredentialStatus(String value, String pending) {
+        return CredentialStatus.builder()
+                .value(value)
+                .pending(pending)
+                .isVerified(pending == null && value != null && !value.isEmpty())
+                .build();
+    }
+
+    public void updateCredential(String authHeader, CredentialUpdateRequest request) {
+        Long userId = Long.parseLong(jwtService.extractSubject(authHeader.replace("Bearer ", "")));
+        userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found!"));
+
+        String value = request.getValue();
+        String type = request.getType();
+
+        if (!type.equals("email") && !type.equals("phone")) {
+            throw new InvalidCredentialException("Invalid credential type!");
+        }
+
+        // Validate format
+        if (type.equals("email")) {
+            if (!isValidEmail(value)) {
+                throw new InvalidCredentialException("Invalid email format!");
+            }
+        } else {
+            if (!isValidPhone(value)) {
+                throw new InvalidCredentialException("Invalid phone number format!");
+            }
+        }
+
+        // Check if value already exists
+        if (userRepository.existsByEmailOrPhoneNumber(value)) {
+            throw new CredentialAlreadyExistException("Credential already exists!");
+        }
+
+        // Save to Redis as pending
+        tokenRedisService.savePendingCredentialUpdate(userId, type, value, 3, TimeUnit.DAYS);
+
+        otpService.sendOtp(value);
+    }
+
+    public void verifyCredential(String authHeader, CredentialVerifyRequest request) {
+        Long userId = Long.parseLong(jwtService.extractSubject(authHeader.replace("Bearer ", "")));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found!"));
+
+        String type = request.getType();
+        String otp = request.getOtp();
+
+        String pendingValue = tokenRedisService.getPendingCredential(userId, type);
+
+        if (pendingValue == null) {
+            throw new BadRequestException("No pending " + type + " found!");
+        }
+
+        otpService.verifyOtp(pendingValue, otp);
+
+        if (type.equals("email")) user.setEmail(pendingValue);
+        else if (type.equals("phone")) user.setPhoneNumber(pendingValue);
+        else throw new InvalidCredentialException("Invalid credential type!");
+        userRepository.save(user);
+
+        // Remove pending and OTP
+        tokenRedisService.deletePendingCredential(userId, type);
     }
 
 //    public UserResponse getUserDTOById(Long userId) {

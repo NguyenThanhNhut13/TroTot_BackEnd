@@ -50,10 +50,16 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("INVALID_CREDENTIALS", ex.getMessage()));
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+    @ExceptionHandler(UserAlreadyExistException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("USER_EXISTS", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CredentialAlreadyExistException.class)
+    public ResponseEntity<ErrorResponse> handleCredentialAlreadyExistsException(CredentialAlreadyExistException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("CREDENTIAL_EXISTS", ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidOtpException.class)

@@ -63,7 +63,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
                     "/api/v1/auth/register",
                     "/api/v1/auth/verify-otp",
                     "/api/v1/auth/refresh",
-                    "/forgot-password/**")
+                    "/api/v1/auth/forgot-password/**")
     );
 
     @Override

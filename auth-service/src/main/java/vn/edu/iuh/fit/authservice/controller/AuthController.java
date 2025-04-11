@@ -16,10 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.ResetPasswordRequest;
-import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
+import vn.edu.iuh.fit.authservice.model.dto.request.*;
+import vn.edu.iuh.fit.authservice.model.dto.response.AccountInfoResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
@@ -94,6 +92,29 @@ public class AuthController {
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ResponseEntity.ok(new BaseResponse<>(true, "Password reset successful.", null));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getAccountInfo(@RequestHeader("Authorization") String authHeader) {
+        AccountInfoResponse accountInfoResponse = authService.getAccountInfo(authHeader);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Account info successful.", accountInfoResponse)
+        );
+    }
+
+    @PostMapping("/me/credentials")
+    public ResponseEntity<?> updateCredential( @RequestHeader("Authorization") String authHeader,
+                                                @RequestBody CredentialUpdateRequest request) {
+        authService.updateCredential(authHeader, request);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Pending credential saved. Please verify with OTP.", null));
+    }
+
+    @PostMapping("/me/credentials/verify")
+    public ResponseEntity<?> verifyCredential(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody CredentialVerifyRequest request) {
+        authService.verifyCredential(authHeader, request);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Credential updated successfully", null));
     }
 
 
