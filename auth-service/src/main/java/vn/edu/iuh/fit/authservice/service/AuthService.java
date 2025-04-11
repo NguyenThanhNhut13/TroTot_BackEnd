@@ -397,7 +397,7 @@ public class AuthService {
 
         // Check if value already exists
         if (userRepository.existsByEmailOrPhoneNumber(value)) {
-            throw new UserAlreadyExistException("Credential already exists!");
+            throw new CredentialAlreadyExistException("Credential already exists!");
         }
 
         // Save to Redis as pending
