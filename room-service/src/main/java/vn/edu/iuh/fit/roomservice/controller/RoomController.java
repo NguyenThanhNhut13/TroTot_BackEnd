@@ -13,12 +13,10 @@ package vn.edu.iuh.fit.roomservice.controller;
  */
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import vn.edu.iuh.fit.roomservice.dto.RoomDTO;
-import vn.edu.iuh.fit.roomservice.entity.Room;
+import vn.edu.iuh.fit.roomservice.model.dto.RoomDTO;
+import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.service.RoomService;
 
 import java.util.List;
@@ -31,7 +29,6 @@ public class RoomController {
     private final RoomService roomService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public void save(@RequestBody Room room) {
         roomService.saveRoom(room);
     }

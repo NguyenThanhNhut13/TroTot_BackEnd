@@ -15,8 +15,8 @@ package vn.edu.iuh.fit.roomservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
-import vn.edu.iuh.fit.roomservice.dto.*;
-import vn.edu.iuh.fit.roomservice.entity.Room;
+import vn.edu.iuh.fit.roomservice.model.dto.*;
+import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.repository.RoomRepository;
 
 import java.util.Collections;

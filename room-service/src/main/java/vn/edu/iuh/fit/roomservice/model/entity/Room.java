@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.roomservice.entity;
+package vn.edu.iuh.fit.roomservice.model.entity;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut

@@ -1,10 +1,10 @@
 /*
- * @ (#) TargetAudience.java       1.0     21/02/2025
+ * @ (#) EnvironmentDTO.java       1.0     21/02/2025
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.roomservice.entity;
+package vn.edu.iuh.fit.roomservice.model.dto;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -12,19 +12,14 @@ package vn.edu.iuh.fit.roomservice.entity;
  * @version:    1.0
  */
 
-import jakarta.persistence.*;
 import lombok.*;
 
-@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TargetAudience {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class EnvironmentDTO {
     private Long id;
-
     private String name;
 }

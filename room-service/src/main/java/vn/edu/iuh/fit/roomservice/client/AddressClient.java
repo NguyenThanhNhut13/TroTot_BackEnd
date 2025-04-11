@@ -16,7 +16,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import vn.edu.iuh.fit.roomservice.dto.AddressDTO;
+import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
 
 import java.util.List;
 
