@@ -31,7 +31,7 @@ public class RoomDTO {
     private String description;
     private double price;
     private double area;
-    private List<String> images;
+    private List<ImageDTO> images;
     private RoomStatus status;
     private List<AmenityDTO> amenities;
     private List<EnvironmentDTO> environments;
