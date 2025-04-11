@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.exception.*;
 import vn.edu.iuh.fit.authservice.model.dto.request.*;
+import vn.edu.iuh.fit.authservice.model.dto.response.AccountInfoResponse;
+import vn.edu.iuh.fit.authservice.model.dto.response.CredentialStatus;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
@@ -347,6 +349,28 @@ public class AuthService {
         userRepository.save(user);
 
         tokenRedisService.deleteResetPasswordToken(request.getToken());
+    }
+
+    public AccountInfoResponse getAccountInfo(String authHeader) {
+        Long userId = Long.parseLong(jwtService.extractSubject(authHeader.replace("Bearer ", "")));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found!"));
+
+        CredentialStatus email = buildCredentialStatus(user.getEmail(), tokenRedisService.getPendingCredential(userId, "email"));
+        CredentialStatus phone = buildCredentialStatus(user.getPhoneNumber(), tokenRedisService.getPendingCredential(userId, "phone"));
+
+        return AccountInfoResponse.builder()
+                .userId(userId)
+                .email(email)
+                .phoneNumber(phone)
+                .build();
+    }
+
+    private CredentialStatus buildCredentialStatus(String value, String pending) {
+        return CredentialStatus.builder()
+                .value(value)
+                .pending(pending)
+                .isVerified(pending == null && value != null && !value.isEmpty())
+                .build();
     }
 
 //    public UserResponse getUserDTOById(Long userId) {

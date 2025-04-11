@@ -20,6 +20,7 @@ import vn.edu.iuh.fit.authservice.model.dto.request.LoginRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.ResetPasswordRequest;
 import vn.edu.iuh.fit.authservice.model.dto.request.VerifyOtpRequest;
+import vn.edu.iuh.fit.authservice.model.dto.response.AccountInfoResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
@@ -94,6 +95,14 @@ public class AuthController {
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ResponseEntity.ok(new BaseResponse<>(true, "Password reset successful.", null));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getAccountInfo(@RequestHeader("Authorization") String authHeader) {
+        AccountInfoResponse accountInfoResponse = authService.getAccountInfo(authHeader);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Account info successful.", accountInfoResponse)
+        );
     }
 
 

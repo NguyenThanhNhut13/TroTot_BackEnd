@@ -15,6 +15,7 @@ package vn.edu.iuh.fit.authservice.config.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -45,7 +46,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/logout").authenticated()
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/verify-otp",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/forgot-password/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").hasAnyAuthority("USER", "LANDLORD", "ADMIN")
                         .requestMatchers(
                                 "/v2/api-docs",
                                 "/v3/api-docs",
@@ -57,8 +64,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/webjars/**",
-                                "/error",
-                                "forgot-password/**"
+                                "/error"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
