@@ -19,7 +19,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EnvironmentDTO {
+public class SurroundingAreaDTO {
     private Long id;
     private String name;
 }

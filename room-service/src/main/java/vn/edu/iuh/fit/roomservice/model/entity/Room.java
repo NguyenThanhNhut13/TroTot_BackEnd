@@ -18,7 +18,9 @@ import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -41,6 +43,9 @@ public class Room {
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
 
+    @OneToOne(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    private RoomDetail roomDetail;
+
     @Enumerated(EnumType.STRING)
     private RoomStatus status;
 
@@ -49,27 +54,27 @@ public class Room {
 
     @ManyToMany
     @JoinTable(
-            name = "room_amenity",
-            joinColumns = @JoinColumn(name = "room_id"),
-            inverseJoinColumns = @JoinColumn(name = "amenity_id")
-    )
-    private List<Amenity> amenities;
-
-    @ManyToMany
-    @JoinTable(
-            name = "room_environment",
-            joinColumns = @JoinColumn(name = "room_id"),
-            inverseJoinColumns = @JoinColumn(name = "environment_id")
-    )
-    private List<Environment> environments;
-
-    @ManyToMany
-    @JoinTable(
-            name = "room_target_audience",
+            name = "room_target_audiences",
             joinColumns = @JoinColumn(name = "room_id"),
             inverseJoinColumns = @JoinColumn(name = "target_audience_id")
     )
-    private List<TargetAudience> targetAudiences;
+    private Set<TargetAudience> targetAudiences = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "room_amenities",
+            joinColumns = @JoinColumn(name = "room_id"),
+            inverseJoinColumns = @JoinColumn(name = "amenity_id")
+    )
+    private Set<Amenity> amenities = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "room_surrounding_areas",
+            joinColumns = @JoinColumn(name = "room_id"),
+            inverseJoinColumns = @JoinColumn(name = "surrounding_area_id")
+    )
+    private Set<SurroundingArea> surroundingAreas = new HashSet<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

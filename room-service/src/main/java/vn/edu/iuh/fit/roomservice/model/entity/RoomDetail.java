@@ -1,5 +1,5 @@
 /*
- * @ (#) Amenity.java       1.0     19/02/2025
+ * @ (#) RoomDetail.java       1.0     14/04/2025
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
@@ -8,14 +8,12 @@ package vn.edu.iuh.fit.roomservice.model.entity;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
- * @date: 19/02/2025
+ * @date: 14/04/2025
  * @version:    1.0
  */
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.List;
 
 @Entity
 @Getter
@@ -23,15 +21,18 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Amenity {
+public class RoomDetail {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "room_id")
+    private Room room;
 
-    @ManyToMany(mappedBy = "amenities")
-    private List<Room> rooms;
-
+    private int numberOfLivingRooms;
+    private int numberOfKitchens;
+    private int numberOfBathrooms;
+    private int numberOfBedrooms;
 }

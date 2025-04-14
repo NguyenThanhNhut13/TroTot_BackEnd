@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.roomservice.model.dto.RoomDTO;
+import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.service.RoomService;
 
@@ -29,8 +30,11 @@ public class RoomController {
     private final RoomService roomService;
 
     @PostMapping
-    public void save(@RequestBody Room room) {
-        roomService.saveRoom(room);
+    public ResponseEntity<?> saveRoom(@RequestBody RoomDTO room) {
+        RoomDTO savedRoom = roomService.saveRoom(room);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Room saved successfully.", savedRoom)
+        );
     }
 
     @GetMapping

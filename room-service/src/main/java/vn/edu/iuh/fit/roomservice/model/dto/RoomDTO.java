@@ -34,8 +34,15 @@ public class RoomDTO {
     private List<ImageDTO> images;
     private RoomStatus status;
     private List<AmenityDTO> amenities;
-    private List<EnvironmentDTO> environments;
+    private List<SurroundingAreaDTO> environments;
     private List<TargetAudienceDTO> targetAudiences;
+
+    // From RoomDetail
+    private Integer numberOfLivingRooms;
+    private Integer numberOfKitchens;
+    private Integer numberOfBathrooms;
+    private Integer numberOfBedrooms;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

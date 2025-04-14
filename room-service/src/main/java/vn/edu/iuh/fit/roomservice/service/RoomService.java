@@ -15,6 +15,8 @@ package vn.edu.iuh.fit.roomservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
+import vn.edu.iuh.fit.roomservice.mapper.ImageMapper;
+import vn.edu.iuh.fit.roomservice.mapper.RoomMapper;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.repository.RoomRepository;
@@ -29,9 +31,13 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final AddressClient addressClient;
+    private final RoomMapper roomMapper;
+    private final ImageMapper imageMapper;
 
-    public void saveRoom(Room room) {
-        roomRepository.save(room);
+    public RoomDTO saveRoom(RoomDTO roomDTO) {
+        Room room = roomMapper.toEntity(roomDTO);
+        Room savedRoom = roomRepository.save(room);
+        return roomMapper.toDTO(savedRoom);
     }
 
     public List<Room> findAllRooms() {
@@ -57,13 +63,13 @@ public class RoomService {
                         .description(room.getDescription())
                         .price(room.getPrice())
                         .area(room.getArea())
-                        .images(room.getImages())
+                        .images(imageMapper.toDTOs(room.getImages()))
                         .status(room.getStatus())
                         .amenities(room.getAmenities().stream()
                                 .map(a -> new AmenityDTO(a.getId(), a.getName()))
                                 .collect(Collectors.toList()))
-                        .environments(room.getEnvironments().stream()
-                                .map(e -> new EnvironmentDTO(e.getId(), e.getName()))
+                        .environments(room.getSurroundingAreas().stream()
+                                .map(e -> new SurroundingAreaDTO(e.getId(), e.getName()))
                                 .collect(Collectors.toList()))
                         .targetAudiences(room.getTargetAudiences().stream()
                                 .map(t -> new TargetAudienceDTO(t.getId(), t.getName()))

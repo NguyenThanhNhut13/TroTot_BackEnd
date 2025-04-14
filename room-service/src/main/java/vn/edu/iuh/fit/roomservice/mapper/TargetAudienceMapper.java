@@ -14,15 +14,15 @@ package vn.edu.iuh.fit.roomservice.mapper;
 
 import org.mapstruct.Mapper;
 import vn.edu.iuh.fit.roomservice.model.dto.TargetAudienceDTO;
-import vn.edu.iuh.fit.roomservice.model.entity.TargetAudience;
+import vn.edu.iuh.fit.roomservice.model.entity.SurroundingArea;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface TargetAudienceMapper {
-    TargetAudienceDTO toDTO(TargetAudience targetAudience);
-    TargetAudience toEntity(TargetAudienceDTO dto);
-    List<TargetAudienceDTO> toDTOs(List<TargetAudience> list);
-    List<TargetAudience> toEntities(List<TargetAudienceDTO> list);
+    TargetAudienceDTO toDTO(SurroundingArea targetAudience);
+    SurroundingArea toEntity(TargetAudienceDTO dto);
+    List<TargetAudienceDTO> toDTOs(List<SurroundingArea> list);
+    List<SurroundingArea> toEntities(List<TargetAudienceDTO> list);
 }
 
