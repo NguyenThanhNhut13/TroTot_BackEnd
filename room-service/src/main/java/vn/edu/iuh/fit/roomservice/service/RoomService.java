@@ -35,6 +35,7 @@ public class RoomService {
     private final ImageMapper imageMapper;
 
     public RoomDTO saveRoom(RoomDTO roomDTO) {
+
         Room room = roomMapper.toEntity(roomDTO);
         Room savedRoom = roomRepository.save(room);
         return roomMapper.toDTO(savedRoom);

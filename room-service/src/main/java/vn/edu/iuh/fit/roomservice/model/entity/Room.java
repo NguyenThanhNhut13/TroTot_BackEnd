@@ -14,6 +14,7 @@ package vn.edu.iuh.fit.roomservice.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import vn.edu.iuh.fit.roomservice.enumvalue.GenderType;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 
@@ -39,6 +40,17 @@ public class Room {
     private String description;
     private double price;
     private double area;
+    private boolean isSelfManaged;
+    private int totalRooms;
+    private int maxPeople;
+
+    @Enumerated(EnumType.STRING)
+    private GenderType forGender;
+    private double deposit;
+
+    // Poster information (if userId is null)
+    private String posterName;
+    private String posterPhone;
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;

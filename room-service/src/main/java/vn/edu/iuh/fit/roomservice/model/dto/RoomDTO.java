@@ -12,7 +12,10 @@ package vn.edu.iuh.fit.roomservice.model.dto;
  * @version:    1.0
  */
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.*;
+import vn.edu.iuh.fit.roomservice.enumvalue.GenderType;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 
 import java.time.LocalDateTime;
@@ -31,6 +34,16 @@ public class RoomDTO {
     private String description;
     private double price;
     private double area;
+    private boolean isSelfManaged;
+    private int totalRooms;
+    private int maxPeople;
+    private GenderType forGender;
+    private double deposit;
+
+    // Poster information (if userId is null)
+    private String posterName;
+    private String posterPhone;
+
     private List<ImageDTO> images;
     private RoomStatus status;
     private List<AmenityDTO> amenities;
