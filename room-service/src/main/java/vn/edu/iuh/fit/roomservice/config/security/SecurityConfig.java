@@ -54,7 +54,10 @@ public class SecurityConfig {
                                 "/configuration/security",
                                 "/swagger-ui/**",
                                 "/webjars/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/api/v1/rooms/amenities",
+                                "/api/v1/rooms/target-audiences",
+                                "/api/v1/rooms/surrounding-areas"
                         ).permitAll()
                         .anyRequest().permitAll()
                 )

@@ -17,9 +17,11 @@ import jakarta.persistence.Enumerated;
 import lombok.*;
 import vn.edu.iuh.fit.roomservice.enumvalue.GenderType;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
+import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -45,10 +47,11 @@ public class RoomDTO {
     private String posterPhone;
 
     private List<ImageDTO> images;
+    private RoomType roomType;
     private RoomStatus status;
-    private List<AmenityDTO> amenities;
-    private List<SurroundingAreaDTO> environments;
-    private List<TargetAudienceDTO> targetAudiences;
+    private Set<AmenityDTO> amenities;
+    private Set<SurroundingAreaDTO> surroundingAreas;
+    private Set<TargetAudienceDTO> targetAudiences;
 
     // From RoomDetail
     private Integer numberOfLivingRooms;

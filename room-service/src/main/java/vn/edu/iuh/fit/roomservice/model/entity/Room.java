@@ -48,7 +48,7 @@ public class Room {
     private GenderType forGender;
     private double deposit;
 
-    // Poster information (if userId is null)
+    // Poster information (if not using default userId)
     private String posterName;
     private String posterPhone;
 

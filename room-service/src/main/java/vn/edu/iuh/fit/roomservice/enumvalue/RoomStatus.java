@@ -8,7 +8,7 @@ public enum RoomStatus {
 
     private final String value;
 
-    private RoomStatus(String value) {
+    RoomStatus(String value) {
         this.value = value;
     }
 }

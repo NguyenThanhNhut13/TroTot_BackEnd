@@ -28,4 +28,5 @@ public class AddressDTO {
     private String houseNumber;
     private Double latitude;
     private Double longitude;
+
 }

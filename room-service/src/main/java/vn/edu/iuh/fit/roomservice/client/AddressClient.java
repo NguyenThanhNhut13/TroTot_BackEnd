@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
-import vn.edu.iuh.fit.roomservice.model.dto.request.Address;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 
 import java.util.List;
@@ -32,5 +31,5 @@ public interface AddressClient {
                                                    @RequestParam(required = false) String district,
                                                    @RequestParam(required = false) String city);
     @PostMapping("/api/v1/addresses")
-    ResponseEntity<BaseResponse<Address>> addAddress(@RequestBody Address address);
+    ResponseEntity<BaseResponse<AddressDTO>> addAddress(@RequestBody AddressDTO address);
 }
