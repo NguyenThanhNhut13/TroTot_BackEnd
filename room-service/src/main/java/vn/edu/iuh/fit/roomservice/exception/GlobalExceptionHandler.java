@@ -50,6 +50,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("ILLEGAL_ARGUMENT", ex.getMessage()));
     }
 
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<ErrorResponse> illegalArgumentException(RoomNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("NOT_FOUND", ex.getMessage()));
+    }
+
 
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {

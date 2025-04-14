@@ -15,6 +15,7 @@ package vn.edu.iuh.fit.roomservice.config.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -59,6 +60,7 @@ public class SecurityConfig {
                                 "/api/v1/rooms/target-audiences",
                                 "/api/v1/rooms/surrounding-areas"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/rooms/").permitAll()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

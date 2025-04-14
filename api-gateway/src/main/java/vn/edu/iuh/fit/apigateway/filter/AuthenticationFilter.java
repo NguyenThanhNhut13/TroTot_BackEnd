@@ -60,7 +60,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
                     "/webjars/**",
                     "/api/v1/rooms/amenities",
                     "/api/v1/rooms/target-audiences",
-                    "/api/v1/rooms/surrounding-areas"),
+                    "/api/v1/rooms/surrounding-areas",
+                    "/api/v1/rooms/**"),
             "POST", List.of(
                     "/api/v1/auth/login",
                     "/api/v1/auth/register",

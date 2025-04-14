@@ -71,8 +71,19 @@ public class RoomController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Room>> findAllRooms() {
-        return ResponseEntity.ok(roomService.findAllRooms());
+    public ResponseEntity<BaseResponse<List<RoomDTO>>> findAllRooms() {
+        List<RoomDTO> data = roomService.findAllRooms();
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get all room successful", data)
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<RoomDTO>> findById(@PathVariable Long id) {
+        RoomDTO data = roomService.findById(id);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get room successful", data)
+        );
     }
 
     @GetMapping("/by-addresses")

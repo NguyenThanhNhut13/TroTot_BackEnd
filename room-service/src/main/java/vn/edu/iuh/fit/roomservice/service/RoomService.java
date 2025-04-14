@@ -14,12 +14,15 @@ package vn.edu.iuh.fit.roomservice.service;
 
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
+import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
+import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.roomservice.model.entity.Amenity;
 import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.model.entity.SurroundingArea;
@@ -30,10 +33,7 @@ import vn.edu.iuh.fit.roomservice.repository.SurroundingAreaRepository;
 import vn.edu.iuh.fit.roomservice.repository.TargetAudienceRepository;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -151,18 +151,22 @@ public class RoomService {
         if (roomDTO.getId() == null) {
             // New room
             roomDTO.setCreatedAt(now);
-            roomDTO.setStatus(RoomStatus.PENDING);
         }
         roomDTO.setUpdatedAt(now);
 
+        AddressDTO addressDTO;
         // Call address service to insert address
         try {
-            addressClient.addAddress(roomDTO.getAddress());
+            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.addAddress(roomDTO.getAddress());
+            addressDTO = Objects.requireNonNull(response.getBody()).getData();
+
         } catch (Exception e) {
             throw new InternalServerErrorException("Error when insert address!");
         }
 
         Room room = roomMapper.toEntity(roomDTO);
+        room.setStatus(RoomStatus.PENDING);
+        room.setAddressId(addressDTO.getId());
         Room savedRoom = roomRepository.save(room);
         return roomMapper.toDTO(savedRoom);
     }
@@ -211,8 +215,8 @@ public class RoomService {
         }
     }
 
-    public List<Room> findAllRooms() {
-        return roomRepository.findAll();
+    public List<RoomDTO> findAllRooms() {
+        return roomRepository.findAll().stream().map(roomMapper::toDTO).collect(Collectors.toList());
     }
 
     public List<RoomDTO> findRoomsByAddress(String street, String district, String city) {
@@ -235,7 +239,6 @@ public class RoomService {
                         .price(room.getPrice())
                         .area(room.getArea())
                         .images(imageMapper.toDTOs(room.getImages()))
-                        .status(room.getStatus())
                         .amenities(room.getAmenities().stream()
                                 .map(a -> new AmenityDTO(a.getId(), a.getName()))
                                 .collect(Collectors.toSet()))
@@ -254,5 +257,11 @@ public class RoomService {
                         .build()
         ).collect(Collectors.toList());
 
+    }
+
+    public RoomDTO findById(Long id) {
+        Room room = roomRepository.findById(id).orElseThrow(
+                () -> new RoomNotFoundException("Room not found with id: " + id));
+        return roomMapper.toDTO(room);
     }
 }

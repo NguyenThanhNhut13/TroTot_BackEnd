@@ -48,7 +48,6 @@ public class RoomDTO {
 
     private List<ImageDTO> images;
     private RoomType roomType;
-    private RoomStatus status;
     private Set<AmenityDTO> amenities;
     private Set<SurroundingAreaDTO> surroundingAreas;
     private Set<TargetAudienceDTO> targetAudiences;

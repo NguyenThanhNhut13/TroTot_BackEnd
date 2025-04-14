@@ -22,5 +22,5 @@ import lombok.*;
 public class ImageDTO {
     private Long id;
     private String publicId;
-    private String secureUrl;
+    private String imageUrl;
 }

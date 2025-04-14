@@ -35,6 +35,7 @@ public interface RoomMapper {
     RoomDTO toDTO(Room room);
 
     @Mapping(target = "roomDetail", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Room toEntity(RoomDTO roomDTO);
 
     @AfterMapping

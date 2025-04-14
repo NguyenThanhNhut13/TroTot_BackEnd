@@ -29,7 +29,7 @@ public class Image {
 
     private String publicId;
 
-    private String secureUrl;
+    private String imageUrl;
 
     @ManyToOne
     @JoinColumn(name = "room_id")
