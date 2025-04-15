@@ -20,6 +20,7 @@ import vn.edu.iuh.fit.roomservice.model.dto.RoomDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.SurroundingAreaDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.TargetAudienceDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
+import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
 import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.service.AmenityService;
 import vn.edu.iuh.fit.roomservice.service.RoomService;
@@ -71,10 +72,15 @@ public class RoomController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<List<RoomDTO>>> findAllRooms() {
-        List<RoomDTO> data = roomService.findAllRooms();
+    public ResponseEntity<BaseResponse<PageResponse<RoomDTO>>> findAllRooms(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort
+    ) {
+        PageResponse<RoomDTO> pagedResponse = roomService.findAllRooms(page, size, sort);
+
         return ResponseEntity.ok(
-                new BaseResponse<>(true, "Get all room successful", data)
+                new BaseResponse<>(true, "Get all room successful", pagedResponse)
         );
     }
 

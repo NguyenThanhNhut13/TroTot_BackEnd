@@ -14,6 +14,10 @@ package vn.edu.iuh.fit.roomservice.service;
 
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
@@ -23,6 +27,7 @@ import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
+import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
 import vn.edu.iuh.fit.roomservice.model.entity.*;
 import vn.edu.iuh.fit.roomservice.repository.AmenityRepository;
 import vn.edu.iuh.fit.roomservice.repository.RoomRepository;
@@ -235,9 +240,55 @@ public class RoomService {
         }
     }
 
-    public List<RoomDTO> findAllRooms() {
-        return roomRepository.findAll().stream().map(roomMapper::toDTO).collect(Collectors.toList());
+    public PageResponse<RoomDTO> findAllRooms(int page, int size, String sort) {
+        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
+
+        Page<Room> roomPage = roomRepository.findAll(pageable);
+
+        List<RoomDTO> roomDTOs = roomPage.getContent().stream()
+                .map(roomMapper::toDTO)
+                .toList();
+
+        return PageResponse.<RoomDTO>builder()
+                .content(roomDTOs)
+                .page(roomPage.getNumber())
+                .size(roomPage.getSize())
+                .totalElements(roomPage.getTotalElements())
+                .totalPages(roomPage.getTotalPages())
+                .last(roomPage.isLast())
+                .build();
     }
+
+   // Sort
+    private Sort parseSort(String sort) {
+        // Default sort createAt desc if not have value
+        if (sort == null || sort.isEmpty()) {
+            return Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+
+        // If there are multiple sort fields, separate them with semicolons
+        // Example: "createdAt,desc;name,asc"
+        String[] sortCriteria = sort.split(";");
+        List<Sort.Order> orders = new ArrayList<>();
+
+        for (String criteria : sortCriteria) {
+            String[] parts = criteria.split(",");
+            String property = parts[0].trim();
+
+            if (parts.length > 1) {
+                // If there is a direction of arrangement specified
+                Sort.Direction direction = "desc".equalsIgnoreCase(parts[1].trim()) ?
+                        Sort.Direction.DESC : Sort.Direction.ASC;
+                orders.add(new Sort.Order(direction, property));
+            } else {
+                // Default if not specify direction
+                orders.add(new Sort.Order(Sort.Direction.ASC, property));
+            }
+        }
+
+        return Sort.by(orders);
+    }
+
 
     public List<RoomDTO> findRoomsByAddress(String street, String district, String city) {
         List<AddressDTO> addressDTOS = addressClient.search(street, district, city).getBody();
