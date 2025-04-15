@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import vn.edu.iuh.fit.addressservice.entity.Coordinates;
 
 import java.util.Optional;
 
@@ -19,17 +20,16 @@ public class GeocodingService {
 
     // Forward Geocoding: Địa chỉ -> Tọa độ
     @Cacheable(value = "geocodingCache", key = "#address")
-    public Optional<double[]> forwardGeocode(String address) {
+    public Optional<Coordinates> forwardGeocode(String address) {
         String url = NOMINATIM_BASE_URL + "/search?format=json&q=" + address + "&limit=1";
         try {
             String response = restTemplate.getForObject(url, String.class);
             JsonNode root = objectMapper.readTree(response);
             if (root.isArray() && root.size() > 0) {
                 JsonNode location = root.get(0);
-                return Optional.of(new double[]{
-                        location.get("lat").asDouble(),
-                        location.get("lon").asDouble()
-                });
+                double lat = location.get("lat").asDouble();
+                double lon = location.get("lon").asDouble();
+                return Optional.of(new Coordinates(lat, lon));
             }
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi gọi OpenStreetMap API: " + e.getMessage());
