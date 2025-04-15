@@ -32,10 +32,12 @@ public interface RoomMapper {
     @Mapping(target = "numberOfKitchens", source = "roomDetail.numberOfKitchens")
     @Mapping(target = "numberOfBathrooms", source = "roomDetail.numberOfBathrooms")
     @Mapping(target = "numberOfBedrooms", source = "roomDetail.numberOfBedrooms")
+    @Mapping(source = "selfManaged", target = "selfManaged")
     RoomDTO toDTO(Room room);
 
     @Mapping(target = "roomDetail", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(source = "selfManaged", target = "selfManaged")
     Room toEntity(RoomDTO roomDTO);
 
     @AfterMapping

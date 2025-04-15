@@ -36,7 +36,7 @@ public class RoomDTO {
     private String description;
     private double price;
     private double area;
-    private boolean isSelfManaged;
+    private Boolean selfManaged;
     private int totalRooms;
     private int maxPeople;
     private GenderType forGender;

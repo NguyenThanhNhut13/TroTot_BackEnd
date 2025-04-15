@@ -40,7 +40,7 @@ public class Room {
     private String description;
     private double price;
     private double area;
-    private boolean isSelfManaged;
+    private boolean selfManaged;
     private int totalRooms;
     private int maxPeople;
 

@@ -23,10 +23,7 @@ import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
-import vn.edu.iuh.fit.roomservice.model.entity.Amenity;
-import vn.edu.iuh.fit.roomservice.model.entity.Room;
-import vn.edu.iuh.fit.roomservice.model.entity.SurroundingArea;
-import vn.edu.iuh.fit.roomservice.model.entity.TargetAudience;
+import vn.edu.iuh.fit.roomservice.model.entity.*;
 import vn.edu.iuh.fit.roomservice.repository.AmenityRepository;
 import vn.edu.iuh.fit.roomservice.repository.RoomRepository;
 import vn.edu.iuh.fit.roomservice.repository.SurroundingAreaRepository;
@@ -57,13 +54,20 @@ public class RoomService {
         if (roomDTO == null) throw new IllegalArgumentException("RoomDTO cannot be null");
         if (roomDTO.getAddress() == null) throw new IllegalArgumentException("Address is required");
         if (roomDTO.getTitle() == null || roomDTO.getTitle().isEmpty()) throw new IllegalArgumentException("Title is required");
-        if (roomDTO.getDescription() == null || roomDTO.getDescription().isEmpty()) throw new IllegalArgumentException("Description is required");
         if (roomDTO.getPrice() <= 0) throw new IllegalArgumentException("Price must be positive");
+        if (roomDTO.getSelfManaged() == null) throw new IllegalArgumentException("Self-managed status must be specified");
         if (roomDTO.getArea() <= 0) throw new IllegalArgumentException("Area must be positive");
         if (roomDTO.getDeposit() < 0) throw new IllegalArgumentException("Deposit cannot be negative");
         if (roomDTO.getForGender() == null) throw new IllegalArgumentException("Gender type is required");
         if (roomDTO.getTotalRooms() <= 0) throw new IllegalArgumentException("Total rooms must be positive");
         if (roomDTO.getMaxPeople() <= 0) throw new IllegalArgumentException("Max people must be positive");
+        if (roomDTO.getImages() == null) throw new IllegalArgumentException("Room image must be positive");
+
+        // Check description at least 10 words
+        if (roomDTO.getDescription() == null || roomDTO.getDescription().isBlank()) throw new IllegalArgumentException("Description is required");
+        String[] words = roomDTO.getDescription().trim().split("\\s+");
+        if (words.length < 10)
+            throw new IllegalArgumentException("Description must contain at least 10 words");
 
         if (roomDTO.getRoomType() == null) throw new IllegalArgumentException("Room type is required");
 
@@ -101,6 +105,12 @@ public class RoomService {
                     throw new IllegalArgumentException("Image in images list cannot be null");
                 }
             }
+        }
+
+        List<Image> images = new ArrayList<>();
+        if (roomDTO.getImages() != null ) {
+            images = roomDTO.getImages()
+                    .stream().map(imageMapper::toEntity).toList();
         }
 
         // Check amenities, environments, targetAudiences và lấy dữ liệu từ database
@@ -167,8 +177,18 @@ public class RoomService {
         Room room = roomMapper.toEntity(roomDTO);
         room.setStatus(RoomStatus.PENDING);
         room.setAddressId(addressDTO.getId());
+
+        // Assign room into each image
+        for (Image image : images) {
+            image.setRoom(room);
+        }
+        room.setImages(images);
         Room savedRoom = roomRepository.save(room);
-        return roomMapper.toDTO(savedRoom);
+
+        // Return room with address
+        RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
+        returnRoom.setAddress(addressDTO);
+        return returnRoom;
     }
 
     /**
@@ -262,6 +282,26 @@ public class RoomService {
     public RoomDTO findById(Long id) {
         Room room = roomRepository.findById(id).orElseThrow(
                 () -> new RoomNotFoundException("Room not found with id: " + id));
-        return roomMapper.toDTO(room);
+
+        AddressDTO addressDTO;
+        // Call address service to get address
+        try {
+            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(room.getAddressId());
+            addressDTO = Objects.requireNonNull(response.getBody()).getData();
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Error when get address!");
+        }
+
+        List<ImageDTO> imageDTO = room.getImages()
+                .stream().map(imageMapper::toDTO)
+                .toList();
+
+        System.out.println("length: "+ imageDTO.size());
+
+        RoomDTO roomDTO = roomMapper.toDTO(room);
+        roomDTO.setAddress(addressDTO);
+        roomDTO.setImages(imageDTO);
+
+        return roomDTO;
     }
 }
