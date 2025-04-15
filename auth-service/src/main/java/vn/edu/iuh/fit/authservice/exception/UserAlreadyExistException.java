@@ -12,8 +12,8 @@ package vn.edu.iuh.fit.authservice.exception;
  * @version:    1.0
  */
 
-public class UserAlreadyExistsException extends RuntimeException {
-    public UserAlreadyExistsException(String message) {
+public class UserAlreadyExistException extends RuntimeException {
+    public UserAlreadyExistException(String message) {
         super(message);
     }
 }

@@ -12,11 +12,13 @@ package vn.edu.iuh.fit.authservice.model.dto.request;
  * @version:    1.0
  */
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {private String credential;
+public class RegisterRequest {
     private String fullName;
+    private String credential;
     private String password;
     private String confirmPassword;
 

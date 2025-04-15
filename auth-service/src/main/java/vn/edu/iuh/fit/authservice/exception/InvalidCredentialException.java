@@ -12,9 +12,9 @@ package vn.edu.iuh.fit.authservice.exception;
  * @version:    1.0
  */
 
-public class InvalidCredentialsException extends RuntimeException {
+public class InvalidCredentialException extends RuntimeException {
 
-    public InvalidCredentialsException(String message) {
+    public InvalidCredentialException(String message) {
         super(message);
     }
 }

@@ -16,6 +16,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
@@ -23,17 +24,19 @@ import vn.edu.iuh.fit.authservice.model.entity.User;
 
 import javax.crypto.SecretKey;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
     @Value("${JWT_SECRET}")
     private String secret;
 
-    public String generateToken(User user, boolean isRefreshToken ) {
+    public String generateToken(User user, boolean isRefreshToken, String jit ) {
         if (isRefreshToken) {
-            return createRefreshToken(user.getId());
+            return createRefreshToken(user.getId(), jit);
         }
         Map<String, Object> claims = new HashMap<>();
 
@@ -42,22 +45,24 @@ public class JwtService {
                 .toList();
         claims.put("roles", String.join(",", roleNames));
 
-        return createToken(claims, user.getId());
+        return createToken(claims, user.getId(), jit);
     }
 
-    private String createToken(Map<String, Object> claims, Long userId) {
+    private String createToken(Map<String, Object> claims, Long userId, String jit) {
         return Jwts.builder()
                 .claims(claims)
                 .subject(userId.toString())
+                .id(jit)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15)) // 15 minutes
                 .signWith(getSecretKey())
                 .compact();
     }
 
-    private String createRefreshToken(Long userId) {
+    private String createRefreshToken(Long userId, String jit) {
         return Jwts.builder()
                 .subject(userId.toString())
+                .id(jit)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 7))
                 .signWith(getSecretKey())
@@ -73,6 +78,11 @@ public class JwtService {
     // Get subject
     public String extractSubject(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    // Get id
+    public String extractId(String token) {
+        return extractClaim(token, Claims::getId);
     }
 
     // Get credential
