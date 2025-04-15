@@ -5,7 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
+import vn.edu.iuh.fit.addressservice.entity.Coordinates;
 import vn.edu.iuh.fit.addressservice.service.AddressService;
+import vn.edu.iuh.fit.addressservice.service.GeocodingService;
 import vn.edu.iuh.fit.addressservice.util.BaseResponse;
 
 import java.util.List;
@@ -17,12 +19,28 @@ import java.util.Optional;
 public class AddressController {
 
     private final AddressService addressService;
-
+    private final GeocodingService geocodingService;
     @PostMapping
     public ResponseEntity<BaseResponse<Address>> addAddress(@RequestBody Address address) {
+        String fullAddress = String.format("%s %s, %s, %s",
+                address.getHouseNumber() != null ? address.getHouseNumber() : " ",
+                address.getStreet() != null ? address.getStreet() : " ",
+                address.getDistrict() != null ? address.getDistrict() : " ",
+                address.getProvince() != null ? address.getProvince() : " "
+        );
+
+        // Gọi geocoding để lấy toạ độ
+        Optional<Coordinates> coords = geocodingService.forwardGeocode(fullAddress.trim());
+        coords.ifPresent(coordinates -> {
+            address.setLatitude(coordinates.getLatitude());
+            address.setLongitude(coordinates.getLongitude());
+        });
+
+        // Lưu vào DB
         addressService.saveAddress(address);
         return ResponseEntity.ok(BaseResponse.ok(address));
     }
+
 
     @GetMapping
     public ResponseEntity<BaseResponse<List<Address>>> getAllAddresses() {
