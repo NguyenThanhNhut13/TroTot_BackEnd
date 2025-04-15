@@ -54,7 +54,41 @@ public class RoomService {
     private final TargetAudienceMapper targetAudienceMapper;
 
     public RoomDTO saveRoom(RoomDTO roomDTO) {
+        // Check input data
+        validateRoomDTO(roomDTO);
 
+        // Set create/update time
+        LocalDateTime now = LocalDateTime.now();
+        roomDTO.setCreatedAt(now);
+        roomDTO.setUpdatedAt(now);
+
+        AddressDTO addressDTO;
+        // Call address service to insert address
+        try {
+            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.addAddress(roomDTO.getAddress());
+            addressDTO = Objects.requireNonNull(response.getBody()).getData();
+
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Error when insert address!");
+        }
+
+        Room room = roomMapper.toEntity(roomDTO);
+        room.setStatus(RoomStatus.PENDING);
+        room.setAddressId(addressDTO.getId());
+
+        // Prepare data
+        room = prepareRoomData(roomDTO, room);
+
+        // Save room
+        Room savedRoom = roomRepository.save(room);
+
+        // Return room with address
+        RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
+        returnRoom.setAddress(addressDTO);
+        return returnRoom;
+    }
+
+    private void validateRoomDTO(RoomDTO roomDTO) {
         // Basic check
         if (roomDTO == null) throw new IllegalArgumentException("RoomDTO cannot be null");
         if (roomDTO.getAddress() == null) throw new IllegalArgumentException("Address is required");
@@ -118,82 +152,60 @@ public class RoomService {
                     .stream().map(imageMapper::toEntity).toList();
         }
 
-        // Check amenities, environments, targetAudiences và lấy dữ liệu từ database
+        // Check amenities, environments, targetAudiences and get data from database
         if (roomDTO.getAmenities() != null) {
-            Set<AmenityDTO> validatedAmenities = new HashSet<>();
             for (AmenityDTO amenity : roomDTO.getAmenities()) {
-                if (amenity == null) {
-                    throw new IllegalArgumentException("Amenity in amenities list cannot be null");
-                }
-                // Verify and get from database
-                Amenity dbAmenity = amenityRepository.findById(amenity.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Amenity with ID " + amenity.getId() + " not found in database"));
-                validatedAmenities.add(amenityMapper.toDTO(dbAmenity));
+                if (amenity == null) throw new IllegalArgumentException("Amenity in amenities list cannot be null");
             }
-            roomDTO.setAmenities(validatedAmenities);
         }
-
         if (roomDTO.getSurroundingAreas() != null) {
-            Set<SurroundingAreaDTO> validatedEnvironments = new HashSet<>();
             for (SurroundingAreaDTO surr : roomDTO.getSurroundingAreas()) {
-                if (surr == null) {
-                    throw new IllegalArgumentException("Surrounding areas in Surrounding area list cannot be null");
-                }
-                // Verify and get from database
-                SurroundingArea dbEnvironment = surroundingAreaRepository.findById(surr.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Environment with ID " + surr.getId() + " not found in database"));
-                validatedEnvironments.add(surroundingAreaMapper.toDTO(dbEnvironment));
+                if (surr == null) throw new IllegalArgumentException("Surrounding area in surrounding areas list cannot be null");
             }
-            roomDTO.setSurroundingAreas(validatedEnvironments);
         }
-
         if (roomDTO.getTargetAudiences() != null) {
-            Set<TargetAudienceDTO> validatedTargets = new HashSet<>();
             for (TargetAudienceDTO target : roomDTO.getTargetAudiences()) {
-                if (target == null) {
-                    throw new IllegalArgumentException("Target audience in targetAudiences list cannot be null");
-                }
-                // Verify and get from database
-                TargetAudience dbTarget = targetAudienceRepository.findById(target.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Target audience with ID " + target.getId() + " not found in database"));
-                validatedTargets.add(targetAudienceMapper.toDTO(dbTarget));
+                if (target == null) throw new IllegalArgumentException("Target audience in targetAudiences list cannot be null");
             }
-            roomDTO.setTargetAudiences(validatedTargets);
         }
+    }
 
-        // Set create/update time
-        LocalDateTime now = LocalDateTime.now();
-        if (roomDTO.getId() == null) {
-            // New room
-            roomDTO.setCreatedAt(now);
-        }
-        roomDTO.setUpdatedAt(now);
-
-        AddressDTO addressDTO;
-        // Call address service to insert address
-        try {
-            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.addAddress(roomDTO.getAddress());
-            addressDTO = Objects.requireNonNull(response.getBody()).getData();
-
-        } catch (Exception e) {
-            throw new InternalServerErrorException("Error when insert address!");
-        }
-
-        Room room = roomMapper.toEntity(roomDTO);
-        room.setStatus(RoomStatus.PENDING);
-        room.setAddressId(addressDTO.getId());
-
-        // Assign room into each image
+    private Room prepareRoomData(RoomDTO roomDTO, Room room) {
+        // Image processing
+        List<Image> images = roomDTO.getImages().stream().map(imageMapper::toEntity).toList();
         for (Image image : images) {
             image.setRoom(room);
         }
         room.setImages(images);
-        Room savedRoom = roomRepository.save(room);
 
-        // Return room with address
-        RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
-        returnRoom.setAddress(addressDTO);
-        return returnRoom;
+        // Amenities processing
+        if (roomDTO.getAmenities() != null) {
+            Set<Amenity> amenities = roomDTO.getAmenities().stream()
+                    .map(amenityDTO -> amenityRepository.findById(amenityDTO.getId())
+                            .orElseThrow(() -> new IllegalArgumentException("Amenity with ID " + amenityDTO.getId() + " not found")))
+                    .collect(Collectors.toSet());
+            room.setAmenities(amenities);
+        }
+
+        // SurrondingArea processing
+        if (roomDTO.getSurroundingAreas() != null) {
+            Set<SurroundingArea> surroundingAreas = roomDTO.getSurroundingAreas().stream()
+                    .map(surrDTO -> surroundingAreaRepository.findById(surrDTO.getId())
+                            .orElseThrow(() -> new IllegalArgumentException("Surrounding area with ID " + surrDTO.getId() + " not found")))
+                    .collect(Collectors.toSet());
+            room.setSurroundingAreas(surroundingAreas);
+        }
+
+        // Target audience processing
+        if (roomDTO.getTargetAudiences() != null) {
+            Set<TargetAudience> targetAudiences = roomDTO.getTargetAudiences().stream()
+                    .map(targetDTO -> targetAudienceRepository.findById(targetDTO.getId())
+                            .orElseThrow(() -> new IllegalArgumentException("Target audience with ID " + targetDTO.getId() + " not found")))
+                    .collect(Collectors.toSet());
+            room.setTargetAudiences(targetAudiences);
+        }
+
+        return room;
     }
 
     /**
@@ -352,5 +364,55 @@ public class RoomService {
         roomDTO.setImages(imageDTO);
 
         return roomDTO;
+    }
+
+    public RoomDTO updateRoom(Long roomId, RoomDTO roomDTO) {
+        // Check input data
+        validateRoomDTO(roomDTO);
+
+        // Get room with id
+        Room existingRoom = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room with ID " + roomId + " not found"));
+
+        // Convert DTO to entity
+        Room updatedRoom = roomMapper.toEntity(roomDTO);
+        updatedRoom.setId(existingRoom.getId());
+        updatedRoom.setCreatedAt(existingRoom.getCreatedAt());
+        updatedRoom.setUpdatedAt(LocalDateTime.now());
+        updatedRoom.setStatus(existingRoom.getStatus());
+
+        RoomDetail existingRoomDetail = existingRoom.getRoomDetail();
+        if (existingRoomDetail != null) {
+            // Update RoomDetail existing
+            existingRoomDetail.setNumberOfLivingRooms(updatedRoom.getRoomDetail().getNumberOfLivingRooms());
+            existingRoomDetail.setNumberOfKitchens(updatedRoom.getRoomDetail().getNumberOfKitchens());
+            existingRoomDetail.setNumberOfBathrooms(updatedRoom.getRoomDetail().getNumberOfBathrooms());
+            existingRoomDetail.setNumberOfBedrooms(updatedRoom.getRoomDetail().getNumberOfBedrooms());
+            updatedRoom.setRoomDetail(existingRoomDetail);
+        } else {
+            // If there is no RoomDetail, assign a new RoomDetail
+            updatedRoom.setRoomDetail(updatedRoom.getRoomDetail());
+        }
+
+        // Address processing
+        AddressDTO addressDTO;
+        try {
+            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.updateAddress(existingRoom.getAddressId(), roomDTO.getAddress());
+            addressDTO = Objects.requireNonNull(response.getBody()).getData();
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Error when updating address!");
+        }
+        updatedRoom.setAddressId(addressDTO.getId());
+
+        // Prepare data
+        updatedRoom = prepareRoomData(roomDTO, updatedRoom);
+
+        // Save
+        Room savedRoom = roomRepository.save(updatedRoom);
+
+        // Return DTO
+        RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
+        returnRoom.setAddress(addressDTO);
+        return returnRoom;
     }
 }

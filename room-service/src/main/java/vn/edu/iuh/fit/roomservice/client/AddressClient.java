@@ -32,4 +32,7 @@ public interface AddressClient {
 
     @GetMapping("/api/v1/addresses/{id}")
     ResponseEntity<BaseResponse<AddressDTO>> getAddressById(@PathVariable Long id);
+
+    @PutMapping("/api/v1/addresses/{id}")
+    ResponseEntity<BaseResponse<AddressDTO>> updateAddress(@PathVariable Long id, @RequestBody AddressDTO newAddress);
 }

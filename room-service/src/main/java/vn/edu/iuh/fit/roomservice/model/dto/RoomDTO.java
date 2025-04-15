@@ -12,11 +12,8 @@ package vn.edu.iuh.fit.roomservice.model.dto;
  * @version:    1.0
  */
 
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.*;
 import vn.edu.iuh.fit.roomservice.enumvalue.GenderType;
-import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 
 import java.time.LocalDateTime;
