@@ -19,6 +19,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class AddressDTO {
     private Long id;
     private String province;
@@ -28,5 +29,4 @@ public class AddressDTO {
     private String houseNumber;
     private Double latitude;
     private Double longitude;
-
 }

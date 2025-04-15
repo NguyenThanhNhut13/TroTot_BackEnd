@@ -1,17 +1,4 @@
-/*
- * @ (#) Address.java       1.0     10/02/2025
- *
- * Copyright (c) 2025 IUH. All rights reserved.
- */
-
 package vn.edu.iuh.fit.addressservice.entity;
-/*
- * @description:
- * @author: Nguyen Thanh Nhut
- * @date: 11/02/2025
- * @version:    1.0
- */
-
 import jakarta.persistence.*;
 import lombok.*;
 

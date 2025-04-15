@@ -347,8 +347,6 @@ public class RoomService {
                 .stream().map(imageMapper::toDTO)
                 .toList();
 
-        System.out.println("length: "+ imageDTO.size());
-
         RoomDTO roomDTO = roomMapper.toDTO(room);
         roomDTO.setAddress(addressDTO);
         roomDTO.setImages(imageDTO);
