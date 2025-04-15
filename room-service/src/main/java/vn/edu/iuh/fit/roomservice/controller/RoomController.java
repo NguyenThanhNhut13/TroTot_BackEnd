@@ -67,8 +67,7 @@ public class RoomController {
     public ResponseEntity<BaseResponse<List<TargetAudienceDTO>>> getAllTargetAudiences() {
         List<TargetAudienceDTO> data = targetAudienceService.getAllTargetAudiences();
         return ResponseEntity.ok(
-                new BaseResponse<>(true, "Get list of successful rental objects", data)
-        );
+                new BaseResponse<>(true, "Get list of target audiences successfully", data)
     }
 
     @GetMapping
