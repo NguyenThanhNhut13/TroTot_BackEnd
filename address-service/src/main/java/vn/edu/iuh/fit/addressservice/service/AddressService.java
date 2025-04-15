@@ -1,43 +1,34 @@
+/*
+ * @ (#) AddressService.java       1.0     10/02/2025
+ *
+ * Copyright (c) 2025 IUH. All rights reserved.
+ */
+
 package vn.edu.iuh.fit.addressservice.service;
+/*
+ * @description:
+ * @author: Nguyen Thanh Nhut
+ * @date: 10/02/2025
+ * @version:    1.0
+ */
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
-import vn.edu.iuh.fit.addressservice.dto.LocationDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
-import vn.edu.iuh.fit.addressservice.entity.Ward;
 import vn.edu.iuh.fit.addressservice.repository.AddressRepository;
-import vn.edu.iuh.fit.addressservice.repository.WardRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AddressService {
-    private final WardRepository wardRepository;
+
     private final AddressRepository addressRepository;
 
-    public List<LocationDTO> searchLocations(String wardName, String districtName, String provinceName) {
-        List<Ward> allWards = wardRepository.findAll();
-
-        return allWards.stream()
-                .filter(w -> wardName == null || w.getName().toLowerCase().contains(wardName.toLowerCase()))
-                .filter(w -> districtName == null || w.getDistrict().getName().toLowerCase().contains(districtName.toLowerCase()))
-                .filter(w -> provinceName == null || w.getDistrict().getProvince().getName().toLowerCase().contains(provinceName.toLowerCase()))
-                .map(w -> LocationDTO.builder()
-                        .wardName(w.getName())
-                        .wardCode(w.getCode())
-                        .districtName(w.getDistrict().getName())
-                        .districtCode(w.getDistrict().getCode())
-                        .provinceName(w.getDistrict().getProvince().getName())
-                        .provinceCode(w.getDistrict().getProvince().getCode())
-                        .build()
-                )
-                .toList();
-    }
-
-    //
     public void saveAddress(Address address) {
         addressRepository.save(address);
     }
@@ -87,4 +78,5 @@ public class AddressService {
         }
         addressRepository.deleteById(id);
     }
+
 }
