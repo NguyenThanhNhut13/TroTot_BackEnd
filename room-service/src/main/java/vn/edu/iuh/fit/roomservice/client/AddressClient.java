@@ -14,9 +14,9 @@ package vn.edu.iuh.fit.roomservice.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import vn.edu.iuh.fit.roomservice.dto.AddressDTO;
+import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
+import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 
 import java.util.List;
 
@@ -24,7 +24,12 @@ import java.util.List;
 public interface AddressClient {
 
     @GetMapping("/api/v1/addresses/search")
-    public ResponseEntity<List<AddressDTO>> search(@RequestParam(required = false) String street,
+    ResponseEntity<List<AddressDTO>> search(@RequestParam(required = false) String street,
                                                    @RequestParam(required = false) String district,
                                                    @RequestParam(required = false) String city);
+    @PostMapping("/api/v1/addresses")
+    ResponseEntity<BaseResponse<AddressDTO>> addAddress(@RequestBody AddressDTO address);
+
+    @GetMapping("/api/v1/addresses/{id}")
+    ResponseEntity<BaseResponse<AddressDTO>> getAddressById(@PathVariable Long id);
 }

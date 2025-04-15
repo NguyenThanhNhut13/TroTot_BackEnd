@@ -3,12 +3,14 @@ package vn.edu.iuh.fit.roomservice.enumvalue;
 import lombok.Getter;
 
 @Getter
-public enum RoomStatus {
-    PENDING("PENDING"), APPROVED("APPROVED"), REJECTED("REJECTED"), HIDDEN("HIDDEN");
+public enum GenderType {
+    MALE("MALE"),
+    FEMALE("FEMALE"),
+    ALL("ALL");
 
     private final String value;
 
-    RoomStatus(String value) {
+    GenderType(String value) {
         this.value = value;
     }
 }

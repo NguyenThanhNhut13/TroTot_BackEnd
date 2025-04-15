@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.roomservice.config;
+package vn.edu.iuh.fit.roomservice.config.security;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
@@ -12,6 +12,7 @@ package vn.edu.iuh.fit.roomservice.config;
  * @version:    1.0
  */
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,13 +28,12 @@ import vn.edu.iuh.fit.roomservice.filter.JwtAuthTokenFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthTokenFilter jwtAuthTokenFilter;
-
-    public SecurityConfig(JwtAuthTokenFilter jwtAuthTokenFilter) {
-        this.jwtAuthTokenFilter = jwtAuthTokenFilter;
-    }
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -55,12 +55,20 @@ public class SecurityConfig {
                                 "/configuration/security",
                                 "/swagger-ui/**",
                                 "/webjars/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/api/v1/rooms/amenities",
+                                "/api/v1/rooms/target-audiences",
+                                "/api/v1/rooms/surrounding-areas"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/rooms/").permitAll()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling( exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .build();
     }
 
