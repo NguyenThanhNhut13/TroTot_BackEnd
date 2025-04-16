@@ -43,8 +43,9 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/0.2.0/lombok-mapstruct-binding-0.2.0.jar" />
         </processorPath>
         <module name="room-service" />
-        <module name="review-service" />
         <module name="user-service" />
+        <module name="payment-service" />
+        <module name="review-service" />
       </profile>
     </annotationProcessing>
   </component>
