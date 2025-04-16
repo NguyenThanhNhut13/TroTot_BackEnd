@@ -10,4 +10,12 @@ import lombok.NoArgsConstructor;
 public class Coordinates {
     private double latitude;
     private double longitude;
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
 }
