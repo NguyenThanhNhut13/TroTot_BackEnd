@@ -22,11 +22,11 @@ public class AddressController {
     private final GeocodingService geocodingService;
     @PostMapping
     public ResponseEntity<BaseResponse<Address>> addAddress(@RequestBody Address address) {
-        String fullAddress = String.format("%s %s, %s, %s",
-                address.getHouseNumber() != null ? address.getHouseNumber() : " ",
-                address.getStreet() != null ? address.getStreet() : " ",
-                address.getDistrict() != null ? address.getDistrict() : " ",
-                address.getProvince() != null ? address.getProvince() : " "
+        String street = "Đường " + (address.getStreet() != null ? address.getStreet() : "");
+        String fullAddress = String.format("%s, %s, %s, Việt Nam",
+                street,
+                address.getDistrict() != null ? address.getDistrict() : "",
+                address.getProvince() != null ? address.getProvince() : ""
         );
 
         // Gọi geocoding để lấy toạ độ

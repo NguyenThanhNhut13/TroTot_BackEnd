@@ -1,11 +1,11 @@
 package vn.edu.iuh.fit.reportservice.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.reportservice.entity.reponse.BaseResponse;
 import vn.edu.iuh.fit.reportservice.dto.ReportDTO;
-import vn.edu.iuh.fit.reportservice.enums.ReportStatus;
+import vn.edu.iuh.fit.reportservice.entity.request.ReportStatusRequest;
 import vn.edu.iuh.fit.reportservice.service.EmailService;
 import vn.edu.iuh.fit.reportservice.service.ReportService;
 
@@ -15,31 +15,32 @@ import java.util.List;
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
 public class ReportController {
-    @Autowired
-    private ReportService reportService;
-
-    @Autowired
-    private EmailService emailService;
+    private final ReportService reportService;
+    private final EmailService emailService;
 
     @GetMapping
-    public ResponseEntity<List<ReportDTO>> getAllReports() {
-        return ResponseEntity.ok(reportService.getAllReports());
+    public ResponseEntity<BaseResponse<List<ReportDTO>>> getAllReports() {
+        List<ReportDTO> reports = reportService.getAllReports();
+        return ResponseEntity.ok(new BaseResponse<>(true, "Get all reports successfully", reports));
     }
 
     @PostMapping
-    public ResponseEntity<ReportDTO> submitReport(@RequestBody ReportDTO reportDTO) {
-        return ResponseEntity.ok(reportService.submitReport(reportDTO));
+    public ResponseEntity<BaseResponse<ReportDTO>> submitReport(@RequestBody ReportDTO reportDTO) {
+        ReportDTO created = reportService.submitReport(reportDTO);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Report submitted successfully", created));
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<ReportDTO> updateReportStatus(@PathVariable Long id, @RequestBody ReportStatus status) {
-        return ResponseEntity.ok(reportService.processReport(id, status));
+    public ResponseEntity<BaseResponse<ReportDTO>> updateReportStatus(
+            @PathVariable Long id,
+            @RequestBody ReportStatusRequest request) {
+        ReportDTO updated = reportService.processReport(id, request.getStatus());
+        return ResponseEntity.ok(new BaseResponse<>(true, "Report status updated", updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReport(@PathVariable Long id) {
+    public ResponseEntity<BaseResponse<Void>> deleteReport(@PathVariable Long id) {
         reportService.deleteReport(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new BaseResponse<>(true, "Report deleted successfully", null));
     }
 }
-
