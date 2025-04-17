@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.authservice.client.UserClient;
+import vn.edu.iuh.fit.authservice.enumerate.OtpPurpose;
 import vn.edu.iuh.fit.authservice.exception.*;
 import vn.edu.iuh.fit.authservice.model.dto.request.*;
 import vn.edu.iuh.fit.authservice.model.dto.response.AccountInfoResponse;
@@ -92,7 +93,7 @@ public class AuthService {
             throw new RuntimeException("Failed to create user profile", ex);
         }
 
-        otpService.sendOtp(request.getCredential());
+        otpService.sendOtp(request.getCredential(), OtpPurpose.REGISTER);
     }
 
     /**
@@ -160,7 +161,7 @@ public class AuthService {
     }
 
     public void verifyOtp(VerifyOtpRequest request) {
-        otpService.verifyOtp(request.getCredential(), request.getOtp());
+        otpService.verifyOtp(request.getCredential(), request.getOtp(), OtpPurpose.REGISTER);
         User user = userRepository.findUserByEmailOrPhoneNumber(request.getCredential());
         if (user == null) {
             throw new UnauthorizedException("Invalid credential");
@@ -324,11 +325,11 @@ public class AuthService {
             throw new UserNotFoundException("User not found!");
         }
 
-        otpService.forgotPassword(credential);
+        otpService.sendOtp(credential, OtpPurpose.FORGOT_PASSWORD);
     }
 
     public String verifyOtpAndGenerateToken(VerifyOtpRequest request) {
-        otpService.verifyOtp(request.getCredential(), request.getOtp());
+        otpService.verifyOtp(request.getCredential(), request.getOtp(), OtpPurpose.FORGOT_PASSWORD);
         String token = UUID.randomUUID().toString();
         tokenRedisService.saveResetPasswordToken(token, request.getCredential(), 5, TimeUnit.MINUTES);
         return token;
@@ -403,7 +404,7 @@ public class AuthService {
         // Save to Redis as pending
         tokenRedisService.savePendingCredentialUpdate(userId, type, value, 3, TimeUnit.DAYS);
 
-        otpService.sendOtp(value);
+        otpService.sendOtp(value, OtpPurpose.UPDATE_CREDENTIAL);
     }
 
     public void verifyCredential(String authHeader, CredentialVerifyRequest request) {
@@ -419,7 +420,7 @@ public class AuthService {
             throw new BadRequestException("No pending " + type + " found!");
         }
 
-        otpService.verifyOtp(pendingValue, otp);
+        otpService.verifyOtp(pendingValue, otp, OtpPurpose.UPDATE_CREDENTIAL);
 
         if (type.equals("email")) user.setEmail(pendingValue);
         else if (type.equals("phone")) user.setPhoneNumber(pendingValue);
@@ -428,6 +429,45 @@ public class AuthService {
 
         // Remove pending and OTP
         tokenRedisService.deletePendingCredential(userId, type);
+    }
+
+    public void resendOtp(ResendOtpRequest request) {
+        String credential = request.getCredential();
+        OtpPurpose purpose = request.getPurpose();
+
+        if (credential == null || credential.trim().isEmpty()) {
+            throw new InvalidCredentialException("Credential must not be empty");
+        }
+
+        if (purpose == null) {
+            throw new BadRequestException("OTP purpose is required");
+        }
+
+        User user = userRepository.findUserByEmailOrPhoneNumber(credential);
+
+        if (user == null) {
+            throw new UserNotFoundException("User not found with given credential");
+        }
+
+        switch (purpose) {
+            case REGISTER:
+                if (user.isVerified()) {
+                    throw new InvalidCredentialException("This account has already been verified");
+                }
+                break;
+
+            case FORGOT_PASSWORD:
+            case UPDATE_CREDENTIAL:
+                if (!user.isVerified()) {
+                    throw new InvalidCredentialException("This account is not verified yet");
+                }
+                break;
+
+            default:
+                throw new BadRequestException("Unsupported OTP purpose");
+        }
+
+        otpService.sendOtp(credential, purpose);
     }
 
 //    public UserResponse getUserDTOById(Long userId) {

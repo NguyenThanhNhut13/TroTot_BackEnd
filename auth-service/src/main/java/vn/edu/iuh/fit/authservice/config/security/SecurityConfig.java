@@ -51,7 +51,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/verify-otp",
                                 "/api/v1/auth/refresh",
-                                "/api/v1/auth/forgot-password/**").permitAll()
+                                "/api/v1/auth/forgot-password/**",
+                                "/api/v1/auth/resend-otp").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").hasAnyAuthority("USER", "LANDLORD", "ADMIN")
                         .requestMatchers(
                                 "/v2/api-docs",
