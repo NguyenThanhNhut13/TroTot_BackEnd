@@ -47,6 +47,14 @@ public class RoomController {
         );
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateRoom(@PathVariable Long id, @RequestBody RoomDTO room) {
+        RoomDTO updatedRoom = roomService.updateRoom(id, room);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Room updated successfully.", updatedRoom)
+        );
+    }
+
     @GetMapping("/amenities")
     public ResponseEntity<BaseResponse<List<AmenityDTO>>> getAllAmenities() {
         List<AmenityDTO> data = amenityService.getAmenities();
@@ -68,6 +76,7 @@ public class RoomController {
         List<TargetAudienceDTO> data = targetAudienceService.getAllTargetAudiences();
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Get list of target audiences successfully", data)
+        );
     }
 
     @GetMapping

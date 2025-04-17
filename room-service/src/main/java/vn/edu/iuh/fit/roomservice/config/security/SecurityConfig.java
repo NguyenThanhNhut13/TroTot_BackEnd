@@ -61,6 +61,8 @@ public class SecurityConfig {
                                 "/api/v1/rooms/surrounding-areas"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/rooms/").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/rooms").hasAnyAuthority("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/rooms/**").hasAnyAuthority("LANDLORD", "ADMIN")
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

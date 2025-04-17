@@ -12,8 +12,8 @@ package vn.edu.iuh.fit.roomservice.exception;
  * @version:    1.0
  */
 
-public class InvalidOtpException extends RuntimeException {
-    public InvalidOtpException(String message) {
+public class InternalServerErrorException extends RuntimeException {
+    public InternalServerErrorException(String message) {
         super(message);
     }
 }
