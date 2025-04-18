@@ -15,6 +15,7 @@ package vn.edu.iuh.fit.roomservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.model.dto.AmenityDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.RoomDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.SurroundingAreaDTO;
@@ -83,9 +84,10 @@ public class RoomController {
     public ResponseEntity<BaseResponse<PageResponse<RoomDTO>>> findAllRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String sort
+            @RequestParam(defaultValue = "createdAt,desc") String sort,
+            @RequestParam(required = false) RoomType roomType
     ) {
-        PageResponse<RoomDTO> pagedResponse = roomService.findAllRooms(page, size, sort);
+        PageResponse<RoomDTO> pagedResponse = roomService.findAllRooms(page, size, sort, roomType);
 
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Get all room successful", pagedResponse)
@@ -99,6 +101,14 @@ public class RoomController {
                 new BaseResponse<>(true, "Get room successful", data)
         );
     }
+//
+//    @GetMapping
+//    public ResponseEntity<BaseResponse<List<RoomDTO>>> findByRoomType(@RequestParam RoomType roomType) {
+//        List<RoomDTO> data = roomService.findByRoomType(roomType);
+//        return ResponseEntity.ok(
+//                new BaseResponse<>(true, "Get rooms by type successful", data)
+//        );
+//    }
 
     @GetMapping("/by-addresses")
     public ResponseEntity<List<RoomDTO>> findAllRooms(

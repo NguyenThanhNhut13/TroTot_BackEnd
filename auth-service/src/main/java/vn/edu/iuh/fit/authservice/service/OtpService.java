@@ -93,6 +93,7 @@ public class OtpService {
             kafkaTemplate.send("otp-email", json);
         } catch (Exception e) {
             throw new RuntimeException("Can't send OTP to Kafka");
+        }
     }
 
     private long getSecondsUntilMidnight() {

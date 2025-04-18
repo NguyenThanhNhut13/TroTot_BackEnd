@@ -252,14 +252,34 @@ public class RoomService {
         }
     }
 
-    public PageResponse<RoomDTO> findAllRooms(int page, int size, String sort) {
+    public PageResponse<RoomDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sort));
 
-        Page<Room> roomPage = roomRepository.findAll(pageable);
+        Page<Room> roomPage;
+
+        if (roomType != null) {
+            roomPage = roomRepository.findByRoomType(roomType, pageable);
+        } else {
+            roomPage = roomRepository.findAll(pageable);
+        }
 
         List<RoomDTO> roomDTOs = roomPage.getContent().stream()
-                .map(roomMapper::toDTO)
+                .map(room -> {
+                    RoomDTO dto = roomMapper.toDTO(room);
+                    try {
+                        ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(room.getAddressId());
+                        AddressDTO addressDTO = Objects.requireNonNull(response.getBody()).getData();
+                        dto.setAddress(addressDTO);
+                    } catch (Exception e) {
+                        // Gọi thất bại thì gán null (đã là mặc định nếu chưa set gì rồi)
+                        dto.setAddress(null);
+                        // Log lỗi nếu cần theo dõi
+                        System.err.println("Could not fetch address for roomId: " + room.getId() + ", addressId: " + room.getAddressId() + ", message: " + e.getMessage());
+                    }
+                    return dto;
+                })
                 .toList();
+
 
         return PageResponse.<RoomDTO>builder()
                 .content(roomDTOs)
@@ -415,4 +435,5 @@ public class RoomService {
         returnRoom.setAddress(addressDTO);
         return returnRoom;
     }
+
 }
