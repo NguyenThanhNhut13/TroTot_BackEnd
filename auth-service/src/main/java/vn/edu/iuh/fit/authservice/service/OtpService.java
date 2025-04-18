@@ -29,6 +29,7 @@ import vn.edu.iuh.fit.authservice.model.dto.request.OtpEmailRequest;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OtpService {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -90,9 +91,12 @@ public class OtpService {
         try {
             OtpEmailRequest request = new OtpEmailRequest(email, otp);
             String json = objectMapper.writeValueAsString(request);
-            kafkaTemplate.send("otp-email", json);
+            log.info("Sending OTP to Kafka topic: {}", json);
+            kafkaTemplate.send("otp-email", json).get();
+            log.info("Successfully sent OTP to Kafka.");
         } catch (Exception e) {
-            throw new RuntimeException("Can't send OTP to Kafka");
+            log.error("Failed to send OTP to Kafka", e);
+            throw new RuntimeException("Can't send OTP to Kafka", e);
         }
     }
 
