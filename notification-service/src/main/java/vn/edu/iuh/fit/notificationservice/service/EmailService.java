@@ -1,6 +1,7 @@
 package vn.edu.iuh.fit.notificationservice.service;
 
 import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,10 +12,10 @@ import java.nio.charset.StandardCharsets;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
 
     public void sendOtpEmail(String toEmail, String otp) {
         try {
