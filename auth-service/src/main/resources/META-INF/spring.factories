@@ -1,1 +1,2 @@
-org.springframework.boot.env.EnvironmentPostProcessor=vn.edu.iuh.fit.authservice.KafkaCertEnvLoader
+org.springframework.boot.env.EnvironmentPostProcessor=\
+ vn.edu.iuh.fit.authservice.config.KafkaCertEnvLoader
