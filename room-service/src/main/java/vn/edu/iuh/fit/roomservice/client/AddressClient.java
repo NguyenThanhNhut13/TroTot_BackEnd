@@ -24,9 +24,11 @@ import java.util.List;
 public interface AddressClient {
 
     @GetMapping("/api/v1/addresses/search")
-    ResponseEntity<List<AddressDTO>> search(@RequestParam(required = false) String street,
-                                                   @RequestParam(required = false) String district,
-                                                   @RequestParam(required = false) String city);
+    ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(
+            @RequestParam(required = false) String street,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String province);
+
     @PostMapping("/api/v1/addresses")
     ResponseEntity<BaseResponse<AddressDTO>> addAddress(@RequestBody AddressDTO address);
 

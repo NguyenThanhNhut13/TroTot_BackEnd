@@ -101,22 +101,39 @@ public class RoomController {
                 new BaseResponse<>(true, "Get room successful", data)
         );
     }
-//
-//    @GetMapping
-//    public ResponseEntity<BaseResponse<List<RoomDTO>>> findByRoomType(@RequestParam RoomType roomType) {
-//        List<RoomDTO> data = roomService.findByRoomType(roomType);
-//        return ResponseEntity.ok(
-//                new BaseResponse<>(true, "Get rooms by type successful", data)
-//        );
-//    }
 
-    @GetMapping("/by-addresses")
-    public ResponseEntity<List<RoomDTO>> findAllRooms(
+    @GetMapping("/search")
+    public ResponseEntity<BaseResponse<PageResponse<RoomDTO>>> searchRooms(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort,
+
             @RequestParam(required = false) String street,
             @RequestParam(required = false) String district,
-            @RequestParam(required = false) String city
+            @RequestParam(required = false) String city,
+
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String areaRange,
+            @RequestParam(required = false) String roomType,
+
+            @RequestParam(required = false) List<Long> amenities,
+            @RequestParam(required = false) List<Long> environment,
+            @RequestParam(required = false) List<Long> targetAudience
+
+//            @RequestParam(required = false) Boolean hasVideoReview
     ) {
-        return ResponseEntity.ok(roomService.findRoomsByAddress(street, district, city));
+        PageResponse<RoomDTO> response = roomService.searchRooms(
+                page, size, sort,
+                street, district, city,
+                minPrice, maxPrice, areaRange, roomType,
+                amenities, environment, targetAudience
+        );
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Search room successfully", response)
+        );
     }
+
 
 }
