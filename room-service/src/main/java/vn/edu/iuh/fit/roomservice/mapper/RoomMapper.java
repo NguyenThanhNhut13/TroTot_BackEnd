@@ -17,8 +17,12 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import vn.edu.iuh.fit.roomservice.model.dto.RoomDTO;
+import vn.edu.iuh.fit.roomservice.model.dto.RoomListDTO;
+import vn.edu.iuh.fit.roomservice.model.entity.Image;
 import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.model.entity.RoomDetail;
+
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = {
         AmenityMapper.class,
@@ -40,6 +44,11 @@ public interface RoomMapper {
     @Mapping(source = "selfManaged", target = "selfManaged")
     Room toEntity(RoomDTO roomDTO);
 
+    @Mapping(target = "district", ignore = true)
+    @Mapping(target = "province", ignore = true)
+    @Mapping(target = "imageUrls", ignore = true)
+    RoomListDTO toListDTO(Room room);
+
     @AfterMapping
     default void setRoomDetail(@MappingTarget Room room, RoomDTO dto) {
         if (dto.getNumberOfLivingRooms() != null || dto.getNumberOfKitchens() != null ||
@@ -54,6 +63,16 @@ public interface RoomMapper {
                     .build();
 
             room.setRoomDetail(detail);
+        }
+    }
+
+    @AfterMapping
+    default void extractImageUrls(@MappingTarget RoomListDTO dto, Room room) {
+        if (room.getImages() != null && !room.getImages().isEmpty()) {
+            // Extract only imageUrl from each Image object
+            dto.setImageUrls(room.getImages().stream()
+                    .map(Image::getImageUrl)
+                    .collect(Collectors.toList()));
         }
     }
 }

@@ -255,7 +255,7 @@ public class RoomService {
         }
     }
 
-    public PageResponse<RoomDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
+    public PageResponse<RoomListDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sort));
 
         Page<Room> roomPage;
@@ -288,17 +288,20 @@ public class RoomService {
         }
 
         Map<Long, AddressDTO> finalAddressMap = addressMap;
-        List<RoomDTO> roomDTOs = roomPage.getContent().stream()
+        List<RoomListDTO> roomDTOs = roomPage.getContent().stream()
                 .map(room -> {
-                    RoomDTO dto = roomMapper.toDTO(room);
+                    RoomListDTO dto = roomMapper.toListDTO(room);
                     AddressDTO addressDTO = finalAddressMap.get(room.getAddressId());
-                    dto.setAddress(addressDTO);
+                    if (addressDTO != null) {
+                        dto.setDistrict(addressDTO.getDistrict());
+                        dto.setProvince(addressDTO.getProvince());
+                    }
                     return dto;
                 })
                 .toList();
 
 
-        return PageResponse.<RoomDTO>builder()
+        return PageResponse.<RoomListDTO>builder()
                 .content(roomDTOs)
                 .page(roomPage.getNumber())
                 .size(roomPage.getSize())
