@@ -81,4 +81,11 @@ public class AddressController {
             return ResponseEntity.status(404).body(BaseResponse.error("Address not found"));
         }
     }
+
+    @PostMapping("/batch")
+    public ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIds(@RequestBody List<Long> ids) {
+        List<AddressDTO> result = addressService.findByIds(ids);
+        return ResponseEntity.ok(BaseResponse.ok(result));
+    }
+
 }
