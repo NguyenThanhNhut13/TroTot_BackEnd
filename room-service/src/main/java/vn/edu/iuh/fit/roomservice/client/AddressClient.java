@@ -37,4 +37,7 @@ public interface AddressClient {
 
     @PutMapping("/api/v1/addresses/{id}")
     ResponseEntity<BaseResponse<AddressDTO>> updateAddress(@PathVariable Long id, @RequestBody AddressDTO newAddress);
+
+    @PostMapping("/api/v1/addresses/batch")
+    ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIds(@RequestBody List<Long> ids);
 }
