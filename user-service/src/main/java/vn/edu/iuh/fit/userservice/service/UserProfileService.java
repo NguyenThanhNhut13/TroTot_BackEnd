@@ -137,4 +137,19 @@ public class UserProfileService {
         return user.getNumberOfPosts();
     }
 
+    public int usePostSlot(Long userId) {
+        UserProfile user = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+
+        if (user.getNumberOfPosts() == null || user.getNumberOfPosts() <= 0) {
+            throw new BadRequestException("No post slots available.");
+        }
+
+        user.setNumberOfPosts(user.getNumberOfPosts() - 1);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userProfileRepository.save(user);
+        return user.getNumberOfPosts();
+    }
+
 }

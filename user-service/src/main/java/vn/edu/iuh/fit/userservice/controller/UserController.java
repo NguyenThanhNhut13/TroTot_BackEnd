@@ -65,7 +65,14 @@ public class UserController {
         );
     }
 
+    @PostMapping("/{userId}/use-post-slot")
+    public ResponseEntity<?> usePostSlot(@PathVariable Long userId) {
+        int remainingPosts = userService.usePostSlot(userId);
 
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Post slot used successfully!", remainingPosts)
+        );
+    }
 
 
 }
