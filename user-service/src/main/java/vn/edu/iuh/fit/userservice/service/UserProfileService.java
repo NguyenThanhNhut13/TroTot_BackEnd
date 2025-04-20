@@ -13,11 +13,14 @@ package vn.edu.iuh.fit.userservice.service;
  */
 
 import jakarta.validation.ValidationException;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.userservice.enumeraion.Gender;
+import vn.edu.iuh.fit.userservice.exception.BadRequestException;
 import vn.edu.iuh.fit.userservice.exception.UserNotFoundException;
 import vn.edu.iuh.fit.userservice.mapper.UserProfileMapper;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
@@ -117,5 +120,21 @@ public class UserProfileService {
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
     }
 
+
+    public int addPostSlots(Long userId, int amount) {
+        if (amount <= 0) {
+            throw new BadRequestException("Amount must be greater than 0");
+        }
+
+        UserProfile user = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+
+        int currentPosts = user.getNumberOfPosts() != null ? user.getNumberOfPosts() : 0;
+        user.setNumberOfPosts(currentPosts + amount);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userProfileRepository.save(user);
+        return user.getNumberOfPosts();
+    }
 
 }

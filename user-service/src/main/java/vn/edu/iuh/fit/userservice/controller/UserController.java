@@ -12,12 +12,14 @@ package vn.edu.iuh.fit.userservice.controller;
  * @version:    1.0
  */
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
+import vn.edu.iuh.fit.userservice.model.dto.request.AddPostSlotRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
 import vn.edu.iuh.fit.userservice.service.UserProfileService;
@@ -52,5 +54,18 @@ public class UserController {
                 new BaseResponse<>(true, "User profile updated successfully!", updatedProfile)
         );
     }
+
+    @PostMapping("/{userId}/add-posts")
+    public ResponseEntity<?> addPostSlots(@PathVariable Long userId,
+                                          @Valid @RequestBody AddPostSlotRequest request) {
+        int newTotalPosts = userService.addPostSlots(userId, request.getAmount());
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Post slots updated successfully!", newTotalPosts)
+        );
+    }
+
+
+
 
 }

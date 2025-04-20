@@ -32,6 +32,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> validationException(ValidationException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("INVALID_USER_PROFILE", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> badRequestException(BadRequestException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("BAD_REQUEST", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
 //        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
