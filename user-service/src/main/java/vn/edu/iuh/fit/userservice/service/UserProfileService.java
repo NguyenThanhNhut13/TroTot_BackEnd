@@ -12,8 +12,10 @@ package vn.edu.iuh.fit.userservice.service;
  * @version:    1.0
  */
 
+import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.userservice.exception.UserNotFoundException;
 import vn.edu.iuh.fit.userservice.mapper.UserProfileMapper;
@@ -48,11 +50,29 @@ public class UserProfileService {
         userRepository.save(userProfile);
     }
 
-    public UserProfileResponse getUserProfile(Long userId) {
-        UserProfile userProfile = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    public UserProfileResponse getUserProfile() {
+        try {
+            Object principalObj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (!(principalObj instanceof String principal)) {
+                throw new IllegalStateException("Invalid principal type");
+            }
 
-        return userProfileMapper.toDTO(userProfile);
+            long userId;
+
+            try {
+                userId = Long.parseLong(principal);
+            } catch (NumberFormatException ex) {
+                throw new IllegalStateException("Principal is not a valid user ID", ex);
+            }
+
+            UserProfile userProfile = userProfileRepository.findById(userId)
+                    .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+
+            return userProfileMapper.toDTO(userProfile);
+
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Failed to fetch user profile", e);
+        }
     }
 
 

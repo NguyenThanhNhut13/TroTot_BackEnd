@@ -38,10 +38,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<?> getUserInfo() {
-        String principal = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = Long.parseLong(principal);
-
-        UserProfileResponse userDTO = userService.getUserProfile(userId);
+        UserProfileResponse userDTO = userService.getUserProfile();
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "User profile retrieved successfully!", userDTO)
         );

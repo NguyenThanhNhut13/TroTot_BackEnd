@@ -36,6 +36,9 @@ public class UserProfile {
 
     private LocalDateTime dob;
 
+    @Column(nullable = false)
+    private Integer numberOfPosts = 1;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

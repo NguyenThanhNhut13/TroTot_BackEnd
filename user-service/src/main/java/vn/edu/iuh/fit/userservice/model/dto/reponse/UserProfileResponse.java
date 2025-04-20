@@ -25,5 +25,6 @@ public class UserProfileResponse {
     private Long id;
     private String fullName;
     private String address;
+    private Integer numberOfPosts;
     private LocalDateTime dob;
 }
