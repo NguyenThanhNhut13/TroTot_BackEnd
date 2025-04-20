@@ -79,4 +79,21 @@ public class AddressService {
         addressRepository.deleteById(id);
     }
 
+    public List<AddressDTO> findByIds(List<Long> ids) {
+        List<Address> addresses = addressRepository.findAllById(ids);
+        return addresses.stream()
+                .map(address -> AddressDTO.builder()
+                        .id(address.getId())
+                        .province(address.getProvince())
+                        .district(address.getDistrict())
+                        .ward(address.getWard())
+                        .street(address.getStreet())
+                        .houseNumber(address.getHouseNumber())
+                        .longitude(address.getLongitude())
+                        .latitude(address.getLatitude())
+                        .build()
+                ).toList();
+    }
+
+
 }
