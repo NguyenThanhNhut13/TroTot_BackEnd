@@ -12,6 +12,8 @@ package vn.edu.iuh.fit.roomservice.service;
  * @version:    1.0
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,9 +23,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
+import vn.edu.iuh.fit.roomservice.client.UserClient;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
+import vn.edu.iuh.fit.roomservice.exception.BadRequestException;
 import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
@@ -36,6 +41,7 @@ import vn.edu.iuh.fit.roomservice.repository.SurroundingAreaRepository;
 import vn.edu.iuh.fit.roomservice.repository.TargetAudienceRepository;
 import vn.edu.iuh.fit.roomservice.repository.spec.RoomSpecification;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -50,12 +56,11 @@ public class RoomService {
     private final RoomMapper roomMapper;
     private final ImageMapper imageMapper;
     private final AmenityRepository amenityRepository;
-    private final AmenityMapper amenityMapper;
     private final SurroundingAreaRepository surroundingAreaRepository;
-    private final SurroundingAreaMapper surroundingAreaMapper;
     private final TargetAudienceRepository targetAudienceRepository;
-    private final TargetAudienceMapper targetAudienceMapper;
+    private final UserClient userClient;
 
+    @Transactional(rollbackFor = Exception.class)
     public RoomDTO saveRoom(RoomDTO roomDTO) {
         // Check input data
         validateRoomDTO(roomDTO);
@@ -84,6 +89,23 @@ public class RoomService {
 
         // Save room
         Room savedRoom = roomRepository.save(room);
+
+        try {
+            userClient.usePostSlot(room.getUserId());
+        } catch (FeignException e) {
+            // Kiểm tra lỗi với mã 400 (Bad Request) từ users-service
+            if (e.status() == 400) {
+                // Trích xuất thông điệp lỗi trả về từ service (JSON đã được tự động chuyển thành chuỗi)
+                String message = e.contentUTF8();
+                throw new BadRequestException(message);  // Ném lỗi với thông điệp cụ thể
+            }
+
+            // Nếu không phải lỗi 400, ném lỗi chung cho các mã khác
+            throw new InternalServerErrorException("Error from user service: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            throw new InternalServerErrorException("Unexpected error when posting room!");
+        }
 
         // Return room with address
         RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
