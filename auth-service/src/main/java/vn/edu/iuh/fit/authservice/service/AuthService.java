@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.edu.iuh.fit.authservice.client.UserClient;
 import vn.edu.iuh.fit.authservice.enumerate.OtpPurpose;
 import vn.edu.iuh.fit.authservice.exception.*;
@@ -72,7 +73,7 @@ public class AuthService {
         return new LoginResponse(accessToken, refreshToken);
     }
 
-
+    @Transactional(rollbackFor = Exception.class)
     public void register(RegisterRequest request) {
 
         // Validate data

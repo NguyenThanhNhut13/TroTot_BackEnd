@@ -37,7 +37,7 @@ public class UserProfile {
 
     private LocalDateTime dob;
 
-    @Column(unique = true, nullable = false, length = 12)
+    @Column(unique = true, length = 12)
     private String cccd;
 
     @Enumerated(EnumType.STRING)

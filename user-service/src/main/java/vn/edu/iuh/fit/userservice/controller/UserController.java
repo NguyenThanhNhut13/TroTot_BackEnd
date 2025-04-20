@@ -56,7 +56,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/add-posts")
-    public ResponseEntity<?> addPostSlots(@PathVariable Long userId,
+    public ResponseEntity<BaseResponse<Integer>> addPostSlots(@PathVariable Long userId,
                                           @Valid @RequestBody AddPostSlotRequest request) {
         int newTotalPosts = userService.addPostSlots(userId, request.getAmount());
 
@@ -66,7 +66,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/use-post-slot")
-    public ResponseEntity<?> usePostSlot(@PathVariable Long userId) {
+    public ResponseEntity<BaseResponse<Integer>> usePostSlot(@PathVariable Long userId) {
         int remainingPosts = userService.usePostSlot(userId);
 
         return ResponseEntity.ok(
