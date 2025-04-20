@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/profile").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/create").permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/**",

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
+import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
 import vn.edu.iuh.fit.userservice.service.UserProfileService;
 
 @RestController
@@ -41,6 +42,14 @@ public class UserController {
         UserProfileResponse userDTO = userService.getUserProfile();
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "User profile retrieved successfully!", userDTO)
+        );
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateUserProfile(@RequestBody UpdateUserProfileRequest request) {
+        UserProfileResponse updatedProfile = userService.updateUserProfile(request);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "User profile updated successfully!", updatedProfile)
         );
     }
 

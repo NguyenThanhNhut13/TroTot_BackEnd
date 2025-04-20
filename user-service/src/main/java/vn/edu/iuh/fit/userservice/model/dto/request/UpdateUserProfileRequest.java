@@ -12,5 +12,20 @@ package vn.edu.iuh.fit.userservice.model.dto.request;
  * @version:    1.0
  */
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import vn.edu.iuh.fit.userservice.enumeraion.Gender;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Builder
 public class UpdateUserProfileRequest {
+    private String fullName;
+    private LocalDateTime dob;
+    private String address;
+    private String cccd;
+    private Gender gender;
 }
