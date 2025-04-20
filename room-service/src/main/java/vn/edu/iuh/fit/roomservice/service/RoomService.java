@@ -266,19 +266,33 @@ public class RoomService {
             roomPage = roomRepository.findAll(pageable);
         }
 
+        // Get list unique addressId
+        List<Long> addressIds = roomPage.getContent().stream()
+                .map(Room::getAddressId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // Call API batch to get list address
+        Map<Long, AddressDTO> addressMap = new HashMap<>();
+        try {
+            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.getAddressesByIds(addressIds);
+            List<AddressDTO> addressDTOs = Objects.requireNonNull(response.getBody()).getData();
+            if (addressDTOs != null) {
+                addressMap = addressDTOs.stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toMap(AddressDTO::getId, dto -> dto));
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to fetch address list: " + e.getMessage());
+        }
+
+        Map<Long, AddressDTO> finalAddressMap = addressMap;
         List<RoomDTO> roomDTOs = roomPage.getContent().stream()
                 .map(room -> {
                     RoomDTO dto = roomMapper.toDTO(room);
-                    try {
-                        ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(room.getAddressId());
-                        AddressDTO addressDTO = Objects.requireNonNull(response.getBody()).getData();
-                        dto.setAddress(addressDTO);
-                    } catch (Exception e) {
-                        // Gọi thất bại thì gán null (đã là mặc định nếu chưa set gì rồi)
-                        dto.setAddress(null);
-                        // Log lỗi nếu cần theo dõi
-                        System.err.println("Could not fetch address for roomId: " + room.getId() + ", addressId: " + room.getAddressId() + ", message: " + e.getMessage());
-                    }
+                    AddressDTO addressDTO = finalAddressMap.get(room.getAddressId());
+                    dto.setAddress(addressDTO);
                     return dto;
                 })
                 .toList();
