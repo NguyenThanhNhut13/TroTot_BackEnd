@@ -23,6 +23,12 @@ import vn.edu.iuh.fit.userservice.model.dto.request.AddPostSlotRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
 import vn.edu.iuh.fit.userservice.service.UserProfileService;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -72,6 +78,17 @@ public class UserController {
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Post slot used successfully!", remainingPosts)
         );
+    }
+
+    @PostMapping("/{userId}/increment-post-slot")
+    public ResponseEntity<BaseResponse<Map<String, Object>>> incrementPostSlot(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") int amount,
+            @RequestHeader("Authorization") String bearerToken
+    ) {
+//        Nguyễn Quân
+        Map<String, Object> result = userService.purchasePostSlots(userId, amount, bearerToken);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Mua gói thành công!", result));
     }
 
 
