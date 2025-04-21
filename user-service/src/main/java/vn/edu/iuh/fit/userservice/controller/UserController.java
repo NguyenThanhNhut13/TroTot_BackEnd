@@ -91,5 +91,12 @@ public class UserController {
         return ResponseEntity.ok(new BaseResponse<>(true, "Mua gói thành công!", result));
     }
 
+    @PostMapping("/{userId}/consume-post-slot")
+    public ResponseEntity<BaseResponse<Integer>> consumePostSlot(@PathVariable Long userId) {
+        int remaining = userService.consumePostSlot(userId);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Đăng bài thành công. Đã trừ 1 lượt đăng trọ.", remaining)
+        );
+    }
 
 }

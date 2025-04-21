@@ -209,4 +209,21 @@ public class UserProfileService {
             return false;
         }
     }
+
+    public int consumePostSlot(Long userId) {
+        UserProfile user = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng có ID: " + userId));
+
+        Integer current = user.getNumberOfPosts();
+        if (current == null || current <= 0) {
+            throw new BadRequestException("Bạn không còn lượt đăng trọ nào.");
+        }
+
+        user.setNumberOfPosts(current - 1);
+        user.setUpdatedAt(LocalDateTime.now());
+        userProfileRepository.save(user);
+
+        return user.getNumberOfPosts();
+    }
+
 }
