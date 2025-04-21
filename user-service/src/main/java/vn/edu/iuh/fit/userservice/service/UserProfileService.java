@@ -17,8 +17,13 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import vn.edu.iuh.fit.userservice.enumeraion.Gender;
 import vn.edu.iuh.fit.userservice.exception.BadRequestException;
 import vn.edu.iuh.fit.userservice.exception.UserNotFoundException;
@@ -31,6 +36,8 @@ import vn.edu.iuh.fit.userservice.model.entity.UserProfile;
 import vn.edu.iuh.fit.userservice.repository.UserProfileRepository;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -149,6 +156,73 @@ public class UserProfileService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userProfileRepository.save(user);
+        return user.getNumberOfPosts();
+    }
+
+    public Map<String, Object> purchasePostSlots(Long userId, int amount, String bearerToken) {
+        int price = switch (amount) {
+            case 1 -> 20000;
+            case 5 -> 90000;
+            case 10 -> 170000;
+            default -> throw new BadRequestException("Chỉ cho phép mua 1, 5 hoặc 10 trọ.");
+        };
+
+        // Truyền token khi gọi trừ tiền
+        boolean isPaid = callDeductApi(userId, price, bearerToken);
+
+        if (!isPaid) {
+            throw new InternalServerErrorException("Thanh toán thất bại. Vui lòng kiểm tra số dư.");
+        }
+
+        int newTotalPosts = addPostSlots(userId, amount);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("newTotalPosts", newTotalPosts);
+        result.put("amountAdded", amount);
+        result.put("amountPaid", price);
+
+        return result;
+    }
+
+
+    private boolean callDeductApi(Long userId, int amount, String bearerToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8222/api/v1/payments/deduct";
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("userId", userId);
+        body.put("amount", amount);
+        body.put("description", "Trừ tiền mua lượt đăng trọ");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        System.out.println("🔑 Token gửi sang payment: " + bearerToken);
+        headers.setBearerAuth(bearerToken.replace("Bearer ", ""));
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public int consumePostSlot(Long userId) {
+        UserProfile user = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng có ID: " + userId));
+
+        Integer current = user.getNumberOfPosts();
+        if (current == null || current <= 0) {
+            throw new BadRequestException("Bạn không còn lượt đăng trọ nào.");
+        }
+
+        user.setNumberOfPosts(current - 1);
+        user.setUpdatedAt(LocalDateTime.now());
+        userProfileRepository.save(user);
+
         return user.getNumberOfPosts();
     }
 
