@@ -5,3 +5,5 @@ pandas
 numpy
 schedule
 requests
+py-eureka-client
+httpx
