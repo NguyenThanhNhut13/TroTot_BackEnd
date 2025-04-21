@@ -132,5 +132,16 @@ public class RoomController {
         );
     }
 
+    @GetMapping("/export")
+    public ResponseEntity<BaseResponse<List<RoomTrainDTO>>> exportAllRooms() {
+        List<RoomTrainDTO> pagedResponse = roomService.exportAllRooms();
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get room train successful", pagedResponse)
+        );
+    }
+
+
+
 
 }

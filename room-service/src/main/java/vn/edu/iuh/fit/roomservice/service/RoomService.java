@@ -363,47 +363,6 @@ public class RoomService {
         return Sort.by(orders);
     }
 
-
-//    public List<RoomDTO> findRoomsByAddress(String street, String district, String city) {
-//        List<AddressDTO> addressDTOS = addressClient.search(street, district, city).getBody();
-//
-//        assert addressDTOS != null;
-//        if (addressDTOS.isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//
-//        List<Long> addressIds = addressDTOS.stream().map(AddressDTO::getId).collect(Collectors.toList());
-//        List<Room> rooms = roomRepository.findByAddressIdIn(addressIds);
-//
-//        return rooms.stream().map(room ->
-//                RoomDTO.builder()
-//                        .id(room.getId())
-//                        .userId(room.getUserId())
-//                        .title(room.getTitle())
-//                        .description(room.getDescription())
-//                        .price(room.getPrice())
-//                        .area(room.getArea())
-//                        .images(imageMapper.toDTOs(room.getImages()))
-//                        .amenities(room.getAmenities().stream()
-//                                .map(a -> new AmenityDTO(a.getId(), a.getName()))
-//                                .collect(Collectors.toSet()))
-//                        .surroundingAreas(room.getSurroundingAreas().stream()
-//                                .map(e -> new SurroundingAreaDTO(e.getId(), e.getName()))
-//                                .collect(Collectors.toSet()))
-//                        .targetAudiences(room.getTargetAudiences().stream()
-//                                .map(t -> new TargetAudienceDTO(t.getId(), t.getName()))
-//                                .collect(Collectors.toSet()))
-//                        .createdAt(room.getCreatedAt())
-//                        .updatedAt(room.getUpdatedAt())
-//                        .address(addressDTOS.stream()
-//                                .filter(a -> a.getId().equals(room.getAddressId()))
-//                                .findFirst()
-//                                .orElse(null)) // Gán đúng AddressDTO
-//                        .build()
-//        ).collect(Collectors.toList());
-//
-//    }
-
     public RoomDTO findById(Long id) {
         Room room = roomRepository.findById(id).orElseThrow(
                 () -> new RoomNotFoundException("Room not found with id: " + id));
@@ -540,6 +499,39 @@ public class RoomService {
     }
 
 
+    public List<RoomTrainDTO> exportAllRooms() {
+        List<Room> rooms = roomRepository.findAll();
+        List<Long> addressIds = rooms.stream()
+                .map(Room::getAddressId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
 
+        // Call API batch to get list address
+        Map<Long, AddressDTO> addressMap = new HashMap<>();
+        try {
+            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.getAddressesByIds(addressIds);
+            BaseResponse<List<AddressDTO>> responseBody = response.getBody();
+            if (responseBody != null && responseBody.getData() != null) {
+                addressMap = responseBody.getData().stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toMap(AddressDTO::getId, dto -> dto));
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to fetch address list: " + e.getMessage());
+        }
 
+        Map<Long, AddressDTO> finalAddressMap = addressMap;
+        return rooms.stream()
+                .map(room -> {
+                    RoomTrainDTO dto = roomMapper.toRoomTrainDTO(room);
+                    AddressDTO addressDTO = finalAddressMap.get(room.getAddressId());
+                    if (addressDTO != null) {
+                        dto.setDistrict(addressDTO.getDistrict());
+                        dto.setProvince(addressDTO.getProvince());
+                    }
+                    return dto;
+                })
+                .toList();
+    }
 }
