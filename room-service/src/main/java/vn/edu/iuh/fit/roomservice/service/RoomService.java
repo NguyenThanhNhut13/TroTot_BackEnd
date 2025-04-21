@@ -479,13 +479,13 @@ public class RoomService {
     }
 
     // Filter search
-    public PageResponse<RoomDTO> searchRooms(
+    public PageResponse<RoomListDTO> searchRooms(
             int page, int size, String sortParam,
             String street, String district, String city,
             Double minPrice, Double maxPrice,
             String areaRange, String roomType,
-            List<Long> amenityIds, List<Long> environmentIds,
-            List<Long> targetAudienceIds
+            List<String> amenityNames, List<String> environmentNames,
+            List<String> targetAudienceNames
     ) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sortParam));
 
@@ -498,22 +498,24 @@ public class RoomService {
 
         Specification<Room> spec = RoomSpecification.buildSpecification(
                 addressIds, minPrice, maxPrice, areaRange, roomType,
-                amenityIds, environmentIds, targetAudienceIds
+                amenityNames, environmentNames, targetAudienceNames
         );
 
         Page<Room> roomPage = roomRepository.findAll(spec, pageable);
 
-        List<RoomDTO> roomDTOs = roomPage.getContent()
-                .stream()
+        List<RoomListDTO> roomDTOs = roomPage.getContent().stream()
                 .map(room -> {
-                    RoomDTO dto = roomMapper.toDTO(room);
+                    RoomListDTO dto = roomMapper.toListDTO(room);
                     AddressDTO addressDTO = addressMap != null ? addressMap.get(room.getAddressId()) : null;
-                    dto.setAddress(addressDTO);
+                    if (addressDTO != null) {
+                        dto.setDistrict(addressDTO.getDistrict());
+                        dto.setProvince(addressDTO.getProvince());
+                    }
                     return dto;
                 })
                 .toList();
 
-        return PageResponse.<RoomDTO>builder()
+        return PageResponse.<RoomListDTO>builder()
                 .content(roomDTOs)
                 .page(roomPage.getNumber())
                 .size(roomPage.getSize())
