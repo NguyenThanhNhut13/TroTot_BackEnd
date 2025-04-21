@@ -100,7 +100,7 @@ public class RoomController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<BaseResponse<PageResponse<RoomDTO>>> searchRooms(
+    public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> searchRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt,desc") String sort,
@@ -114,13 +114,13 @@ public class RoomController {
             @RequestParam(required = false) String areaRange,
             @RequestParam(required = false) String roomType,
 
-            @RequestParam(required = false) List<Long> amenities,
-            @RequestParam(required = false) List<Long> environment,
-            @RequestParam(required = false) List<Long> targetAudience
+            @RequestParam(required = false) List<String> amenities,
+            @RequestParam(required = false) List<String> environment,
+            @RequestParam(required = false) List<String> targetAudience
 
 //            @RequestParam(required = false) Boolean hasVideoReview
     ) {
-        PageResponse<RoomDTO> response = roomService.searchRooms(
+        PageResponse<RoomListDTO> response = roomService.searchRooms(
                 page, size, sort,
                 street, district, city,
                 minPrice, maxPrice, areaRange, roomType,

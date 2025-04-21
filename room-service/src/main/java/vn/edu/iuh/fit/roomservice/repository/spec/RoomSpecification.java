@@ -26,8 +26,8 @@ public class RoomSpecification {
             List<Long> addressIds,
             Double minPrice, Double maxPrice,
             String areaRange, String roomType,
-            List<Long> amenityIds, List<Long> environmentIds,
-            List<Long> targetAudienceIds
+            List<String> amenityNames, List<String> environmentNames,
+            List<String> targetAudienceNames
     ) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -56,19 +56,19 @@ public class RoomSpecification {
 //                predicates.add(cb.equal(root.get("hasVideoReview"), hasVideoReview));
 //            }
 
-            if (amenityIds != null && !amenityIds.isEmpty()) {
+            if (amenityNames != null && !amenityNames.isEmpty()) {
                 Join<Room, Amenity> amenityJoin = root.join("amenities", JoinType.INNER);
-                predicates.add(amenityJoin.get("id").in(amenityIds));
+                predicates.add(amenityJoin.get("name").in(amenityNames));
             }
 
-            if (environmentIds != null && !environmentIds.isEmpty()) {
+            if (environmentNames != null && !environmentNames.isEmpty()) {
                 Join<Room, SurroundingArea> envJoin = root.join("surroundingAreas", JoinType.INNER);
-                predicates.add(envJoin.get("id").in(environmentIds));
+                predicates.add(envJoin.get("name").in(environmentNames));
             }
 
-            if (targetAudienceIds != null && !targetAudienceIds.isEmpty()) {
+            if (targetAudienceNames != null && !targetAudienceNames.isEmpty()) {
                 Join<Room, TargetAudience> targetJoin = root.join("targetAudiences", JoinType.INNER);
-                predicates.add(targetJoin.get("id").in(targetAudienceIds));
+                predicates.add(targetJoin.get("name").in(targetAudienceNames));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
