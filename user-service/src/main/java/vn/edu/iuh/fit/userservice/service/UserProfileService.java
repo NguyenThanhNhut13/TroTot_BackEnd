@@ -12,10 +12,12 @@ package vn.edu.iuh.fit.userservice.service;
  * @version:    1.0
  */
 
+import feign.FeignException;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.userservice.client.PaymentClient;
@@ -25,6 +27,8 @@ import vn.edu.iuh.fit.userservice.exception.BadRequestException;
 import vn.edu.iuh.fit.userservice.exception.PaymentFailedException;
 import vn.edu.iuh.fit.userservice.exception.UserNotFoundException;
 import vn.edu.iuh.fit.userservice.mapper.UserProfileMapper;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.RoomListResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
 import vn.edu.iuh.fit.userservice.model.dto.request.DeductRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
@@ -36,9 +40,8 @@ import vn.edu.iuh.fit.userservice.repository.UserProfileRepository;
 import vn.edu.iuh.fit.userservice.repository.WishlistRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -209,9 +212,37 @@ public class UserProfileService {
         wishlistRepository.save(newWishList);
     }
 
-    public List<Wishlist> getSavedRooms() {
+    public List<RoomListResponse> getSavedRooms() {
         UserProfile userProfile = getCurrentUser();
-        return wishlistRepository.findByUserProfileId(userProfile.getId());
+
+        List<Wishlist> wishlists = wishlistRepository.findByUserProfileId(userProfile.getId());
+
+        // Get roomId list
+        List<Long> roomIds = wishlists.stream()
+                .map(Wishlist::getRoomId)
+                .collect(Collectors.toList());
+
+        if (roomIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        try {
+            // Call RoomService to get room details
+            ResponseEntity<BaseResponse<List<RoomListResponse>>> response = roomClient.findByIds(roomIds);
+
+            if (response.getStatusCode().is2xxSuccessful() &&
+                    response.getBody() != null &&
+                    response.getBody().isSuccess()) {
+                return response.getBody().getData();
+            } else {
+                System.err.println("RoomService response error " + response.getBody());
+                return Collections.emptyList();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Failed to call RoomService to fetch room details " + e);
+            return Collections.emptyList();
+        }
     }
 
 
@@ -220,14 +251,23 @@ public class UserProfileService {
 
         try {
             roomClient.checkRoomExists(roomId);
-        } catch (NotFoundException e) {
+        } catch (FeignException.NotFound e) {
+            System.err.println("Room with ID " + roomId + "does not exist in RoomService");
             throw new BadRequestException("Room does not exist!");
+        } catch (Exception e) {
+            System.err.println("Error calling RoomService" + e);
+            throw new RuntimeException("Failed to verify room existence");
         }
 
-        Wishlist wishlist = wishlistRepository.findByUserProfileIdAndRoomId(user.getId(), roomId)
-                .orElseThrow(() -> new BadRequestException("Room not found in wishlist!"));
+        // find room in wíshlist
+        Optional<Wishlist> optionalWishlist = wishlistRepository.findByUserProfileIdAndRoomId(user.getId(), roomId);
 
-        wishlistRepository.delete(wishlist);
+        if (optionalWishlist.isEmpty()) {
+            throw new BadRequestException("Room not found in wishlist!");
+        }
+
+        // Remove from wishlist
+        wishlistRepository.delete(optionalWishlist.get());
     }
 
 }

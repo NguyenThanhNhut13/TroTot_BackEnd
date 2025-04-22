@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.RoomListResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
 import vn.edu.iuh.fit.userservice.model.dto.request.AddPostSlotRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
@@ -86,9 +87,9 @@ public class UserController {
     }
 
     @GetMapping("/wish-list")
-    public ResponseEntity<BaseResponse<List<Wishlist>>> getWishlist() {
+    public ResponseEntity<BaseResponse<List<RoomListResponse>>> getWishlist() {
 
-        List<Wishlist> wishlist = userService.getSavedRooms();
+        List<RoomListResponse> wishlist = userService.getSavedRooms();
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Get list wishlist successfully!", wishlist)
         );

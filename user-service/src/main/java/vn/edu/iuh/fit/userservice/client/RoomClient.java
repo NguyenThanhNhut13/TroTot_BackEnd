@@ -29,6 +29,6 @@ public interface RoomClient {
     @GetMapping("/api/v1/rooms/{id}/exists")
     ResponseEntity<BaseResponse<Boolean>> checkRoomExists(@PathVariable Long id);
 
-    @PostMapping("/api/v1/rooms/{id}/exists")
+    @PostMapping("/api/v1/rooms/bulk")
     ResponseEntity<BaseResponse<List<RoomListResponse>>> findByIds(@RequestBody List<Long> ids);
 }
