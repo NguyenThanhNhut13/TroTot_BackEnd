@@ -150,6 +150,13 @@ public class RoomController {
         );
     }
 
+    @PostMapping("/bulk")
+    public ResponseEntity<BaseResponse<List<RoomListDTO>>> findByIds(@RequestBody List<Long> ids) {
+        List<RoomListDTO> data = roomService.findByIds(ids);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get rooms successful", data)
+        );
+    }
 
 
 

@@ -15,7 +15,6 @@ package vn.edu.iuh.fit.userservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
@@ -24,7 +23,6 @@ import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
 import vn.edu.iuh.fit.userservice.model.entity.Wishlist;
 import vn.edu.iuh.fit.userservice.service.UserProfileService;
-import org.springframework.http.*;
 
 import java.util.List;
 
@@ -77,7 +75,7 @@ public class UserController {
         );
     }
 
-    @PostMapping("/{roomId}")
+    @PostMapping("/wish-list/{roomId}")
     public ResponseEntity<BaseResponse<String>> addToWishlist(
             @PathVariable Long roomId) {
 
@@ -87,7 +85,7 @@ public class UserController {
         );
     }
 
-    @GetMapping
+    @GetMapping("/wish-list")
     public ResponseEntity<BaseResponse<List<Wishlist>>> getWishlist() {
 
         List<Wishlist> wishlist = userService.getSavedRooms();
@@ -96,7 +94,7 @@ public class UserController {
         );
     }
 
-    @DeleteMapping("/{roomId}")
+    @DeleteMapping("/wish-list/{roomId}")
     public ResponseEntity<BaseResponse<String>> removeFromWishlist(
             @PathVariable Long roomId) {
 

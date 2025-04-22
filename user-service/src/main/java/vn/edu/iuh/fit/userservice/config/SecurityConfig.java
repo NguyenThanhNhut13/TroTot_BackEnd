@@ -49,7 +49,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/users").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/add-posts").hasAnyAuthority("ADMIN", "LANDLORD")
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/use-post-slot").hasAnyAuthority("ADMIN", "LANDLORD")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/wish-list/{roomId}").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/wish-list").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/wish-list/{roomId}").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/create").permitAll()
+
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/v2/api-docs",

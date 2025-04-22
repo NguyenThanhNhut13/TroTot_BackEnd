@@ -44,6 +44,7 @@ public interface RoomMapper {
     @Mapping(target = "district", ignore = true)
     @Mapping(target = "province", ignore = true)
     @Mapping(target = "imageUrls", ignore = true)
+    @Mapping(source = "roomType", target = "roomType")
     RoomListDTO toListDTO(Room room);
 
     @Mapping(target = "amenities", source = "amenities", qualifiedByName = "mapAmenityNames")
