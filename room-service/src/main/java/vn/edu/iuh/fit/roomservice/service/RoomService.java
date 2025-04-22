@@ -534,4 +534,12 @@ public class RoomService {
                 })
                 .toList();
     }
+
+    public boolean checkRoomExistsById(Long roomId) {
+        boolean exists = roomRepository.existsById(roomId);
+        if (!exists) {
+            throw new RoomNotFoundException("Room not found with ID: " + roomId);
+        }
+        return true;
+    }
 }

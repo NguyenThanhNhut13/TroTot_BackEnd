@@ -141,6 +141,16 @@ public class RoomController {
         );
     }
 
+    @GetMapping("/{id}/exists")
+    public ResponseEntity<BaseResponse<Boolean>> checkRoomExists(@PathVariable Long id) {
+        boolean exists = roomService.checkRoomExistsById(id);
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Room exists!", exists)
+        );
+    }
+
+
 
 
 

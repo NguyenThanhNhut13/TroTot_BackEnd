@@ -14,15 +14,12 @@ package vn.edu.iuh.fit.userservice.service;
 
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import vn.edu.iuh.fit.userservice.client.PaymentClient;
+import vn.edu.iuh.fit.userservice.client.RoomClient;
 import vn.edu.iuh.fit.userservice.enumeraion.Gender;
 import vn.edu.iuh.fit.userservice.exception.BadRequestException;
 import vn.edu.iuh.fit.userservice.exception.PaymentFailedException;
@@ -34,10 +31,13 @@ import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.exception.UserAlreadyExistsException;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
 import vn.edu.iuh.fit.userservice.model.entity.UserProfile;
+import vn.edu.iuh.fit.userservice.model.entity.Wishlist;
 import vn.edu.iuh.fit.userservice.repository.UserProfileRepository;
+import vn.edu.iuh.fit.userservice.repository.WishlistRepository;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -48,6 +48,8 @@ public class UserProfileService {
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;
     private final PaymentClient paymentClient;
+    private final RoomClient roomClient;
+    private final WishlistRepository wishlistRepository;
 
     public void createUser(RegisterRequest request) {
         if (userRepository.existsUserProfilesById(request.getId())) {
@@ -130,7 +132,9 @@ public class UserProfileService {
     }
 
 
-    public int addPostSlots(Long userId, int amount) {
+    public int addPostSlots(int amount) {
+        UserProfile user = getCurrentUser();
+
         if (amount <= 0) {
             throw new BadRequestException("Amount must be greater than 0");
         }
@@ -146,15 +150,11 @@ public class UserProfileService {
             throw new BadRequestException("Only allowed to buy 1, 5 or 10 slots.");
         }
 
-        // Lấy thông tin user
-        UserProfile user = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
-
         // Gọi payment-service để trừ tiền
         DeductRequest request = DeductRequest.builder()
                 .amount((long) price)
-                .userId(userId)
-                .description("User " + userId + " purchased " + amount + " post slot(s).")
+                .userId(user.getId())
+                .description("User " + user.getId() + " purchased " + amount + " post slot(s).")
                 .build();
 
         try {
@@ -171,9 +171,8 @@ public class UserProfileService {
         return user.getNumberOfPosts();
     }
 
-    public int usePostSlot(Long userId) {
-        UserProfile user = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+    public int usePostSlot() {
+        UserProfile user = getCurrentUser();
 
         if (user.getNumberOfPosts() == null || user.getNumberOfPosts() <= 0) {
             throw new BadRequestException("No post slots available.");
@@ -184,6 +183,51 @@ public class UserProfileService {
 
         userProfileRepository.save(user);
         return user.getNumberOfPosts();
+    }
+
+    public void addRoomToWishlist(Long roomId) {
+        UserProfile user = getCurrentUser();
+
+        try {
+            roomClient.checkRoomExists(roomId);
+        } catch (NotFoundException e) {
+            throw new BadRequestException("Room does not exist!");
+        }
+
+        boolean exists = wishlistRepository.existsByUserProfileIdAndRoomId(user.getId(), roomId);
+
+        if (exists) {
+            throw new BadRequestException("Room already exists in wishlist!");
+        }
+
+        Wishlist newWishList = Wishlist.builder()
+                .roomId(roomId)
+                .userProfile(user)
+                .savedAt(LocalDateTime.now())
+                .build();
+
+        wishlistRepository.save(newWishList);
+    }
+
+    public List<Wishlist> getSavedRooms() {
+        UserProfile userProfile = getCurrentUser();
+        return wishlistRepository.findByUserProfileId(userProfile.getId());
+    }
+
+
+    public void removeRoomFromWishlist(Long roomId) {
+        UserProfile user = getCurrentUser();
+
+        try {
+            roomClient.checkRoomExists(roomId);
+        } catch (NotFoundException e) {
+            throw new BadRequestException("Room does not exist!");
+        }
+
+        Wishlist wishlist = wishlistRepository.findByUserProfileIdAndRoomId(user.getId(), roomId)
+                .orElseThrow(() -> new BadRequestException("Room not found in wishlist!"));
+
+        wishlistRepository.delete(wishlist);
     }
 
 }

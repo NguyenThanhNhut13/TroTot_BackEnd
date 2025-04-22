@@ -22,13 +22,11 @@ import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
 import vn.edu.iuh.fit.userservice.model.dto.request.AddPostSlotRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
+import vn.edu.iuh.fit.userservice.model.entity.Wishlist;
 import vn.edu.iuh.fit.userservice.service.UserProfileService;
 import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -61,22 +59,50 @@ public class UserController {
         );
     }
 
-    @PostMapping("/{userId}/add-posts")
-    public ResponseEntity<BaseResponse<Integer>> addPostSlots(@PathVariable Long userId,
-                                          @Valid @RequestBody AddPostSlotRequest request) {
-        int newTotalPosts = userService.addPostSlots(userId, request.getAmount());
+    @PostMapping("/add-posts")
+    public ResponseEntity<BaseResponse<Integer>> addPostSlots(@Valid @RequestBody AddPostSlotRequest request) {
+        int newTotalPosts = userService.addPostSlots(request.getAmount());
 
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Post slots updated successfully!", newTotalPosts)
         );
     }
 
-    @PostMapping("/{userId}/use-post-slot")
-    public ResponseEntity<BaseResponse<Integer>> usePostSlot(@PathVariable Long userId) {
-        int remainingPosts = userService.usePostSlot(userId);
+    @PostMapping("/use-post-slot")
+    public ResponseEntity<BaseResponse<Integer>> usePostSlot() {
+        int remainingPosts = userService.usePostSlot();
 
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Post slot used successfully!", remainingPosts)
+        );
+    }
+
+    @PostMapping("/{roomId}")
+    public ResponseEntity<BaseResponse<String>> addToWishlist(
+            @PathVariable Long roomId) {
+
+        userService.addRoomToWishlist(roomId);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Room added to wishlist!", "Room ID: " + roomId)
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<BaseResponse<List<Wishlist>>> getWishlist() {
+
+        List<Wishlist> wishlist = userService.getSavedRooms();
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get list wishlist successfully!", wishlist)
+        );
+    }
+
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<BaseResponse<String>> removeFromWishlist(
+            @PathVariable Long roomId) {
+
+        userService.removeRoomFromWishlist(roomId);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Delete room from wishlist!", "Room ID: " + roomId)
         );
     }
 
