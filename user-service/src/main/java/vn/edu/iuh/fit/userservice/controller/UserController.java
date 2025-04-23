@@ -12,14 +12,23 @@ package vn.edu.iuh.fit.userservice.controller;
  * @version:    1.0
  */
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
+import vn.edu.iuh.fit.userservice.model.dto.request.AddPostSlotRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
+import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
 import vn.edu.iuh.fit.userservice.service.UserProfileService;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -38,12 +47,55 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<?> getUserInfo() {
-        String principal = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = Long.parseLong(principal);
-
-        UserProfileResponse userDTO = userService.getUserProfile(userId);
+        UserProfileResponse userDTO = userService.getUserProfile();
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "User profile retrieved successfully!", userDTO)
+        );
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateUserProfile(@RequestBody UpdateUserProfileRequest request) {
+        UserProfileResponse updatedProfile = userService.updateUserProfile(request);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "User profile updated successfully!", updatedProfile)
+        );
+    }
+
+    @PostMapping("/{userId}/add-posts")
+    public ResponseEntity<BaseResponse<Integer>> addPostSlots(@PathVariable Long userId,
+                                          @Valid @RequestBody AddPostSlotRequest request) {
+        int newTotalPosts = userService.addPostSlots(userId, request.getAmount());
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Post slots updated successfully!", newTotalPosts)
+        );
+    }
+
+    @PostMapping("/{userId}/use-post-slot")
+    public ResponseEntity<BaseResponse<Integer>> usePostSlot(@PathVariable Long userId) {
+        int remainingPosts = userService.usePostSlot(userId);
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Post slot used successfully!", remainingPosts)
+        );
+    }
+
+    @PostMapping("/{userId}/increment-post-slot")
+    public ResponseEntity<BaseResponse<Map<String, Object>>> incrementPostSlot(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") int amount,
+            @RequestHeader("Authorization") String bearerToken
+    ) {
+//        Nguyễn Quân
+        Map<String, Object> result = userService.purchasePostSlots(userId, amount, bearerToken);
+        return ResponseEntity.ok(new BaseResponse<>(true, "Mua gói thành công!", result));
+    }
+
+    @PostMapping("/{userId}/consume-post-slot")
+    public ResponseEntity<BaseResponse<Integer>> consumePostSlot(@PathVariable Long userId) {
+        int remaining = userService.consumePostSlot(userId);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Đăng bài thành công. Đã trừ 1 lượt đăng trọ.", remaining)
         );
     }
 

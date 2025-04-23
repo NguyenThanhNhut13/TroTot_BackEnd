@@ -16,10 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
-import vn.edu.iuh.fit.roomservice.model.dto.AmenityDTO;
-import vn.edu.iuh.fit.roomservice.model.dto.RoomDTO;
-import vn.edu.iuh.fit.roomservice.model.dto.SurroundingAreaDTO;
-import vn.edu.iuh.fit.roomservice.model.dto.TargetAudienceDTO;
+import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
 import vn.edu.iuh.fit.roomservice.model.entity.Room;
@@ -81,13 +78,13 @@ public class RoomController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<PageResponse<RoomDTO>>> findAllRooms(
+    public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> findAllRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt,desc") String sort,
             @RequestParam(required = false) RoomType roomType
     ) {
-        PageResponse<RoomDTO> pagedResponse = roomService.findAllRooms(page, size, sort, roomType);
+        PageResponse<RoomListDTO> pagedResponse = roomService.findAllRooms(page, size, sort, roomType);
 
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Get all room successful", pagedResponse)
@@ -103,7 +100,7 @@ public class RoomController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<BaseResponse<PageResponse<RoomDTO>>> searchRooms(
+    public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> searchRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt,desc") String sort,
@@ -117,13 +114,13 @@ public class RoomController {
             @RequestParam(required = false) String areaRange,
             @RequestParam(required = false) String roomType,
 
-            @RequestParam(required = false) List<Long> amenities,
-            @RequestParam(required = false) List<Long> environment,
-            @RequestParam(required = false) List<Long> targetAudience
+            @RequestParam(required = false) List<String> amenities,
+            @RequestParam(required = false) List<String> environment,
+            @RequestParam(required = false) List<String> targetAudience
 
 //            @RequestParam(required = false) Boolean hasVideoReview
     ) {
-        PageResponse<RoomDTO> response = roomService.searchRooms(
+        PageResponse<RoomListDTO> response = roomService.searchRooms(
                 page, size, sort,
                 street, district, city,
                 minPrice, maxPrice, areaRange, roomType,

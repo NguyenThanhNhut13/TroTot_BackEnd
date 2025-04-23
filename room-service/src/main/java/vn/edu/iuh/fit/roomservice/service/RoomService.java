@@ -12,6 +12,8 @@ package vn.edu.iuh.fit.roomservice.service;
  * @version:    1.0
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,9 +23,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
+import vn.edu.iuh.fit.roomservice.client.UserClient;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
+import vn.edu.iuh.fit.roomservice.exception.BadRequestException;
 import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
@@ -36,6 +41,7 @@ import vn.edu.iuh.fit.roomservice.repository.SurroundingAreaRepository;
 import vn.edu.iuh.fit.roomservice.repository.TargetAudienceRepository;
 import vn.edu.iuh.fit.roomservice.repository.spec.RoomSpecification;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -50,12 +56,11 @@ public class RoomService {
     private final RoomMapper roomMapper;
     private final ImageMapper imageMapper;
     private final AmenityRepository amenityRepository;
-    private final AmenityMapper amenityMapper;
     private final SurroundingAreaRepository surroundingAreaRepository;
-    private final SurroundingAreaMapper surroundingAreaMapper;
     private final TargetAudienceRepository targetAudienceRepository;
-    private final TargetAudienceMapper targetAudienceMapper;
+    private final UserClient userClient;
 
+    @Transactional(rollbackFor = Exception.class)
     public RoomDTO saveRoom(RoomDTO roomDTO) {
         // Check input data
         validateRoomDTO(roomDTO);
@@ -84,6 +89,23 @@ public class RoomService {
 
         // Save room
         Room savedRoom = roomRepository.save(room);
+
+        try {
+            userClient.usePostSlot(room.getUserId());
+        } catch (FeignException e) {
+            // Kiểm tra lỗi với mã 400 (Bad Request) từ users-service
+            if (e.status() == 400) {
+                // Trích xuất thông điệp lỗi trả về từ service (JSON đã được tự động chuyển thành chuỗi)
+                String message = e.contentUTF8();
+                throw new BadRequestException(message);  // Ném lỗi với thông điệp cụ thể
+            }
+
+            // Nếu không phải lỗi 400, ném lỗi chung cho các mã khác
+            throw new InternalServerErrorException("Error from user service: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            throw new InternalServerErrorException("Unexpected error when posting room!");
+        }
 
         // Return room with address
         RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
@@ -255,7 +277,7 @@ public class RoomService {
         }
     }
 
-    public PageResponse<RoomDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
+    public PageResponse<RoomListDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sort));
 
         Page<Room> roomPage;
@@ -266,25 +288,42 @@ public class RoomService {
             roomPage = roomRepository.findAll(pageable);
         }
 
-        List<RoomDTO> roomDTOs = roomPage.getContent().stream()
+        // Get list unique addressId
+        List<Long> addressIds = roomPage.getContent().stream()
+                .map(Room::getAddressId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // Call API batch to get list address
+        Map<Long, AddressDTO> addressMap = new HashMap<>();
+        try {
+            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.getAddressesByIds(addressIds);
+            List<AddressDTO> addressDTOs = Objects.requireNonNull(response.getBody()).getData();
+            if (addressDTOs != null) {
+                addressMap = addressDTOs.stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toMap(AddressDTO::getId, dto -> dto));
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to fetch address list: " + e.getMessage());
+        }
+
+        Map<Long, AddressDTO> finalAddressMap = addressMap;
+        List<RoomListDTO> roomDTOs = roomPage.getContent().stream()
                 .map(room -> {
-                    RoomDTO dto = roomMapper.toDTO(room);
-                    try {
-                        ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(room.getAddressId());
-                        AddressDTO addressDTO = Objects.requireNonNull(response.getBody()).getData();
-                        dto.setAddress(addressDTO);
-                    } catch (Exception e) {
-                        // Gọi thất bại thì gán null (đã là mặc định nếu chưa set gì rồi)
-                        dto.setAddress(null);
-                        // Log lỗi nếu cần theo dõi
-                        System.err.println("Could not fetch address for roomId: " + room.getId() + ", addressId: " + room.getAddressId() + ", message: " + e.getMessage());
+                    RoomListDTO dto = roomMapper.toListDTO(room);
+                    AddressDTO addressDTO = finalAddressMap.get(room.getAddressId());
+                    if (addressDTO != null) {
+                        dto.setDistrict(addressDTO.getDistrict());
+                        dto.setProvince(addressDTO.getProvince());
                     }
                     return dto;
                 })
                 .toList();
 
 
-        return PageResponse.<RoomDTO>builder()
+        return PageResponse.<RoomListDTO>builder()
                 .content(roomDTOs)
                 .page(roomPage.getNumber())
                 .size(roomPage.getSize())
@@ -440,13 +479,13 @@ public class RoomService {
     }
 
     // Filter search
-    public PageResponse<RoomDTO> searchRooms(
+    public PageResponse<RoomListDTO> searchRooms(
             int page, int size, String sortParam,
             String street, String district, String city,
             Double minPrice, Double maxPrice,
             String areaRange, String roomType,
-            List<Long> amenityIds, List<Long> environmentIds,
-            List<Long> targetAudienceIds
+            List<String> amenityNames, List<String> environmentNames,
+            List<String> targetAudienceNames
     ) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sortParam));
 
@@ -459,22 +498,24 @@ public class RoomService {
 
         Specification<Room> spec = RoomSpecification.buildSpecification(
                 addressIds, minPrice, maxPrice, areaRange, roomType,
-                amenityIds, environmentIds, targetAudienceIds
+                amenityNames, environmentNames, targetAudienceNames
         );
 
         Page<Room> roomPage = roomRepository.findAll(spec, pageable);
 
-        List<RoomDTO> roomDTOs = roomPage.getContent()
-                .stream()
+        List<RoomListDTO> roomDTOs = roomPage.getContent().stream()
                 .map(room -> {
-                    RoomDTO dto = roomMapper.toDTO(room);
+                    RoomListDTO dto = roomMapper.toListDTO(room);
                     AddressDTO addressDTO = addressMap != null ? addressMap.get(room.getAddressId()) : null;
-                    dto.setAddress(addressDTO);
+                    if (addressDTO != null) {
+                        dto.setDistrict(addressDTO.getDistrict());
+                        dto.setProvince(addressDTO.getProvince());
+                    }
                     return dto;
                 })
                 .toList();
 
-        return PageResponse.<RoomDTO>builder()
+        return PageResponse.<RoomListDTO>builder()
                 .content(roomDTOs)
                 .page(roomPage.getNumber())
                 .size(roomPage.getSize())

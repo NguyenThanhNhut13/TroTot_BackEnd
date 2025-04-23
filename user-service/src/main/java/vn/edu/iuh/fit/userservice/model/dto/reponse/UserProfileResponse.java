@@ -15,6 +15,7 @@ package vn.edu.iuh.fit.userservice.model.dto.reponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import vn.edu.iuh.fit.userservice.enumeraion.Gender;
 
 import java.time.LocalDateTime;
 
@@ -25,5 +26,8 @@ public class UserProfileResponse {
     private Long id;
     private String fullName;
     private String address;
+    private Gender gender;
+    private String cccd;
+    private Integer numberOfPosts;
     private LocalDateTime dob;
 }

@@ -16,6 +16,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import vn.edu.iuh.fit.userservice.enumeraion.Gender;
 
 import java.time.LocalDateTime;
 
@@ -35,6 +36,16 @@ public class UserProfile {
     private String address;
 
     private LocalDateTime dob;
+
+    @Column(unique = true, length = 12)
+    private String cccd;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Gender gender = Gender.OTHER;
+
+    @Column(nullable = false)
+    private Integer numberOfPosts = 1;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
