@@ -61,7 +61,8 @@ public class SecurityConfig {
                                 "/api/v1/rooms/surrounding-areas"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/rooms/").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/rooms").hasAnyAuthority("LANDLORD", "ADMIN")
+                        // cho phép tất cả người dùng truy cập vào các endpoint này
+                        .requestMatchers(HttpMethod.POST, "/api/v1/rooms").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/rooms/**").hasAnyAuthority("LANDLORD", "ADMIN")
                         .anyRequest().permitAll()
                 )
