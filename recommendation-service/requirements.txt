@@ -7,3 +7,4 @@ schedule
 requests
 py-eureka-client
 httpx
+apscheduler==3.10.4
