@@ -24,6 +24,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class UserWishlistResponse {
-    private String userId;
+    private Long userId;
     private List<Long> roomIds;
 }

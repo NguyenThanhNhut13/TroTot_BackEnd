@@ -278,13 +278,13 @@ public class UserProfileService {
             return rawData.stream()
                     .filter(row -> row[0] != null && row[1] != null)
                     .collect(Collectors.groupingBy(
-                            row -> String.valueOf(row[0]),
+                            row -> row[0],
                             Collectors.mapping(row -> (Long) row[1], Collectors.toList())
                     ))
                     .entrySet()
                     .stream()
                     .map(entry -> UserWishlistResponse.builder()
-                            .userId(entry.getKey())
+                            .userId((long ) entry.getKey())
                             .roomIds(entry.getValue())
                             .build()
                     )
