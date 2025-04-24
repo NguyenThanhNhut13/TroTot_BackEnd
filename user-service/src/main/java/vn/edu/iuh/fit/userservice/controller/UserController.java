@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.RoomListResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.UserWishlistResponse;
 import vn.edu.iuh.fit.userservice.model.dto.request.AddPostSlotRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
@@ -92,6 +93,15 @@ public class UserController {
         List<RoomListResponse> wishlist = userService.getSavedRooms();
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Get list wishlist successfully!", wishlist)
+        );
+    }
+
+    @GetMapping("/wish-list/all")
+    public ResponseEntity<BaseResponse<List<UserWishlistResponse>>> getAllWishlist() {
+
+        List<UserWishlistResponse> wishlist = userService.getAllWishList();
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get all wishlist successfully!", wishlist)
         );
     }
 

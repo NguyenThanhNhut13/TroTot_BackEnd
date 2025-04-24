@@ -30,6 +30,7 @@ import vn.edu.iuh.fit.userservice.mapper.UserProfileMapper;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.RoomListResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.UserWishlistResponse;
 import vn.edu.iuh.fit.userservice.model.dto.request.DeductRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.exception.UserAlreadyExistsException;
@@ -270,4 +271,28 @@ public class UserProfileService {
         wishlistRepository.delete(optionalWishlist.get());
     }
 
+    public List<UserWishlistResponse> getAllWishList() {
+        try {
+            List<Object[]> rawData = wishlistRepository.findAllUserWishlistRaw();
+
+            return rawData.stream()
+                    .filter(row -> row[0] != null && row[1] != null)
+                    .collect(Collectors.groupingBy(
+                            row -> String.valueOf(row[0]),
+                            Collectors.mapping(row -> (Long) row[1], Collectors.toList())
+                    ))
+                    .entrySet()
+                    .stream()
+                    .map(entry -> UserWishlistResponse.builder()
+                            .userId(entry.getKey())
+                            .roomIds(entry.getValue())
+                            .build()
+                    )
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("Error when get wishlists: "+  e.getMessage());
+            return Collections.emptyList();
+        }
+    }
 }
