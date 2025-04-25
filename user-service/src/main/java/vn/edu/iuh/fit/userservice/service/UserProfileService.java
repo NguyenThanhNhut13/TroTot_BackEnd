@@ -295,4 +295,20 @@ public class UserProfileService {
             return Collections.emptyList();
         }
     }
+
+    public UserWishlistResponse getWishListByUserId(Long userId) {
+        try {
+            List<Long> roomIds = wishlistRepository.findRoomIdsByUserId(userId);
+            return UserWishlistResponse.builder()
+                    .userId(userId)
+                    .roomIds(roomIds)
+                    .build();
+        } catch (Exception e) {
+            System.err.println("Error when get wishlist for user " + userId + ": " + e.getMessage());
+            return UserWishlistResponse.builder()
+                    .userId(userId)
+                    .roomIds(Collections.emptyList())
+                    .build();
+        }
+    }
 }

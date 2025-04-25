@@ -14,6 +14,7 @@ package vn.edu.iuh.fit.userservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.edu.iuh.fit.userservice.model.entity.Wishlist;
 
@@ -28,4 +29,8 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
     @Query("SELECT w.userProfile.id, w.roomId FROM Wishlist w")
     List<Object[]> findAllUserWishlistRaw();
+
+    @Query("SELECT w.roomId FROM Wishlist w WHERE w.userProfile.id = :userId")
+    List<Long> findRoomIdsByUserId(@Param("userId") Long userId);
+
 }

@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/wish-list/{roomId}").hasAnyAuthority("ADMIN", "USER", "LANDLORD")
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/create").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/wish-list/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/{userId}/wish-list").permitAll()
 
                         .requestMatchers(
                                 "/api/v1/auth/**",

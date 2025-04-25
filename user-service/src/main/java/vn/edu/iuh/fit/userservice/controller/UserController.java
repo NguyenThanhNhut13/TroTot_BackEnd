@@ -96,6 +96,15 @@ public class UserController {
         );
     }
 
+    @GetMapping("/{userId}/wish-list")
+    public ResponseEntity<BaseResponse<UserWishlistResponse>> getWishlistByUserId(@PathVariable Long userId) {
+
+        UserWishlistResponse wishlist = userService.getWishListByUserId(userId);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get list wishlist successfully!", wishlist)
+        );
+    }
+
     @GetMapping("/wish-list/all")
     public ResponseEntity<BaseResponse<List<UserWishlistResponse>>> getAllWishlist() {
 
