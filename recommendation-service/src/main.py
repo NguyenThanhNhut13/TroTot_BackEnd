@@ -53,7 +53,7 @@ async def register_with_eureka():
             instance_port=PORT,
             instance_ip="127.0.0.1",  # Dùng IP cố định để tránh lỗi DNS
             instance_host="localhost",
-            renewal_interval_in_secs=30,
+            renewal_interval_in_secs=60,
             duration_in_secs=90
         )
         set_eureka_client(client)  # Lưu client vào eureka_config
