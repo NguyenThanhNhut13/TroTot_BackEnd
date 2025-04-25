@@ -1,5 +1,7 @@
 import numpy as np
 import logging
+import time
+import json
 from redis.asyncio import Redis
 from src.clients.service_client import ServiceClient
 from src.clients.eureka_config import get_eureka_client
@@ -36,10 +38,13 @@ class UserBehaviorModel:
         try:
             data = await self.service_client.call_service(f"/api/v1/users/{user_id}/wish-list")
             if data.get("success"):
+                # Truy cập trực tiếp roomIds từ data["data"]
+                room_ids = data["data"]["roomIds"]
+                # Đảm bảo room_ids là danh sách các số nguyên
+                room_ids = [int(room_id) for room_id in room_ids]
                 # Lưu wish-list vào Redis để sử dụng sau
-                room_ids = [room["id"] for room in data["data"]]
                 if room_ids:
-                    await self.redis_client.set(f"user:{user_id}:wish_list", str(room_ids))
+                    await self.redis_client.set(f"user:{user_id}:wish_list", json.dumps(room_ids))
                 return room_ids
             else:
                 logger.error(f"user-service trả về lỗi: {data.get('message', 'Không có thông báo lỗi')}")
@@ -49,7 +54,7 @@ class UserBehaviorModel:
             # Thử lấy từ Redis nếu có
             cached = await self.redis_client.get(f"user:{user_id}:wish_list")
             if cached:
-                return eval(cached)  # Chuyển chuỗi thành list
+                return json.loads(cached)  # Chuyển chuỗi thành list
             return []
 
     # Lấy tất cả wish-lists và viewed_rooms của các user
@@ -58,7 +63,6 @@ class UserBehaviorModel:
             # Kiểm tra xem dữ liệu đã được cache chưa
             if self.all_user_data and self.last_updated:
                 # Giả sử cache hợp lệ trong 5 phút
-                import time
                 if time.time() - self.last_updated < 300:
                     return self.all_user_data
 
@@ -67,7 +71,8 @@ class UserBehaviorModel:
                 logger.error(f"user-service trả về lỗi: {data.get('message', 'Không có thông báo lỗi')}")
                 return {}
 
-            all_wish_lists = {item["userId"]: item["roomIds"] for item in data["data"]}
+            # data["data"] là danh sách các wish-list
+            all_wish_lists = {str(item["userId"]): [int(room_id) for room_id in item["roomIds"]] for item in data["data"]}
             all_user_data = {}
 
             # Lấy viewed_rooms cho từng user
@@ -191,7 +196,8 @@ class UserBehaviorModel:
                 # Đếm số lần lưu của mỗi phòng
                 all_room_ids = []
                 for user_data in data["data"]:
-                    all_room_ids.extend(user_data["roomIds"])
+                    room_ids = user_data["roomIds"]
+                    all_room_ids.extend(room_ids)
                 saves = [(room_id, count) for room_id, count in Counter(all_room_ids).items()]
 
             # Tính điểm phổ biến: 0.5 * views + 0.5 * saves
