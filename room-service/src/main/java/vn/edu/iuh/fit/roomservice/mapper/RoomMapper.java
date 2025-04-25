@@ -12,16 +12,13 @@ package vn.edu.iuh.fit.roomservice.mapper;
  * @version:    1.0
  */
 
-import org.mapstruct.AfterMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 import vn.edu.iuh.fit.roomservice.model.dto.RoomDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.RoomListDTO;
-import vn.edu.iuh.fit.roomservice.model.entity.Image;
-import vn.edu.iuh.fit.roomservice.model.entity.Room;
-import vn.edu.iuh.fit.roomservice.model.entity.RoomDetail;
+import vn.edu.iuh.fit.roomservice.model.dto.RoomTrainDTO;
+import vn.edu.iuh.fit.roomservice.model.entity.*;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = {
@@ -47,7 +44,15 @@ public interface RoomMapper {
     @Mapping(target = "district", ignore = true)
     @Mapping(target = "province", ignore = true)
     @Mapping(target = "imageUrls", ignore = true)
+    @Mapping(source = "roomType", target = "roomType")
     RoomListDTO toListDTO(Room room);
+
+    @Mapping(target = "amenities", source = "amenities", qualifiedByName = "mapAmenityNames")
+    @Mapping(target = "targetAudiences", source = "targetAudiences", qualifiedByName = "mapTargetAudienceNames")
+    @Mapping(target = "surroundingAreas", source = "surroundingAreas", qualifiedByName = "mapSurroundingAreaNames")
+    @Mapping(target = "province", ignore = true)
+    @Mapping(target = "district", ignore = true)
+    RoomTrainDTO toRoomTrainDTO(Room room);
 
     @AfterMapping
     default void setRoomDetail(@MappingTarget Room room, RoomDTO dto) {
@@ -74,5 +79,26 @@ public interface RoomMapper {
                     .map(Image::getImageUrl)
                     .collect(Collectors.toList()));
         }
+    }
+
+    @Named("mapAmenityNames")
+    static Set<String> mapAmenityNames(Set<Amenity> amenities) {
+        return amenities != null
+                ? amenities.stream().map(Amenity::getName).collect(Collectors.toSet())
+                : null;
+    }
+
+    @Named("mapTargetAudienceNames")
+    static Set<String> mapTargetAudienceNames(Set<TargetAudience> targetAudiences) {
+        return targetAudiences != null
+                ? targetAudiences.stream().map(TargetAudience::getName).collect(Collectors.toSet())
+                : null;
+    }
+
+    @Named("mapSurroundingAreaNames")
+    static Set<String> mapSurroundingAreaNames(Set<SurroundingArea> surroundingAreas) {
+        return surroundingAreas != null
+                ? surroundingAreas.stream().map(SurroundingArea::getName).collect(Collectors.toSet())
+                : null;
     }
 }

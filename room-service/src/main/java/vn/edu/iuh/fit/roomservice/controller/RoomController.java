@@ -21,7 +21,6 @@ import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.request.PushNotificationRequest;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
-import vn.edu.iuh.fit.roomservice.model.entity.Room;
 import vn.edu.iuh.fit.roomservice.service.*;
 
 import java.util.List;
@@ -37,6 +36,8 @@ public class RoomController {
     private final TargetAudienceService targetAudienceService;
     private final PushNotificationProducer pushNotificationProducer;
 
+    //    Nguyễn Quân - Notification - Room service
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @PostMapping
     public ResponseEntity<?> saveRoom(@RequestBody RoomDTO room) {
@@ -133,8 +134,31 @@ public class RoomController {
         );
     }
 
-    //    Nguyễn Quân - Notification - Room service
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    @GetMapping("/export")
+    public ResponseEntity<BaseResponse<List<RoomTrainDTO>>> exportAllRooms() {
+        List<RoomTrainDTO> pagedResponse = roomService.exportAllRooms();
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get room train successful", pagedResponse)
+        );
+    }
+
+    @GetMapping("/{id}/exists")
+    public ResponseEntity<BaseResponse<Boolean>> checkRoomExists(@PathVariable Long id) {
+        boolean exists = roomService.checkRoomExistsById(id);
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Room exists!", exists)
+        );
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<BaseResponse<List<RoomListDTO>>> findByIds(@RequestBody List<Long> ids) {
+        List<RoomListDTO> data = roomService.findByIds(ids);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get rooms successful", data)
+        );
+    }
 
     @GetMapping("/test-kafka")
     public ResponseEntity<String> testKafka() {

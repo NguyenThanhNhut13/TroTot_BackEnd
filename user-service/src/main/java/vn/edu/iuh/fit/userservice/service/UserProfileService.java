@@ -12,32 +12,37 @@ package vn.edu.iuh.fit.userservice.service;
  * @version:    1.0
  */
 
+import feign.FeignException;
 import jakarta.validation.ValidationException;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import vn.edu.iuh.fit.userservice.client.PaymentClient;
+import vn.edu.iuh.fit.userservice.client.RoomClient;
 import vn.edu.iuh.fit.userservice.enumeraion.Gender;
 import vn.edu.iuh.fit.userservice.exception.BadRequestException;
+import vn.edu.iuh.fit.userservice.exception.PaymentFailedException;
 import vn.edu.iuh.fit.userservice.exception.UserNotFoundException;
 import vn.edu.iuh.fit.userservice.mapper.UserProfileMapper;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.RoomListResponse;
 import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.UserWishlistResponse;
+import vn.edu.iuh.fit.userservice.model.dto.request.DeductRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.exception.UserAlreadyExistsException;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
 import vn.edu.iuh.fit.userservice.model.entity.UserProfile;
+import vn.edu.iuh.fit.userservice.model.entity.Wishlist;
 import vn.edu.iuh.fit.userservice.repository.UserProfileRepository;
+import vn.edu.iuh.fit.userservice.repository.WishlistRepository;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +51,9 @@ public class UserProfileService {
     private final UserProfileRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;
+    private final PaymentClient paymentClient;
+    private final RoomClient roomClient;
+    private final WishlistRepository wishlistRepository;
 
     public void createUser(RegisterRequest request) {
         if (userRepository.existsUserProfilesById(request.getId())) {
@@ -128,13 +136,36 @@ public class UserProfileService {
     }
 
 
-    public int addPostSlots(Long userId, int amount) {
+    public int addPostSlots(int amount) {
+        UserProfile user = getCurrentUser();
+
         if (amount <= 0) {
             throw new BadRequestException("Amount must be greater than 0");
         }
 
-        UserProfile user = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+        Map<Integer, Integer> priceMap = Map.of(
+                1, 20000,
+                5, 90000,
+                10, 170000
+        );
+
+        Integer price = priceMap.get(amount);
+        if (price == null) {
+            throw new BadRequestException("Only allowed to buy 1, 5 or 10 slots.");
+        }
+
+        // Gọi payment-service để trừ tiền
+        DeductRequest request = DeductRequest.builder()
+                .amount((long) price)
+                .userId(user.getId())
+                .description("User " + user.getId() + " purchased " + amount + " post slot(s).")
+                .build();
+
+        try {
+            paymentClient.deduct(request);
+        } catch (Exception e) {
+            throw new PaymentFailedException("Unable to deduct payment. Please try again later.");
+        }
 
         int currentPosts = user.getNumberOfPosts() != null ? user.getNumberOfPosts() : 0;
         user.setNumberOfPosts(currentPosts + amount);
@@ -144,9 +175,8 @@ public class UserProfileService {
         return user.getNumberOfPosts();
     }
 
-    public int usePostSlot(Long userId) {
-        UserProfile user = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+    public int usePostSlot() {
+        UserProfile user = getCurrentUser();
 
         if (user.getNumberOfPosts() == null || user.getNumberOfPosts() <= 0) {
             throw new BadRequestException("No post slots available.");
@@ -159,71 +189,126 @@ public class UserProfileService {
         return user.getNumberOfPosts();
     }
 
-    public Map<String, Object> purchasePostSlots(Long userId, int amount, String bearerToken) {
-        int price = switch (amount) {
-            case 1 -> 20000;
-            case 5 -> 90000;
-            case 10 -> 170000;
-            default -> throw new BadRequestException("Chỉ cho phép mua 1, 5 hoặc 10 trọ.");
-        };
-
-        // Truyền token khi gọi trừ tiền
-        boolean isPaid = callDeductApi(userId, price, bearerToken);
-
-        if (!isPaid) {
-            throw new InternalServerErrorException("Thanh toán thất bại. Vui lòng kiểm tra số dư.");
-        }
-
-        int newTotalPosts = addPostSlots(userId, amount);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("newTotalPosts", newTotalPosts);
-        result.put("amountAdded", amount);
-        result.put("amountPaid", price);
-
-        return result;
-    }
-
-
-    private boolean callDeductApi(Long userId, int amount, String bearerToken) {
-        RestTemplate restTemplate = new RestTemplate();
-        String url = "http://localhost:8222/api/v1/payments/deduct";
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("userId", userId);
-        body.put("amount", amount);
-        body.put("description", "Trừ tiền mua lượt đăng trọ");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        System.out.println("🔑 Token gửi sang payment: " + bearerToken);
-        headers.setBearerAuth(bearerToken.replace("Bearer ", ""));
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+    public void addRoomToWishlist(Long roomId) {
+        UserProfile user = getCurrentUser();
 
         try {
-            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-            return response.getStatusCode().is2xxSuccessful();
+            roomClient.checkRoomExists(roomId);
+        } catch (NotFoundException e) {
+            throw new BadRequestException("Room does not exist!");
+        }
+
+        boolean exists = wishlistRepository.existsByUserProfileIdAndRoomId(user.getId(), roomId);
+
+        if (exists) {
+            throw new BadRequestException("Room already exists in wishlist!");
+        }
+
+        Wishlist newWishList = Wishlist.builder()
+                .roomId(roomId)
+                .userProfile(user)
+                .savedAt(LocalDateTime.now())
+                .build();
+
+        wishlistRepository.save(newWishList);
+    }
+
+    public List<RoomListResponse> getSavedRooms() {
+        UserProfile userProfile = getCurrentUser();
+
+        List<Wishlist> wishlists = wishlistRepository.findByUserProfileId(userProfile.getId());
+
+        // Get roomId list
+        List<Long> roomIds = wishlists.stream()
+                .map(Wishlist::getRoomId)
+                .collect(Collectors.toList());
+
+        if (roomIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        try {
+            // Call RoomService to get room details
+            ResponseEntity<BaseResponse<List<RoomListResponse>>> response = roomClient.findByIds(roomIds);
+
+            if (response.getStatusCode().is2xxSuccessful() &&
+                    response.getBody() != null &&
+                    response.getBody().isSuccess()) {
+                return response.getBody().getData();
+            } else {
+                System.err.println("RoomService response error " + response.getBody());
+                return Collections.emptyList();
+            }
+
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            System.err.println("Failed to call RoomService to fetch room details " + e);
+            return Collections.emptyList();
         }
     }
 
-    public int consumePostSlot(Long userId) {
-        UserProfile user = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng có ID: " + userId));
 
-        Integer current = user.getNumberOfPosts();
-        if (current == null || current <= 0) {
-            throw new BadRequestException("Bạn không còn lượt đăng trọ nào.");
+    public void removeRoomFromWishlist(Long roomId) {
+        UserProfile user = getCurrentUser();
+
+        try {
+            roomClient.checkRoomExists(roomId);
+        } catch (FeignException.NotFound e) {
+            System.err.println("Room with ID " + roomId + "does not exist in RoomService");
+            throw new BadRequestException("Room does not exist!");
+        } catch (Exception e) {
+            System.err.println("Error calling RoomService" + e);
+            throw new RuntimeException("Failed to verify room existence");
         }
 
-        user.setNumberOfPosts(current - 1);
-        user.setUpdatedAt(LocalDateTime.now());
-        userProfileRepository.save(user);
+        // find room in wíshlist
+        Optional<Wishlist> optionalWishlist = wishlistRepository.findByUserProfileIdAndRoomId(user.getId(), roomId);
 
-        return user.getNumberOfPosts();
+        if (optionalWishlist.isEmpty()) {
+            throw new BadRequestException("Room not found in wishlist!");
+        }
+
+        // Remove from wishlist
+        wishlistRepository.delete(optionalWishlist.get());
     }
 
+    public List<UserWishlistResponse> getAllWishList() {
+        try {
+            List<Object[]> rawData = wishlistRepository.findAllUserWishlistRaw();
+
+            return rawData.stream()
+                    .filter(row -> row[0] != null && row[1] != null)
+                    .collect(Collectors.groupingBy(
+                            row -> row[0],
+                            Collectors.mapping(row -> (Long) row[1], Collectors.toList())
+                    ))
+                    .entrySet()
+                    .stream()
+                    .map(entry -> UserWishlistResponse.builder()
+                            .userId((long ) entry.getKey())
+                            .roomIds(entry.getValue())
+                            .build()
+                    )
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("Error when get wishlists: "+  e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public UserWishlistResponse getWishListByUserId(Long userId) {
+        try {
+            List<Long> roomIds = wishlistRepository.findRoomIdsByUserId(userId);
+            return UserWishlistResponse.builder()
+                    .userId(userId)
+                    .roomIds(roomIds)
+                    .build();
+        } catch (Exception e) {
+            System.err.println("Error when get wishlist for user " + userId + ": " + e.getMessage());
+            return UserWishlistResponse.builder()
+                    .userId(userId)
+                    .roomIds(Collections.emptyList())
+                    .build();
+        }
+    }
 }
