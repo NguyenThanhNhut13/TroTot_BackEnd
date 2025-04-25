@@ -138,6 +138,29 @@ async def track_save(request: TrackSaveRequest):
         logger.error(f"Lỗi khi ghi nhận lưu phòng: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Lỗi khi ghi nhận lưu phòng: {str(e)}")
 
+# API huấn luyện mô hình
+@router.post("/train")
+async def train_models():
+    try:
+        # Lấy dữ liệu phòng mới nhất từ room-service
+        rooms_data = await get_rooms_data()
+        
+        # Huấn luyện content_model
+        content_model = get_content_model()
+        content_model.train(rooms_data)  # Giả định RecommendModel có phương thức train()
+        logger.info("Huấn luyện content_model thành công")
+
+        # UserBehaviorModel tự cập nhật trong recommend_user_based(), không cần huấn luyện ở đây
+
+        return {
+            "success": True,
+            "message": "Huấn luyện mô hình thành công",
+            "data": None
+        }
+    except Exception as e:
+        logger.error(f"Lỗi khi huấn luyện mô hình: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Lỗi khi huấn luyện mô hình: {str(e)}")
+     
 # API gợi ý phòng cho user
 @router.get("/user/{user_id}")
 async def recommend_user(user_id: int, limit: int = 5):
