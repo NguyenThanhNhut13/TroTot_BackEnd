@@ -14,16 +14,14 @@ package vn.edu.iuh.fit.roomservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
+import vn.edu.iuh.fit.roomservice.model.dto.request.PushNotificationRequest;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
-import vn.edu.iuh.fit.roomservice.model.entity.Room;
-import vn.edu.iuh.fit.roomservice.service.AmenityService;
-import vn.edu.iuh.fit.roomservice.service.RoomService;
-import vn.edu.iuh.fit.roomservice.service.SurroundingAreaService;
-import vn.edu.iuh.fit.roomservice.service.TargetAudienceService;
+import vn.edu.iuh.fit.roomservice.service.*;
 
 import java.util.List;
 
@@ -36,6 +34,10 @@ public class RoomController {
     private final AmenityService amenityService;
     private final SurroundingAreaService surroundingAreaService;
     private final TargetAudienceService targetAudienceService;
+    private final PushNotificationProducer pushNotificationProducer;
+
+    //    Nguyễn Quân - Notification - Room service
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @PostMapping
     public ResponseEntity<?> saveRoom(@RequestBody RoomDTO room) {
@@ -158,7 +160,19 @@ public class RoomController {
         );
     }
 
-
-
+    @GetMapping("/test-kafka")
+    public ResponseEntity<String> testKafka() {
+        kafkaTemplate.send("push-notification", "Test", "Hello from room-service!");
+        return ResponseEntity.ok("Sent!");
+    }
+    @PostMapping("/notify")
+    public ResponseEntity<BaseResponse<String>> sendPushNotification(
+            @RequestBody PushNotificationRequest request
+    ) {
+        pushNotificationProducer.sendNotification(request);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Gửi thông báo thành công", "Đã gửi push notification đến Kafka topic")
+        );
+    }
 
 }

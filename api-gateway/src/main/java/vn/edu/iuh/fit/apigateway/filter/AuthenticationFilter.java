@@ -61,7 +61,9 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
                     "/api/v1/rooms/amenities",
                     "/api/v1/rooms/target-audiences",
                     "/api/v1/rooms/surrounding-areas",
-                    "/api/v1/rooms/**"),
+                    "/api/v1/rooms/**",
+                    "/api/v1/users/wish-list/all",
+                    "/api/v1/users/[^/]+/wish-list"),
             "POST", List.of(
                     "/api/v1/auth/login",
                     "/api/v1/auth/register",
