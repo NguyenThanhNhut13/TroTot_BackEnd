@@ -70,15 +70,8 @@ public class RoomService {
         roomDTO.setCreatedAt(now);
         roomDTO.setUpdatedAt(now);
 
-        AddressDTO addressDTO;
         // Call address service to insert address
-        try {
-            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.addAddress(roomDTO.getAddress());
-            addressDTO = Objects.requireNonNull(response.getBody()).getData();
-
-        } catch (Exception e) {
-            throw new InternalServerErrorException("Error when insert address!");
-        }
+        AddressDTO addressDTO = saveOrUpdateAddress(null, roomDTO.getAddress());
 
         Room room = roomMapper.toEntity(roomDTO);
         room.setStatus(RoomStatus.PENDING);
@@ -93,14 +86,13 @@ public class RoomService {
         try {
             userClient.usePostSlot(room.getUserId());
         } catch (FeignException e) {
-            // Kiểm tra lỗi với mã 400 (Bad Request) từ users-service
+            // Check for 400 error (Bad Request) from users-service
             if (e.status() == 400) {
-                // Trích xuất thông điệp lỗi trả về từ service (JSON đã được tự động chuyển thành chuỗi)
+                // Extract error message from service (JSON automatically converted to string)
                 String message = e.contentUTF8();
-                throw new BadRequestException(message);  // Ném lỗi với thông điệp cụ thể
+                throw new BadRequestException(message);
             }
-
-            // Nếu không phải lỗi 400, ném lỗi chung cho các mã khác
+            // For non-400 errors, throw general error with different codes
             throw new InternalServerErrorException("Error from user service: " + e.getMessage());
         } catch (Exception e) {
             System.err.println("Unexpected error: " + e.getMessage());
@@ -113,6 +105,158 @@ public class RoomService {
         return returnRoom;
     }
 
+    public RoomDTO updateRoom(Long roomId, RoomDTO roomDTO) {
+        // Check input data
+        validateRoomDTO(roomDTO);
+
+        // Get room with id
+        Room existingRoom = getRoomById(roomId);
+
+        // Convert DTO to entity
+        Room updatedRoom = roomMapper.toEntity(roomDTO);
+        updatedRoom.setId(existingRoom.getId());
+        updatedRoom.setCreatedAt(existingRoom.getCreatedAt());
+        updatedRoom.setUpdatedAt(LocalDateTime.now());
+        updatedRoom.setStatus(existingRoom.getStatus());
+
+        RoomDetail existingRoomDetail = existingRoom.getRoomDetail();
+        if (existingRoomDetail != null) {
+            // Update RoomDetail existing
+            existingRoomDetail.setNumberOfLivingRooms(updatedRoom.getRoomDetail().getNumberOfLivingRooms());
+            existingRoomDetail.setNumberOfKitchens(updatedRoom.getRoomDetail().getNumberOfKitchens());
+            existingRoomDetail.setNumberOfBathrooms(updatedRoom.getRoomDetail().getNumberOfBathrooms());
+            existingRoomDetail.setNumberOfBedrooms(updatedRoom.getRoomDetail().getNumberOfBedrooms());
+            updatedRoom.setRoomDetail(existingRoomDetail);
+        } else {
+            // If there is no RoomDetail, assign a new RoomDetail
+            updatedRoom.setRoomDetail(updatedRoom.getRoomDetail());
+        }
+
+        // Address processing
+        AddressDTO addressDTO = saveOrUpdateAddress(existingRoom.getAddressId(), roomDTO.getAddress());
+        updatedRoom.setAddressId(addressDTO.getId());
+
+        // Prepare data
+        updatedRoom = prepareRoomData(roomDTO, updatedRoom);
+
+        // Save
+        Room savedRoom = roomRepository.save(updatedRoom);
+
+        // Return DTO
+        RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
+        returnRoom.setAddress(addressDTO);
+        return returnRoom;
+    }
+
+    public RoomDTO findById(Long id) {
+        Room room = getRoomById(id);
+        AddressDTO addressDTO = getAddressById(room.getAddressId());
+
+        List<ImageDTO> imageDTO = room.getImages()
+                .stream().map(imageMapper::toDTO)
+                .toList();
+
+        RoomDTO roomDTO = roomMapper.toDTO(room);
+        roomDTO.setAddress(addressDTO);
+        roomDTO.setImages(imageDTO);
+
+        return roomDTO;
+    }
+
+    public PageResponse<RoomListDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
+        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
+
+        Page<Room> roomPage;
+
+        if (roomType != null) {
+            roomPage = roomRepository.findByRoomType(roomType, pageable);
+        } else {
+            roomPage = roomRepository.findAll(pageable);
+        }
+
+        // Get list of rooms with address info
+        return buildRoomPageResponse(roomPage);
+    }
+
+    public PageResponse<RoomListDTO> searchRooms(
+            int page, int size, String sortParam,
+            String street, String district, String city,
+            Double minPrice, Double maxPrice,
+            String areaRange, String roomType,
+            List<String> amenityNames, List<String> environmentNames,
+            List<String> targetAudienceNames
+    ) {
+        Pageable pageable = PageRequest.of(page, size, parseSort(sortParam));
+
+        // Get addresses and create map for quick lookup
+        Map<Long, AddressDTO> addressMap = fetchAddressMap(street, district, city);
+
+        List<Long> addressIds = (addressMap != null && !addressMap.isEmpty())
+                ? new ArrayList<>(addressMap.keySet())
+                : null;
+
+        Specification<Room> spec = RoomSpecification.buildSpecification(
+                addressIds, minPrice, maxPrice, areaRange, roomType,
+                amenityNames, environmentNames, targetAudienceNames
+        );
+
+        Page<Room> roomPage = roomRepository.findAll(spec, pageable);
+
+        // Build response with address info
+        return buildRoomPageResponseWithAddressMap(roomPage, addressMap);
+    }
+
+    public List<RoomTrainDTO> exportAllRooms() {
+        List<Room> rooms = roomRepository.findAll();
+
+        // Get addresses for all rooms
+        Map<Long, AddressDTO> addressMap = getAddressMapForRooms(rooms);
+
+        return rooms.stream()
+                .map(room -> {
+                    RoomTrainDTO dto = roomMapper.toRoomTrainDTO(room);
+                    AddressDTO addressDTO = addressMap.get(room.getAddressId());
+                    if (addressDTO != null) {
+                        dto.setDistrict(addressDTO.getDistrict());
+                        dto.setProvince(addressDTO.getProvince());
+                    }
+                    return dto;
+                })
+                .toList();
+    }
+
+    public List<RoomListDTO> findByIds(List<Long> ids) {
+        List<Room> rooms = roomRepository.findAllById(ids);
+
+        // Get addresses for all rooms
+        Map<Long, AddressDTO> addressMap = getAddressMapForRooms(rooms);
+
+        return rooms.stream()
+                .map(room -> {
+                    RoomListDTO dto = roomMapper.toListDTO(room);
+                    AddressDTO addressDTO = addressMap.get(room.getAddressId());
+                    if (addressDTO != null) {
+                        dto.setDistrict(addressDTO.getDistrict());
+                        dto.setProvince(addressDTO.getProvince());
+                    }
+                    return dto;
+                })
+                .toList();
+    }
+
+    public boolean checkRoomExistsById(Long roomId) {
+        boolean exists = roomRepository.existsById(roomId);
+        if (!exists) {
+            throw new RoomNotFoundException("Room not found with ID: " + roomId);
+        }
+        return true;
+    }
+
+    // ====================== HELPER METHODS ======================
+
+    /**
+     * Validates the RoomDTO for required fields and valid values
+     */
     private void validateRoomDTO(RoomDTO roomDTO) {
         // Basic check
         if (roomDTO == null) throw new IllegalArgumentException("RoomDTO cannot be null");
@@ -171,12 +315,6 @@ public class RoomService {
             }
         }
 
-        List<Image> images = new ArrayList<>();
-        if (roomDTO.getImages() != null ) {
-            images = roomDTO.getImages()
-                    .stream().map(imageMapper::toEntity).toList();
-        }
-
         // Check amenities, environments, targetAudiences and get data from database
         if (roomDTO.getAmenities() != null) {
             for (AmenityDTO amenity : roomDTO.getAmenities()) {
@@ -195,6 +333,9 @@ public class RoomService {
         }
     }
 
+    /**
+     * Prepares room data by setting related entities
+     */
     private Room prepareRoomData(RoomDTO roomDTO, Room room) {
         // Image processing
         List<Image> images = roomDTO.getImages().stream().map(imageMapper::toEntity).toList();
@@ -236,8 +377,6 @@ public class RoomService {
     /**
      * Check the validity of the phone number
      * Support international and Vietnamese formats
-     * @param phone The phone number to check
-     * @return true if the phone number is valid, false if invalid
      */
     private boolean isValidPhone(String phone) {
         if (phone == null || phone.isEmpty()) return false;
@@ -277,63 +416,9 @@ public class RoomService {
         }
     }
 
-    public PageResponse<RoomListDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
-        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
-
-        Page<Room> roomPage;
-
-        if (roomType != null) {
-            roomPage = roomRepository.findByRoomType(roomType, pageable);
-        } else {
-            roomPage = roomRepository.findAll(pageable);
-        }
-
-        // Get list unique addressId
-        List<Long> addressIds = roomPage.getContent().stream()
-                .map(Room::getAddressId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-
-        // Call API batch to get list address
-        Map<Long, AddressDTO> addressMap = new HashMap<>();
-        try {
-            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.getAddressesByIds(addressIds);
-            List<AddressDTO> addressDTOs = Objects.requireNonNull(response.getBody()).getData();
-            if (addressDTOs != null) {
-                addressMap = addressDTOs.stream()
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(AddressDTO::getId, dto -> dto));
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to fetch address list: " + e.getMessage());
-        }
-
-        Map<Long, AddressDTO> finalAddressMap = addressMap;
-        List<RoomListDTO> roomDTOs = roomPage.getContent().stream()
-                .map(room -> {
-                    RoomListDTO dto = roomMapper.toListDTO(room);
-                    AddressDTO addressDTO = finalAddressMap.get(room.getAddressId());
-                    if (addressDTO != null) {
-                        dto.setDistrict(addressDTO.getDistrict());
-                        dto.setProvince(addressDTO.getProvince());
-                    }
-                    return dto;
-                })
-                .toList();
-
-
-        return PageResponse.<RoomListDTO>builder()
-                .content(roomDTOs)
-                .page(roomPage.getNumber())
-                .size(roomPage.getSize())
-                .totalElements(roomPage.getTotalElements())
-                .totalPages(roomPage.getTotalPages())
-                .last(roomPage.isLast())
-                .build();
-    }
-
-   // Sort
+    /**
+     * Parse sort string into Sort object
+     */
     private Sort parseSort(String sort) {
         // Default sort createAt desc if not have value
         if (sort == null || sort.isEmpty()) {
@@ -363,146 +448,111 @@ public class RoomService {
         return Sort.by(orders);
     }
 
-
-//    public List<RoomDTO> findRoomsByAddress(String street, String district, String city) {
-//        List<AddressDTO> addressDTOS = addressClient.search(street, district, city).getBody();
-//
-//        assert addressDTOS != null;
-//        if (addressDTOS.isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//
-//        List<Long> addressIds = addressDTOS.stream().map(AddressDTO::getId).collect(Collectors.toList());
-//        List<Room> rooms = roomRepository.findByAddressIdIn(addressIds);
-//
-//        return rooms.stream().map(room ->
-//                RoomDTO.builder()
-//                        .id(room.getId())
-//                        .userId(room.getUserId())
-//                        .title(room.getTitle())
-//                        .description(room.getDescription())
-//                        .price(room.getPrice())
-//                        .area(room.getArea())
-//                        .images(imageMapper.toDTOs(room.getImages()))
-//                        .amenities(room.getAmenities().stream()
-//                                .map(a -> new AmenityDTO(a.getId(), a.getName()))
-//                                .collect(Collectors.toSet()))
-//                        .surroundingAreas(room.getSurroundingAreas().stream()
-//                                .map(e -> new SurroundingAreaDTO(e.getId(), e.getName()))
-//                                .collect(Collectors.toSet()))
-//                        .targetAudiences(room.getTargetAudiences().stream()
-//                                .map(t -> new TargetAudienceDTO(t.getId(), t.getName()))
-//                                .collect(Collectors.toSet()))
-//                        .createdAt(room.getCreatedAt())
-//                        .updatedAt(room.getUpdatedAt())
-//                        .address(addressDTOS.stream()
-//                                .filter(a -> a.getId().equals(room.getAddressId()))
-//                                .findFirst()
-//                                .orElse(null)) // Gán đúng AddressDTO
-//                        .build()
-//        ).collect(Collectors.toList());
-//
-//    }
-
-    public RoomDTO findById(Long id) {
-        Room room = roomRepository.findById(id).orElseThrow(
+    /**
+     * Gets a room by ID or throws exception if not found
+     */
+    private Room getRoomById(Long id) {
+        return roomRepository.findById(id).orElseThrow(
                 () -> new RoomNotFoundException("Room not found with id: " + id));
+    }
 
-        AddressDTO addressDTO;
-        // Call address service to get address
+    /**
+     * Gets an address by ID from the address service
+     */
+    private AddressDTO getAddressById(Long addressId) {
         try {
-            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(room.getAddressId());
-            addressDTO = Objects.requireNonNull(response.getBody()).getData();
+            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(addressId);
+            return Objects.requireNonNull(response.getBody()).getData();
         } catch (Exception e) {
-            throw new InternalServerErrorException("Error when get address!");
+            throw new InternalServerErrorException("Error when getting address: " + e.getMessage());
         }
+    }
 
-        List<ImageDTO> imageDTO = room.getImages()
-                .stream().map(imageMapper::toDTO)
+    /**
+     * Save or update address through address service
+     */
+    private AddressDTO saveOrUpdateAddress(Long addressId, AddressDTO addressDTO) {
+        try {
+            ResponseEntity<BaseResponse<AddressDTO>> response;
+            if (addressId == null) {
+                // Create new address
+                response = addressClient.addAddress(addressDTO);
+            } else {
+                // Update existing address
+                response = addressClient.updateAddress(addressId, addressDTO);
+            }
+            return Objects.requireNonNull(response.getBody()).getData();
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Error when processing address: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Gets address map for search filters
+     */
+    private Map<Long, AddressDTO> fetchAddressMap(String street, String district, String city) {
+        if (street == null && district == null && city == null) return null;
+
+        try {
+            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.searchAddresses(street, district, city);
+
+            return Optional.ofNullable(response)
+                    .filter(res -> res.getStatusCode().is2xxSuccessful())
+                    .map(ResponseEntity::getBody)
+                    .map(BaseResponse::getData)
+                    .orElse(List.of()) // fallback empty
+                    .stream()
+                    .collect(Collectors.toMap(AddressDTO::getId, Function.identity()));
+        } catch (Exception e) {
+            System.err.println("Error fetching addresses: " + e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Gets all addresses for a list of rooms
+     */
+    private Map<Long, AddressDTO> getAddressMapForRooms(List<Room> rooms) {
+        List<Long> addressIds = rooms.stream()
+                .map(Room::getAddressId)
+                .filter(Objects::nonNull)
+                .distinct()
                 .toList();
 
-        RoomDTO roomDTO = roomMapper.toDTO(room);
-        roomDTO.setAddress(addressDTO);
-        roomDTO.setImages(imageDTO);
-
-        return roomDTO;
-    }
-
-    public RoomDTO updateRoom(Long roomId, RoomDTO roomDTO) {
-        // Check input data
-        validateRoomDTO(roomDTO);
-
-        // Get room with id
-        Room existingRoom = roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room with ID " + roomId + " not found"));
-
-        // Convert DTO to entity
-        Room updatedRoom = roomMapper.toEntity(roomDTO);
-        updatedRoom.setId(existingRoom.getId());
-        updatedRoom.setCreatedAt(existingRoom.getCreatedAt());
-        updatedRoom.setUpdatedAt(LocalDateTime.now());
-        updatedRoom.setStatus(existingRoom.getStatus());
-
-        RoomDetail existingRoomDetail = existingRoom.getRoomDetail();
-        if (existingRoomDetail != null) {
-            // Update RoomDetail existing
-            existingRoomDetail.setNumberOfLivingRooms(updatedRoom.getRoomDetail().getNumberOfLivingRooms());
-            existingRoomDetail.setNumberOfKitchens(updatedRoom.getRoomDetail().getNumberOfKitchens());
-            existingRoomDetail.setNumberOfBathrooms(updatedRoom.getRoomDetail().getNumberOfBathrooms());
-            existingRoomDetail.setNumberOfBedrooms(updatedRoom.getRoomDetail().getNumberOfBedrooms());
-            updatedRoom.setRoomDetail(existingRoomDetail);
-        } else {
-            // If there is no RoomDetail, assign a new RoomDetail
-            updatedRoom.setRoomDetail(updatedRoom.getRoomDetail());
+        if (addressIds.isEmpty()) {
+            return Collections.emptyMap();
         }
 
-        // Address processing
-        AddressDTO addressDTO;
         try {
-            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.updateAddress(existingRoom.getAddressId(), roomDTO.getAddress());
-            addressDTO = Objects.requireNonNull(response.getBody()).getData();
+            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.getAddressesByIds(addressIds);
+            BaseResponse<List<AddressDTO>> responseBody = response.getBody();
+
+            if (responseBody != null && responseBody.getData() != null) {
+                return responseBody.getData().stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toMap(AddressDTO::getId, dto -> dto));
+            }
         } catch (Exception e) {
-            throw new InternalServerErrorException("Error when updating address!");
+            System.err.println("Failed to fetch address list: " + e.getMessage());
         }
-        updatedRoom.setAddressId(addressDTO.getId());
 
-        // Prepare data
-        updatedRoom = prepareRoomData(roomDTO, updatedRoom);
-
-        // Save
-        Room savedRoom = roomRepository.save(updatedRoom);
-
-        // Return DTO
-        RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
-        returnRoom.setAddress(addressDTO);
-        return returnRoom;
+        return Collections.emptyMap();
     }
 
-    // Filter search
-    public PageResponse<RoomListDTO> searchRooms(
-            int page, int size, String sortParam,
-            String street, String district, String city,
-            Double minPrice, Double maxPrice,
-            String areaRange, String roomType,
-            List<String> amenityNames, List<String> environmentNames,
-            List<String> targetAudienceNames
-    ) {
-        Pageable pageable = PageRequest.of(page, size, parseSort(sortParam));
+    /**
+     * Builds page response for room listings
+     */
+    private PageResponse<RoomListDTO> buildRoomPageResponse(Page<Room> roomPage) {
+        // Get addresses for all rooms
+        Map<Long, AddressDTO> addressMap = getAddressMapForRooms(roomPage.getContent());
 
-        // Lấy danh sách địa chỉ và tạo Map để tra nhanh
-        Map<Long, AddressDTO> addressMap = fetchAddressMap(street, district, city);
+        return buildRoomPageResponseWithAddressMap(roomPage, addressMap);
+    }
 
-        List<Long> addressIds = (addressMap != null && !addressMap.isEmpty())
-                ? new ArrayList<>(addressMap.keySet())
-                : null;
-
-        Specification<Room> spec = RoomSpecification.buildSpecification(
-                addressIds, minPrice, maxPrice, areaRange, roomType,
-                amenityNames, environmentNames, targetAudienceNames
-        );
-
-        Page<Room> roomPage = roomRepository.findAll(spec, pageable);
-
+    /**
+     * Builds page response for room listings with provided address map
+     */
+    private PageResponse<RoomListDTO> buildRoomPageResponseWithAddressMap(Page<Room> roomPage, Map<Long, AddressDTO> addressMap) {
         List<RoomListDTO> roomDTOs = roomPage.getContent().stream()
                 .map(room -> {
                     RoomListDTO dto = roomMapper.toListDTO(room);
@@ -524,22 +574,4 @@ public class RoomService {
                 .last(roomPage.isLast())
                 .build();
     }
-
-    private Map<Long, AddressDTO> fetchAddressMap(String street, String district, String city) {
-        if (street == null && district == null && city == null) return null;
-
-        ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.searchAddresses(street, district, city);
-
-        return Optional.ofNullable(response)
-                .filter(res -> res.getStatusCode().is2xxSuccessful())
-                .map(ResponseEntity::getBody)
-                .map(BaseResponse::getData)
-                .orElse(List.of()) // fallback empty
-                .stream()
-                .collect(Collectors.toMap(AddressDTO::getId, Function.identity()));
-    }
-
-
-
-
 }

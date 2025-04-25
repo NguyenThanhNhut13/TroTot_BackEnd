@@ -29,7 +29,7 @@ public class RoomListDTO {
     private String title;
     private double price;
     private double area;
-    private RoomType roomType;
+    private String roomType;
     private List<String> imageUrls;
     private String district;
     private String province;
