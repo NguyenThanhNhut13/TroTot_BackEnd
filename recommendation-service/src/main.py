@@ -9,12 +9,21 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import httpx
 from redis.asyncio import Redis
+from fastapi.middleware.cors import CORSMiddleware
 
 # Cấu hình logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Cho phép origin từ localhost:3000
+    allow_credentials=True,
+    allow_methods=["*"],  # Cho phép tất cả các phương thức (GET, POST, v.v.)
+    allow_headers=["*"],  # Cho phép tất cả các header
+)
 
 # Đọc cấu hình từ Config Server
 try:
