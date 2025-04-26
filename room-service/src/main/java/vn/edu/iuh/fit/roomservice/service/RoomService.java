@@ -84,7 +84,7 @@ public class RoomService {
         Room savedRoom = roomRepository.save(room);
 
         try {
-            userClient.usePostSlot(room.getUserId());
+            userClient.usePostSlot();
         } catch (FeignException e) {
             // Check for 400 error (Bad Request) from users-service
             if (e.status() == 400) {

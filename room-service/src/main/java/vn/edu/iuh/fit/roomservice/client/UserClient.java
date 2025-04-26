@@ -22,6 +22,6 @@ import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 @FeignClient(name = "user-service", configuration = FeignClientConfig.class)
 public interface UserClient {
 
-    @PostMapping("/api/v1/users/{userId}/use-post-slot")
-    ResponseEntity<BaseResponse<Integer>> usePostSlot(@PathVariable Long userId);
+    @PostMapping("/api/v1/users/use-post-slot")
+    ResponseEntity<BaseResponse<Integer>> usePostSlot();
 }
