@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+**/.env
+
+config-server/src/main/resources/configurations/
+config-server/src/main/resources/kafka-cert

@@ -1,0 +1,2 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+ vn.edu.iuh.fit.roomservice.config.KafkaCertEnvLoader
