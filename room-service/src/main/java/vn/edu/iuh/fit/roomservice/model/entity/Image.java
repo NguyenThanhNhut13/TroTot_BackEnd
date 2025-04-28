@@ -34,5 +34,17 @@ public class Image {
     @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Image)) return false;
+        return id != null && id.equals(((Image) o).getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
 

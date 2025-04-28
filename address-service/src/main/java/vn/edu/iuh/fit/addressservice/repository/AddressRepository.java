@@ -32,4 +32,7 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
                                                                     @Param("district") String district,
                                                                     @Param("province") String province);
 
+
+    @Query("SELECT a FROM Address a WHERE a.id IN :ids")
+    List<Address> findProjectionsByIds(@Param("ids") List<Long> ids);
 }

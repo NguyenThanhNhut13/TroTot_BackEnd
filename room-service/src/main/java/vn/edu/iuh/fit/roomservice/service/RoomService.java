@@ -164,18 +164,26 @@ public class RoomService {
     }
 
     public PageResponse<RoomListDTO> findAllRooms(int page, int size, String sort, RoomType roomType) {
-        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
+        long totalStart = System.currentTimeMillis();
 
+        long startFetchRoom = System.currentTimeMillis();
+        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
         Page<Room> roomPage;
 
         if (roomType != null) {
             roomPage = roomRepository.findByRoomType(roomType, pageable);
         } else {
-            roomPage = roomRepository.findAll(pageable);
+            roomPage = roomRepository.findAllRooms(pageable);
         }
+        System.out.println("⏱️ Time to fetch Room from DB: " + (System.currentTimeMillis() - startFetchRoom) + "ms");
 
-        // Get list of rooms with address info
-        return buildRoomPageResponse(roomPage);
+        long startBuildRoomPage = System.currentTimeMillis();
+        PageResponse<RoomListDTO> response = buildRoomPageResponse(roomPage);
+        System.out.println("⏱️ Time to build Room Page (with addresses): " + (System.currentTimeMillis() - startBuildRoomPage) + "ms");
+
+        System.out.println("✅ Total time for findAllRooms: " + (System.currentTimeMillis() - totalStart) + "ms");
+
+        return response;
     }
 
     public PageResponse<RoomListDTO> searchRooms(
@@ -338,7 +346,7 @@ public class RoomService {
      */
     private Room prepareRoomData(RoomDTO roomDTO, Room room) {
         // Image processing
-        List<Image> images = roomDTO.getImages().stream().map(imageMapper::toEntity).toList();
+        Set<Image> images = roomDTO.getImages().stream().map(imageMapper::toEntity).collect(Collectors.toSet());
         for (Image image : images) {
             image.setRoom(room);
         }
@@ -513,24 +521,32 @@ public class RoomService {
      * Gets all addresses for a list of rooms
      */
     private Map<Long, AddressDTO> getAddressMapForRooms(List<Room> rooms) {
+        long start = System.currentTimeMillis();
         List<Long> addressIds = rooms.stream()
                 .map(Room::getAddressId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
+        System.out.println("⏱️ Time to extract Address IDs: " + (System.currentTimeMillis() - start) + "ms");
 
         if (addressIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
         try {
+            start = System.currentTimeMillis();
             ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.getAddressesByIds(addressIds);
+            System.out.println("⏱️ Time to call addressClient.getAddressesByIds: " + (System.currentTimeMillis() - start) + "ms");
+
+            start = System.currentTimeMillis();
             BaseResponse<List<AddressDTO>> responseBody = response.getBody();
 
             if (responseBody != null && responseBody.getData() != null) {
-                return responseBody.getData().stream()
+                Map<Long, AddressDTO> addressDTOMap = responseBody.getData().stream()
                         .filter(Objects::nonNull)
                         .collect(Collectors.toMap(AddressDTO::getId, dto -> dto));
+                System.out.println("⏱️ Time to map AddressDTO list to Map: " + (System.currentTimeMillis() - start) + "ms");
+                return addressDTOMap;
             }
         } catch (Exception e) {
             System.err.println("Failed to fetch address list: " + e.getMessage());
@@ -543,29 +559,71 @@ public class RoomService {
      * Builds page response for room listings
      */
     private PageResponse<RoomListDTO> buildRoomPageResponse(Page<Room> roomPage) {
-        // Get addresses for all rooms
+        long start = System.currentTimeMillis();
         Map<Long, AddressDTO> addressMap = getAddressMapForRooms(roomPage.getContent());
+        System.out.println("⏱️ Time to fetch all Addresses: " + (System.currentTimeMillis() - start) + "ms");
 
-        return buildRoomPageResponseWithAddressMap(roomPage, addressMap);
+        start = System.currentTimeMillis();
+        PageResponse<RoomListDTO> response = buildRoomPageResponseWithAddressMap(roomPage, addressMap);
+        System.out.println("⏱️ Time to build RoomListDTO with AddressMap: " + (System.currentTimeMillis() - start) + "ms");
+
+        return response;
     }
 
     /**
      * Builds page response for room listings with provided address map
      */
     private PageResponse<RoomListDTO> buildRoomPageResponseWithAddressMap(Page<Room> roomPage, Map<Long, AddressDTO> addressMap) {
-        List<RoomListDTO> roomDTOs = roomPage.getContent().stream()
-                .map(room -> {
-                    RoomListDTO dto = roomMapper.toListDTO(room);
-                    AddressDTO addressDTO = addressMap != null ? addressMap.get(room.getAddressId()) : null;
-                    if (addressDTO != null) {
-                        dto.setDistrict(addressDTO.getDistrict());
-                        dto.setProvince(addressDTO.getProvince());
-                    }
-                    return dto;
-                })
-                .toList();
+        System.out.println("=== PERFORMANCE ANALYSIS ===");
+        System.out.println("Total rooms to process: " + roomPage.getContent().size());
 
-        return PageResponse.<RoomListDTO>builder()
+        long totalMappingTime = 0;
+        long totalAddressLookupTime = 0;
+        long totalAddressSettingTime = 0;
+
+        List<RoomListDTO> roomDTOs = new ArrayList<>(roomPage.getContent().size());
+
+        // Đo thời gian cho mỗi phòng riêng biệt
+        for (Room room : roomPage.getContent()) {
+            // 1. Đo thời gian mapping
+            long startMapping = System.currentTimeMillis();
+            RoomListDTO dto = roomMapper.toListDTO(room);
+            long mappingTime = System.currentTimeMillis() - startMapping;
+            totalMappingTime += mappingTime;
+
+            // 2. Đo thời gian lấy địa chỉ
+            long startAddressLookup = System.currentTimeMillis();
+            AddressDTO addressDTO = null;
+            if (room.getAddressId() != null) {
+                addressDTO = addressMap.get(room.getAddressId());
+            }
+            long addressLookupTime = System.currentTimeMillis() - startAddressLookup;
+            totalAddressLookupTime += addressLookupTime;
+
+            // 3. Đo thời gian thiết lập địa chỉ
+            long startAddressSetting = System.currentTimeMillis();
+            if (addressDTO != null) {
+                dto.setDistrict(addressDTO.getDistrict());
+                dto.setProvince(addressDTO.getProvince());
+            }
+            long addressSettingTime = System.currentTimeMillis() - startAddressSetting;
+            totalAddressSettingTime += addressSettingTime;
+
+//            // Ghi log cho 10 phòng đầu tiên để tham khảo
+//            if (roomDTOs.size() < 10) {
+//                System.out.println("Room #" + (roomDTOs.size() + 1) + " (ID: " + room.getId() + "):");
+//                System.out.println("  - Mapping time: " + mappingTime + "ms");
+//                System.out.println("  - Address lookup time: " + addressLookupTime + "ms");
+//                System.out.println("  - Address setting time: " + addressSettingTime + "ms");
+//                System.out.println("  - Total for this room: " + (mappingTime + addressLookupTime + addressSettingTime) + "ms");
+//            }
+
+            roomDTOs.add(dto);
+        }
+
+        // 4. Đo thời gian tạo PageResponse
+        long startBuildResponse = System.currentTimeMillis();
+        PageResponse<RoomListDTO> response = PageResponse.<RoomListDTO>builder()
                 .content(roomDTOs)
                 .page(roomPage.getNumber())
                 .size(roomPage.getSize())
@@ -573,5 +631,17 @@ public class RoomService {
                 .totalPages(roomPage.getTotalPages())
                 .last(roomPage.isLast())
                 .build();
+        long buildResponseTime = System.currentTimeMillis() - startBuildResponse;
+
+        // In tổng hợp
+        System.out.println("\n=== SUMMARY ===");
+        System.out.println("Total mapping time: " + totalMappingTime + "ms (" + (totalMappingTime / (double) roomPage.getContent().size()) + "ms per room)");
+        System.out.println("Total address lookup time: " + totalAddressLookupTime + "ms");
+        System.out.println("Total address setting time: " + totalAddressSettingTime + "ms");
+        System.out.println("PageResponse building time: " + buildResponseTime + "ms");
+        System.out.println("Total execution time: " + (totalMappingTime + totalAddressLookupTime + totalAddressSettingTime + buildResponseTime) + "ms");
+        System.out.println("===================\n");
+
+        return response;
     }
 }

@@ -80,7 +80,7 @@ public class AddressService {
     }
 
     public List<AddressDTO> findByIds(List<Long> ids) {
-        List<Address> addresses = addressRepository.findAllById(ids);
+        List<Address> addresses = addressRepository.findProjectionsByIds(ids);
         return addresses.stream()
                 .map(address -> AddressDTO.builder()
                         .id(address.getId())

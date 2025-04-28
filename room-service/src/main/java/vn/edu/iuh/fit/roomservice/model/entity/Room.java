@@ -53,7 +53,7 @@ public class Room {
     private String posterPhone;
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Image> images;
+    private Set<Image> images = new HashSet<>();
 
     @OneToOne(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private RoomDetail roomDetail;
