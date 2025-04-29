@@ -16,6 +16,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
+import vn.edu.iuh.fit.roomservice.model.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 
 import java.util.List;
@@ -40,4 +41,7 @@ public interface AddressClient {
 
     @PostMapping("/api/v1/addresses/batch")
     ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIds(@RequestBody List<Long> ids);
+
+    @PostMapping("/api/v1/addresses/batch/summary")
+    ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids);
 }
