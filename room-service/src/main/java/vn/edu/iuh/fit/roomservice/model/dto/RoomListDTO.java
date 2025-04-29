@@ -33,13 +33,4 @@ public class RoomListDTO {
     private String district;
     private String province;
 
-    public RoomListDTO(Long id, String title, double price, double area, RoomType roomType, String imageUrls) {
-        this.id = id;
-        this.title = title;
-        this.price = price;
-        this.area = area;
-        this.roomType = roomType;
-        this.imageUrls = imageUrls != null ? Arrays.asList(imageUrls.split(",")) : List.of();
-    }
-
 }

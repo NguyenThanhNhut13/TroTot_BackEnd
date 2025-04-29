@@ -237,15 +237,24 @@ public class RoomService {
     }
 
     public List<RoomListDTO> findByIds(List<Long> ids) {
+        long startFetchImages = System.currentTimeMillis();
         List<Room> rooms = roomRepository.findAllById(ids);
+        System.out.println("⏱️ Time to fetch Room for search: " + (System.currentTimeMillis() - startFetchImages) + "ms");
 
-        // Get addresses for all rooms
-        Map<Long, AddressDTO> addressMap = getAddressMapForRooms2(rooms);
+        // Get addressId list from each room
+        List<Long> addressIds = rooms.stream()
+                .map(Room::getAddressId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // Call service to get map from addressId -> AddressSummaryDTO
+        Map<Long, AddressSummaryDTO> addressMap = getAddressMapForRooms(addressIds);
 
         return rooms.stream()
                 .map(room -> {
                     RoomListDTO dto = roomMapper.toListDTO(room);
-                    AddressDTO addressDTO = addressMap.get(room.getAddressId());
+                    AddressSummaryDTO addressDTO = addressMap.get(room.getAddressId());
                     if (addressDTO != null) {
                         dto.setDistrict(addressDTO.getDistrict());
                         dto.setProvince(addressDTO.getProvince());
