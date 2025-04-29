@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
+import vn.edu.iuh.fit.addressservice.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
 import vn.edu.iuh.fit.addressservice.entity.Coordinates;
 import vn.edu.iuh.fit.addressservice.service.AddressService;
@@ -139,5 +140,12 @@ public class AddressController {
         List<AddressDTO> result = addressService.findByIds(ids);
         return ResponseEntity.ok(BaseResponse.ok(result));
     }
+
+    @PostMapping("/batch/summary")
+    public ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids) {
+        List<AddressSummaryDTO> result = addressService.getAddressSummary(ids);
+        return ResponseEntity.ok(BaseResponse.ok(result));
+    }
+
 
 }

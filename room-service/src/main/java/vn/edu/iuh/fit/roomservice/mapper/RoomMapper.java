@@ -43,7 +43,6 @@ public interface RoomMapper {
 
     @Mapping(target = "district", ignore = true)
     @Mapping(target = "province", ignore = true)
-    @Mapping(target = "imageUrls", ignore = true)
     @Mapping(source = "roomType", target = "roomType")
     RoomListDTO toListDTO(Room room);
 
@@ -73,6 +72,7 @@ public interface RoomMapper {
 
     @AfterMapping
     default void extractImageUrls(@MappingTarget RoomListDTO dto, Room room) {
+        System.out.println("Here");
         if (room.getImages() != null && !room.getImages().isEmpty()) {
             // Extract only imageUrl from each Image object
             dto.setImageUrls(room.getImages().stream()
