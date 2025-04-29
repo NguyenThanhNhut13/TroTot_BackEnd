@@ -15,6 +15,7 @@ package vn.edu.iuh.fit.addressservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
+import vn.edu.iuh.fit.addressservice.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
 import vn.edu.iuh.fit.addressservice.repository.AddressRepository;
 
@@ -95,5 +96,9 @@ public class AddressService {
                 ).toList();
     }
 
+
+    public List<AddressSummaryDTO> getAddressSummary(List<Long> ids) {
+        return addressRepository.findAddressSummaryByIds(ids);
+    }
 
 }

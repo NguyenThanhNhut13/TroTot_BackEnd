@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
+import vn.edu.iuh.fit.addressservice.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
 
 import java.util.List;
@@ -35,4 +36,13 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 
     @Query("SELECT a FROM Address a WHERE a.id IN :ids")
     List<Address> findProjectionsByIds(@Param("ids") List<Long> ids);
+
+    @Query("""
+        SELECT new vn.edu.iuh.fit.addressservice.dto.AddressSummaryDTO(
+            a.id, a.province, a.district
+        )
+        FROM Address a
+        WHERE a.id IN :ids
+    """)
+    List<AddressSummaryDTO> findAddressSummaryByIds(List<Long> ids);
 }
