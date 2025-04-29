@@ -13,10 +13,9 @@ package vn.edu.iuh.fit.roomservice.model.dto;
  */
 
 import lombok.*;
-import vn.edu.iuh.fit.roomservice.enumvalue.GenderType;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 
-import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Getter
@@ -29,8 +28,18 @@ public class RoomListDTO {
     private String title;
     private double price;
     private double area;
-    private String roomType;
+    private RoomType roomType;
     private List<String> imageUrls;
     private String district;
     private String province;
+
+    public RoomListDTO(Long id, String title, double price, double area, RoomType roomType, String imageUrls) {
+        this.id = id;
+        this.title = title;
+        this.price = price;
+        this.area = area;
+        this.roomType = roomType;
+        this.imageUrls = imageUrls != null ? Arrays.asList(imageUrls.split(",")) : List.of();
+    }
+
 }

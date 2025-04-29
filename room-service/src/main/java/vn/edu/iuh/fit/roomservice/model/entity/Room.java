@@ -64,7 +64,7 @@ public class Room {
     @Enumerated(EnumType.STRING)
     private RoomType roomType;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "room_target_audiences",
             joinColumns = @JoinColumn(name = "room_id"),
@@ -72,7 +72,7 @@ public class Room {
     )
     private Set<TargetAudience> targetAudiences = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "room_amenities",
             joinColumns = @JoinColumn(name = "room_id"),
@@ -80,7 +80,7 @@ public class Room {
     )
     private Set<Amenity> amenities = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "room_surrounding_areas",
             joinColumns = @JoinColumn(name = "room_id"),
@@ -91,4 +91,13 @@ public class Room {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+
+    public Room(Long id, Long addressId, String title, double price, double area, RoomType roomType) {
+        this.id = id;
+        this.addressId = addressId;
+        this.title = title;
+        this.price = price;
+        this.area = area;
+        this.roomType = roomType;
+    }
 }

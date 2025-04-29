@@ -35,6 +35,14 @@ public class Image {
     @JoinColumn(name = "room_id")
     private Room room;
 
+    public Image(Long id, String imageUrl, Long roomId) {
+        this.id = id;
+        this.imageUrl = imageUrl;
+        this.room = new Room();
+        this.room.setId(roomId);
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

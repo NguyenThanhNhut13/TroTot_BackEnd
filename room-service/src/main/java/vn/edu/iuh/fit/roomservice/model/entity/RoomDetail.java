@@ -26,7 +26,7 @@ public class RoomDetail {
     @Id
     private Long id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "room_id")
     private Room room;
