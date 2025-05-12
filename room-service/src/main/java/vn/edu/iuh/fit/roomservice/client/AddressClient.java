@@ -13,6 +13,7 @@ package vn.edu.iuh.fit.roomservice.client;
  */
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -32,6 +33,7 @@ public interface AddressClient {
 
     @GetMapping("/api/v1/addresses/search")
     @CircuitBreaker(name = "addressService", fallbackMethod = "searchAddressFallback")
+    @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(
             @RequestParam(required = false) String street,
             @RequestParam(required = false) String district,
@@ -43,6 +45,7 @@ public interface AddressClient {
 
     @GetMapping("/api/v1/addresses/{id}")
     @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressByIdFallback")
+    @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<AddressDTO>> getAddressById(@PathVariable Long id);
 
     @PutMapping("/api/v1/addresses/{id}")
@@ -51,10 +54,12 @@ public interface AddressClient {
 
     @PostMapping("/api/v1/addresses/batch")
     @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressesByIdsFallback")
+    @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIds(@RequestBody List<Long> ids);
 
     @PostMapping("/api/v1/addresses/batch/summary")
     @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressSummaryFallback")
+    @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids);
 
     default ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddressFallback(
