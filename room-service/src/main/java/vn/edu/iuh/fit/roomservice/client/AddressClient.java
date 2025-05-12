@@ -38,6 +38,7 @@ public interface AddressClient {
             @RequestParam(required = false) String province);
 
     @PostMapping("/api/v1/addresses")
+    @CircuitBreaker(name = "addressService", fallbackMethod = "addAddressFallback")
     ResponseEntity<BaseResponse<AddressDTO>> addAddress(@RequestBody AddressDTO address);
 
     @GetMapping("/api/v1/addresses/{id}")
@@ -61,6 +62,20 @@ public interface AddressClient {
                 false,
                 "Service is temporarily unavailable. This is a fallback response.",
                 Collections.emptyList()
+        );
+
+        return ResponseEntity.ok(fallbackResponse);
+    }
+
+    default ResponseEntity<BaseResponse<AddressDTO>> addAddressFallback(
+            AddressDTO address, Throwable t) {
+
+        log.error("Fallback triggered for addAddress: {}", t.getMessage());
+
+        BaseResponse<AddressDTO> fallbackResponse = new BaseResponse<>(
+                false,
+                "Service is temporarily unavailable. Unable to add address.",
+                null
         );
 
         return ResponseEntity.ok(fallbackResponse);
