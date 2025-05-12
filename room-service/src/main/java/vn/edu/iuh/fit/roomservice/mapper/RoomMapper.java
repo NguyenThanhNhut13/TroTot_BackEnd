@@ -71,6 +71,7 @@ public interface RoomMapper {
 
     @AfterMapping
     default void extractImageUrls(@MappingTarget RoomListDTO dto, Room room) {
+        System.out.println("Here");
         if (room.getImages() != null && !room.getImages().isEmpty()) {
             // Extract only imageUrl from each Image object
             dto.setImageUrls(room.getImages().stream()
