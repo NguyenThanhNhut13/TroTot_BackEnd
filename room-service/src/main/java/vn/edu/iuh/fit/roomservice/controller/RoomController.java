@@ -165,6 +165,7 @@ public class RoomController {
         kafkaTemplate.send("push-notification", "Test", "Hello from room-service!");
         return ResponseEntity.ok("Sent!");
     }
+
     @PostMapping("/notify")
     public ResponseEntity<BaseResponse<String>> sendPushNotification(
             @RequestBody PushNotificationRequest request

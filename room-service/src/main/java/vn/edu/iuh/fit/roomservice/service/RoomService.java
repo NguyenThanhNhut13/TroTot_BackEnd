@@ -12,11 +12,9 @@ package vn.edu.iuh.fit.roomservice.service;
  * @version:    1.0
  */
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +37,6 @@ import vn.edu.iuh.fit.roomservice.model.entity.*;
 import vn.edu.iuh.fit.roomservice.repository.*;
 import vn.edu.iuh.fit.roomservice.repository.spec.RoomSpecification;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
