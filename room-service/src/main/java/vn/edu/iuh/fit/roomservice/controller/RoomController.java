@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.roomservice.client.AddressClient;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.request.PushNotificationRequest;
@@ -25,6 +26,7 @@ import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
 import vn.edu.iuh.fit.roomservice.service.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
@@ -36,6 +38,7 @@ public class RoomController {
     private final SurroundingAreaService surroundingAreaService;
     private final TargetAudienceService targetAudienceService;
     private final PushNotificationProducer pushNotificationProducer;
+    private final AddressClient addressClient;
 
     //    Nguyễn Quân - Notification - Room service
     private final KafkaTemplate<String, String> kafkaTemplate;
@@ -184,6 +187,16 @@ public class RoomController {
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Gửi thông báo thành công", "Đã gửi push notification đến Kafka topic")
         );
+    }
+
+    @GetMapping("/test-address-retry")
+    public ResponseEntity<String> testAddressRetry() {
+        ResponseEntity<BaseResponse<String>> response = addressClient.testRetry();
+        if (response.getStatusCode().is2xxSuccessful() && Objects.requireNonNull(response.getBody()).isSuccess()) {
+            return ResponseEntity.ok("Success: " + response.getBody().getData());
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).body("Failed: " + Objects.requireNonNull(response.getBody()).getMessage());
+        }
     }
 
 }

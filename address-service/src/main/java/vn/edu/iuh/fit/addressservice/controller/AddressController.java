@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
@@ -18,7 +20,10 @@ import vn.edu.iuh.fit.addressservice.util.BaseResponse;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
+@Slf4j
 @Tag(name = "Address Controller", description = "Quản lý thông tin địa chỉ và xử lý tọa độ thông qua dịch vụ Geocoding")
 @RestController
 @RequestMapping("/api/v1/addresses")
@@ -27,6 +32,7 @@ public class AddressController {
 
     private final AddressService addressService;
     private final GeocodingService geocodingService;
+    private AtomicInteger callCounter = new AtomicInteger(0);
 
 
     @Operation(
@@ -145,6 +151,21 @@ public class AddressController {
     public ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids) {
         List<AddressSummaryDTO> result = addressService.getAddressSummary(ids);
         return ResponseEntity.ok(BaseResponse.ok(result));
+    }
+
+    @GetMapping("/test-retry")
+    public ResponseEntity<BaseResponse<String>> testRetry() {
+        int callCount = callCounter.incrementAndGet();
+        if (callCount < 3) {
+            // Simulate temporary error for first two calls
+            log.info("Retry attempt: {}", callCount);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new BaseResponse<>(false, "Service temporarily unavailable", null));
+        } else {
+            // Reset counter after successful call
+            callCounter.set(0);
+            return ResponseEntity.ok(new BaseResponse<>(true, "Success", "Data from address-service"));
+        }
     }
 
 

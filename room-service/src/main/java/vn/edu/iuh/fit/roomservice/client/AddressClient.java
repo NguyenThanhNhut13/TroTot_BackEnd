@@ -62,6 +62,12 @@ public interface AddressClient {
     @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids);
 
+    // Test retry
+    @GetMapping("/api/v1/addresses/test-retry")
+    @Retry(name = "addressServiceRetry")
+    ResponseEntity<BaseResponse<String>> testRetry();
+
+
     default ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddressFallback(
             String street, String district, String province, Throwable t) {
 
