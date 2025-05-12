@@ -118,15 +118,15 @@ public class RoomController {
 
             @RequestParam(required = false) List<String> amenities,
             @RequestParam(required = false) List<String> environment,
-            @RequestParam(required = false) List<String> targetAudience
+            @RequestParam(required = false) List<String> targetAudience,
 
-//            @RequestParam(required = false) Boolean hasVideoReview
+            @RequestParam(required = false) Boolean hasVideoReview
     ) {
         PageResponse<RoomListDTO> response = roomService.searchRooms(
                 page, size, sort,
                 street, district, city,
                 minPrice, maxPrice, areaRange, roomType,
-                amenities, environment, targetAudience
+                amenities, environment, targetAudience, hasVideoReview
         );
 
         return ResponseEntity.ok(

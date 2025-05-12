@@ -189,7 +189,7 @@ public class RoomService {
             Double minPrice, Double maxPrice,
             String areaRange, String roomType,
             List<String> amenityNames, List<String> environmentNames,
-            List<String> targetAudienceNames
+            List<String> targetAudienceNames, Boolean hasVideoReview
     ) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sortParam));
 
@@ -202,7 +202,7 @@ public class RoomService {
 
         Specification<Room> spec = RoomSpecification.buildSpecification(
                 addressIds, minPrice, maxPrice, areaRange, roomType,
-                amenityNames, environmentNames, targetAudienceNames
+                amenityNames, environmentNames, targetAudienceNames, hasVideoReview
         );
 
 

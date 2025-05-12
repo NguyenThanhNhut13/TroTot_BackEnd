@@ -27,7 +27,7 @@ public class RoomSpecification {
             Double minPrice, Double maxPrice,
             String areaRange, String roomType,
             List<String> amenityNames, List<String> environmentNames,
-            List<String> targetAudienceNames
+            List<String> targetAudienceNames, Boolean hasVideoReview
     ) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -52,9 +52,13 @@ public class RoomSpecification {
                 predicates.add(cb.equal(root.get("roomType"), RoomType.valueOf(roomType)));
             }
 
-//            if (hasVideoReview != null) {
-//                predicates.add(cb.equal(root.get("hasVideoReview"), hasVideoReview));
-//            }
+            if (hasVideoReview != null) {
+                if (hasVideoReview) {
+                    predicates.add(cb.isNotNull(root.get("videoUrl")));
+                } else {
+                    predicates.add(cb.isNull(root.get("videoUrl")));
+                }
+            }
 
             if (amenityNames != null && !amenityNames.isEmpty()) {
                 Join<Room, Amenity> amenityJoin = root.join("amenities", JoinType.INNER);
