@@ -27,10 +27,7 @@ import vn.edu.iuh.fit.userservice.exception.BadRequestException;
 import vn.edu.iuh.fit.userservice.exception.PaymentFailedException;
 import vn.edu.iuh.fit.userservice.exception.UserNotFoundException;
 import vn.edu.iuh.fit.userservice.mapper.UserProfileMapper;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.RoomListResponse;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.UserWishlistResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.*;
 import vn.edu.iuh.fit.userservice.model.dto.request.DeductRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.exception.UserAlreadyExistsException;
@@ -310,5 +307,15 @@ public class UserProfileService {
                     .roomIds(Collections.emptyList())
                     .build();
         }
+    }
+
+    public UserWishlistIdsResponse getWishListIdByUser() {
+        UserProfile user = getCurrentUser();
+
+        List<Long> roomIds = wishlistRepository.findRoomIdsByUserId(user.getId());
+
+        return UserWishlistIdsResponse.builder()
+                .roomIds(roomIds)
+                .build();
     }
 }

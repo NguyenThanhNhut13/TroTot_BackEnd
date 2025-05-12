@@ -12,17 +12,16 @@ package vn.edu.iuh.fit.roomservice.service;
  * @version:    1.0
  */
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
@@ -39,7 +38,6 @@ import vn.edu.iuh.fit.roomservice.model.entity.*;
 import vn.edu.iuh.fit.roomservice.repository.*;
 import vn.edu.iuh.fit.roomservice.repository.spec.RoomSpecification;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -192,7 +190,7 @@ public class RoomService {
             Double minPrice, Double maxPrice,
             String areaRange, String roomType,
             List<String> amenityNames, List<String> environmentNames,
-            List<String> targetAudienceNames
+            List<String> targetAudienceNames, Boolean hasVideoReview
     ) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sortParam));
 
@@ -205,7 +203,7 @@ public class RoomService {
 
         Specification<Room> spec = RoomSpecification.buildSpecification(
                 addressIds, minPrice, maxPrice, areaRange, roomType,
-                amenityNames, environmentNames, targetAudienceNames
+                amenityNames, environmentNames, targetAudienceNames, hasVideoReview
         );
 
 
@@ -220,13 +218,20 @@ public class RoomService {
     public List<RoomTrainDTO> exportAllRooms() {
         List<Room> rooms = roomRepository.findAll();
 
+        // Get addressId list from each room
+        List<Long> addressIds = rooms.stream()
+                .map(Room::getAddressId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
         // Get addresses for all rooms
-        Map<Long, AddressDTO> addressMap = getAddressMapForRooms2(rooms);
+        Map<Long, AddressSummaryDTO> addressMap = getAddressMapForRooms(addressIds);
 
         return rooms.stream()
                 .map(room -> {
                     RoomTrainDTO dto = roomMapper.toRoomTrainDTO(room);
-                    AddressDTO addressDTO = addressMap.get(room.getAddressId());
+                    AddressSummaryDTO addressDTO = addressMap.get(room.getAddressId());
                     if (addressDTO != null) {
                         dto.setDistrict(addressDTO.getDistrict());
                         dto.setProvince(addressDTO.getProvince());
@@ -237,18 +242,43 @@ public class RoomService {
     }
 
     public List<RoomListDTO> findByIds(List<Long> ids) {
-        List<Room> rooms = roomRepository.findAllById(ids);
+        long startFetchRooms = System.currentTimeMillis();
+        List<Room> rooms = roomRepository.findByIds(ids);
+        System.out.println("⏱️ Time to fetch Room for search: " + (System.currentTimeMillis() - startFetchRooms) + "ms");
 
-        // Get addresses for all rooms
-        Map<Long, AddressDTO> addressMap = getAddressMapForRooms2(rooms);
+        // Get addressId list from each room
+        List<Long> addressIds = rooms.stream()
+                .map(Room::getAddressId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // Call service to get map from addressId -> AddressSummaryDTO
+        Map<Long, AddressSummaryDTO> addressMap = getAddressMapForRooms(addressIds);
+
+        long startFetchImages = System.currentTimeMillis();
+        List<Image> images = imageRepository.findFirstImagesByRoomIds(ids);
+        Map<Long, String> imageMap = images.stream()
+                .collect(Collectors.toMap(
+                        img -> img.getRoom().getId(),
+                        Image::getImageUrl,
+                        (existing, replacement) -> existing // Giữ URL đầu tiên nếu trùng
+                ));
+        System.out.println("⏱️ Time to fetch Images: " + (System.currentTimeMillis() - startFetchImages) + "ms");
 
         return rooms.stream()
                 .map(room -> {
                     RoomListDTO dto = roomMapper.toListDTO(room);
-                    AddressDTO addressDTO = addressMap.get(room.getAddressId());
+                    AddressSummaryDTO addressDTO = addressMap.get(room.getAddressId());
                     if (addressDTO != null) {
                         dto.setDistrict(addressDTO.getDistrict());
                         dto.setProvince(addressDTO.getProvince());
+                    }
+
+                    // Set image URL if available
+                    String imageUrl = imageMap.get(room.getId());
+                    if (imageUrl != null) {
+                        dto.setImageUrls(Collections.singletonList(imageUrl)); // Assuming only one image is needed
                     }
                     return dto;
                 })
@@ -364,7 +394,7 @@ public class RoomService {
             room.setAmenities(amenities);
         }
 
-        // SurrondingArea processing
+        // SurroundingArea processing
         if (roomDTO.getSurroundingAreas() != null) {
             Set<SurroundingArea> surroundingAreas = roomDTO.getSurroundingAreas().stream()
                     .map(surrDTO -> surroundingAreaRepository.findById(surrDTO.getId())
@@ -521,44 +551,6 @@ public class RoomService {
     }
 
     /**
-     * Gets all addresses for a list of rooms
-     */
-    private Map<Long, AddressDTO> getAddressMapForRooms2(List<Room> rooms) {
-        long start = System.currentTimeMillis();
-        List<Long> addressIds = rooms.stream()
-                .map(Room::getAddressId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-        System.out.println("⏱️ Time to extract Address IDs: " + (System.currentTimeMillis() - start) + "ms");
-
-        if (addressIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        try {
-            start = System.currentTimeMillis();
-            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.getAddressesByIds(addressIds);
-            System.out.println("⏱️ Time to call addressClient.getAddressesByIds: " + (System.currentTimeMillis() - start) + "ms");
-
-            start = System.currentTimeMillis();
-            BaseResponse<List<AddressDTO>> responseBody = response.getBody();
-
-            if (responseBody != null && responseBody.getData() != null) {
-                Map<Long, AddressDTO> addressDTOMap = responseBody.getData().stream()
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(AddressDTO::getId, dto -> dto));
-                System.out.println("⏱️ Time to map AddressDTO list to Map: " + (System.currentTimeMillis() - start) + "ms");
-                return addressDTOMap;
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to fetch address list: " + e.getMessage());
-        }
-
-        return Collections.emptyMap();
-    }
-
-    /**
      * Builds page response for room listings
      */
     private PageResponse<RoomListDTO> buildRoomPageResponse(Page<Room> roomPage) {
@@ -572,7 +564,7 @@ public class RoomService {
 
         // Lấy ảnh batch
         long startFetchImages = System.currentTimeMillis();
-        List<Image> images = imageRepository.findFirstImagesByRoomIds(roomIds); // Hoặc findPrimaryImagesByRoomIds nếu có isPrimary
+        List<Image> images = imageRepository.findFirstImagesByRoomIds(roomIds);
         Map<Long, String> imageMap = images.stream()
                 .collect(Collectors.toMap(
                         img -> img.getRoom().getId(),
@@ -628,6 +620,9 @@ public class RoomService {
                 .build();
     }
 
+    /**
+     * Gets all addresses for a list of rooms
+     */
     private Map<Long, AddressSummaryDTO> getAddressMapForRooms(List<Long> addressIds) {
         try {
             long start = System.currentTimeMillis();
@@ -642,5 +637,13 @@ public class RoomService {
             System.err.println("Failed to fetch address list: " + e.getMessage());
         }
         return Map.of();
+    }
+
+    public void updateVideoReview(Long roomId, String videoUrl) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RoomNotFoundException("Room not found"));
+
+        room.setVideoUrl(videoUrl);
+        roomRepository.save(room);
     }
 }

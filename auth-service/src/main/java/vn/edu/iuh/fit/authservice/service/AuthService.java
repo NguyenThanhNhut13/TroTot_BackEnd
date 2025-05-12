@@ -13,6 +13,7 @@ package vn.edu.iuh.fit.authservice.service;
  */
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.model.entity.Role;
 import vn.edu.iuh.fit.authservice.model.entity.User;
+import vn.edu.iuh.fit.authservice.repository.RoleRepository;
 import vn.edu.iuh.fit.authservice.repository.UserRepository;
 
 import java.util.*;
@@ -42,6 +44,7 @@ public class AuthService {
     private final UserClient userClient;
     private final RoleService roleService;
     private final TokenRedisService tokenRedisService;
+    private final RoleRepository roleRepository;
 
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findUserByEmailOrPhoneNumber(loginRequest.getCredential());
@@ -469,6 +472,35 @@ public class AuthService {
         }
 
         otpService.sendOtp(credential, purpose);
+    }
+
+    public void upgradeRoleToLandlord() {
+        User currentUser = getCurrentUser();
+        Role landlord = roleRepository.findByRoleName("LANDLORD")
+                .orElseThrow(() -> new RuntimeException("LANDLORD role not found in database"));
+
+        if (!currentUser.getRoles().contains(landlord)) {
+            currentUser.getRoles().add(landlord);
+            userRepository.save(currentUser);
+        }
+    }
+
+    private User getCurrentUser() {
+        Object principalObj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principalObj instanceof String principal)) {
+            throw new IllegalStateException("Invalid principal type");
+        }
+
+        long userId;
+
+        try {
+            userId = Long.parseLong(principal);
+        } catch (NumberFormatException ex) {
+            throw new IllegalStateException("Principal is not a valid user ID", ex);
+        }
+
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
     }
 
 //    public UserResponse getUserDTOById(Long userId) {

@@ -43,6 +43,8 @@ public class RoomDTO {
     private String posterName;
     private String posterPhone;
 
+    private String videoUrl;
+
     private List<ImageDTO> images;
     private RoomType roomType;
     private Set<AmenityDTO> amenities;

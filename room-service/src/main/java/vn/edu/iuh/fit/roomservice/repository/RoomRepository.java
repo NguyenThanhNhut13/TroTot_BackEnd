@@ -46,4 +46,14 @@ public interface RoomRepository extends JpaRepository<Room, Long>, JpaSpecificat
         WHERE r.roomType = :roomType
     """)
     Page<Room> findByRoomType(@Param("roomType") RoomType roomType, Pageable pageable);
+
+
+    @Query("""
+        SELECT new vn.edu.iuh.fit.roomservice.model.entity.Room(
+            r.id, r.addressId, r.title, r.price, r.area, r.roomType
+        )
+        FROM Room r
+        WHERE r.id IN :ids
+    """)
+    List<Room> findByIds(@Param("ids") List<Long> ids);
 }

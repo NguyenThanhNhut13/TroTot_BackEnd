@@ -128,6 +128,14 @@ public class AuthController {
         return ResponseEntity.ok(new BaseResponse<>(true, "Credential updated successfully", null));
     }
 
+    @PostMapping("/upgrade-role")
+    public ResponseEntity<?> upgradeToLandlord() {
+        authService.upgradeRoleToLandlord();
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Role upgraded to LANDLORD successfully.", null)
+        );
+    }
+
 
 
 }

@@ -52,6 +52,8 @@ public class Room {
     private String posterName;
     private String posterPhone;
 
+    private String videoUrl;
+
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Image> images = new HashSet<>();
 
