@@ -42,15 +42,19 @@ public interface AddressClient {
     ResponseEntity<BaseResponse<AddressDTO>> addAddress(@RequestBody AddressDTO address);
 
     @GetMapping("/api/v1/addresses/{id}")
+    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressByIdFallback")
     ResponseEntity<BaseResponse<AddressDTO>> getAddressById(@PathVariable Long id);
 
     @PutMapping("/api/v1/addresses/{id}")
+    @CircuitBreaker(name = "addressService", fallbackMethod = "updateAddressFallback")
     ResponseEntity<BaseResponse<AddressDTO>> updateAddress(@PathVariable Long id, @RequestBody AddressDTO newAddress);
 
     @PostMapping("/api/v1/addresses/batch")
+    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressesByIdsFallback")
     ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIds(@RequestBody List<Long> ids);
 
     @PostMapping("/api/v1/addresses/batch/summary")
+    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressSummaryFallback")
     ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids);
 
     default ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddressFallback(
@@ -76,6 +80,62 @@ public interface AddressClient {
                 false,
                 "Service is temporarily unavailable. Unable to add address.",
                 null
+        );
+
+        return ResponseEntity.ok(fallbackResponse);
+    }
+
+    default ResponseEntity<BaseResponse<AddressDTO>> getAddressByIdFallback(
+            Long id, Throwable t) {
+
+        log.error("Fallback triggered for getAddressById: {}", t.getMessage());
+
+        BaseResponse<AddressDTO> fallbackResponse = new BaseResponse<>(
+                false,
+                "Service is temporarily unavailable. Unable to retrieve address.",
+                null
+        );
+
+        return ResponseEntity.ok(fallbackResponse);
+    }
+
+    default ResponseEntity<BaseResponse<AddressDTO>> updateAddressFallback(
+            Long id, AddressDTO newAddress, Throwable t) {
+
+        log.error("Fallback triggered for updateAddress: {}", t.getMessage());
+
+        BaseResponse<AddressDTO> fallbackResponse = new BaseResponse<>(
+                false,
+                "Service is temporarily unavailable. Unable to update address.",
+                null
+        );
+
+        return ResponseEntity.ok(fallbackResponse);
+    }
+
+    default ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIdsFallback(
+            List<Long> ids, Throwable t) {
+
+        log.error("Fallback triggered for getAddressesByIds: {}", t.getMessage());
+
+        BaseResponse<List<AddressDTO>> fallbackResponse = new BaseResponse<>(
+                false,
+                "Service is temporarily unavailable. Unable to retrieve addresses by IDs.",
+                Collections.emptyList()
+        );
+
+        return ResponseEntity.ok(fallbackResponse);
+    }
+
+    default ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummaryFallback(
+            List<Long> ids, Throwable t) {
+
+        log.error("Fallback triggered for getAddressSummary: {}", t.getMessage());
+
+        BaseResponse<List<AddressSummaryDTO>> fallbackResponse = new BaseResponse<>(
+                false,
+                "Service is temporarily unavailable. Unable to retrieve address summaries.",
+                Collections.emptyList()
         );
 
         return ResponseEntity.ok(fallbackResponse);
