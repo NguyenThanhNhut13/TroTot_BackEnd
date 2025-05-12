@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.request.PushNotificationRequest;
+import vn.edu.iuh.fit.roomservice.model.dto.request.VideoReviewRequest;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
 import vn.edu.iuh.fit.roomservice.service.*;
@@ -157,6 +158,15 @@ public class RoomController {
         List<RoomListDTO> data = roomService.findByIds(ids);
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Get rooms successful", data)
+        );
+    }
+
+    @PutMapping("/{roomId}/video-review")
+    public ResponseEntity<BaseResponse<Void>> updateVideoReview(@PathVariable Long roomId,
+                                                                @RequestBody VideoReviewRequest request) {
+        roomService.updateVideoReview(roomId, request.getVideoUrl());
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Video review updated successfully.", null)
         );
     }
 
