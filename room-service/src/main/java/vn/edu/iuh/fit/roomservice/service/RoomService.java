@@ -172,13 +172,13 @@ public class RoomService {
             roomPage = roomRepository.findAllRoom(pageable);
         }
 
-        System.out.println("⏱️ Time to fetch Room from DB: " + (System.currentTimeMillis() - startFetchRoom) + "ms");
+//        System.out.println("⏱️ Time to fetch Room from DB: " + (System.currentTimeMillis() - startFetchRoom) + "ms");
 
         long startBuildRoomPage = System.currentTimeMillis();
         PageResponse<RoomListDTO> response = buildRoomPageResponse(roomPage);
-        System.out.println("⏱️ Time to build Room Page (with addresses): " + (System.currentTimeMillis() - startBuildRoomPage) + "ms");
+//        System.out.println("⏱️ Time to build Room Page (with addresses): " + (System.currentTimeMillis() - startBuildRoomPage) + "ms");
 
-        System.out.println("✅ Total time for findAllRooms: " + (System.currentTimeMillis() - totalStart) + "ms");
+//        System.out.println("✅ Total time for findAllRooms: " + (System.currentTimeMillis() - totalStart) + "ms");
 
         return response;
     }
@@ -570,7 +570,7 @@ public class RoomService {
                         Image::getImageUrl,
                         (existing, replacement) -> existing // Giữ URL đầu tiên nếu trùng
                 ));
-        System.out.println("⏱️ Time to fetch Images: " + (System.currentTimeMillis() - startFetchImages) + "ms");
+//        System.out.println("⏱️ Time to fetch Images: " + (System.currentTimeMillis() - startFetchImages) + "ms");
 
         // Lấy danh sách addressId
         List<Long> addressIds = roomPage.getContent().stream()
@@ -578,12 +578,12 @@ public class RoomService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        System.out.println("⏱️ Time to extract Address IDs: " + (System.currentTimeMillis() - start) + "ms");
+//        System.out.println("⏱️ Time to extract Address IDs: " + (System.currentTimeMillis() - start) + "ms");
 
         // Gọi Address Service
         start = System.currentTimeMillis();
         Map<Long, AddressSummaryDTO> addressMap = addressIds.isEmpty() ? Map.of() : getAddressMapForRooms(addressIds);
-        System.out.println("⏱️ Time to fetch all Addresses: " + (System.currentTimeMillis() - start) + "ms");
+//        System.out.println("⏱️ Time to fetch all Addresses: " + (System.currentTimeMillis() - start) + "ms");
 
         // Map sang RoomListDTO
         start = System.currentTimeMillis();

@@ -14,7 +14,10 @@ package vn.edu.iuh.fit.roomservice.config;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -23,27 +26,27 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Configuration
 public class FeignClientConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(FeignClientConfig.class);
+
     @Bean
     public RequestInterceptor requestInterceptor() {
-        return new RequestInterceptor() {
-            @Override
-            public void apply(RequestTemplate requestTemplate) {
-                ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-                if (attributes != null) {
-                    HttpServletRequest request = attributes.getRequest();
-                    String authHeader = request.getHeader("Authorization");
+        return requestTemplate -> {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                String authHeader = request.getHeader("Authorization");
 
-                    if (authHeader != null) {
-                        requestTemplate.header("Authorization", authHeader); // Gửi lại JWT qua Feign
-                    }
+                if (authHeader != null) {
+                    requestTemplate.header("Authorization", authHeader); // Gửi lại JWT qua Feign
                 }
             }
         };
     }
 
     @Bean
-    public RequestInterceptor rateLimiterInterceptor() {
-        return new RateLimiterInterceptor();
+    public RequestInterceptor rateLimiterInterceptor(RateLimiterRegistry rateLimiterRegistry) {
+        logger.info("Registering RateLimiterInterceptor");
+        return new RateLimiterInterceptor(rateLimiterRegistry);
     }
 
 }
