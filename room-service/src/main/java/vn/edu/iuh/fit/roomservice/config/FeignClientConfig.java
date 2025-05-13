@@ -43,10 +43,10 @@ public class FeignClientConfig {
         };
     }
 
-    @Bean
-    public RequestInterceptor rateLimiterInterceptor(RateLimiterRegistry rateLimiterRegistry) {
-        logger.info("Registering RateLimiterInterceptor");
-        return new RateLimiterInterceptor(rateLimiterRegistry);
-    }
+//    @Bean
+//    public RequestInterceptor rateLimiterInterceptor(RateLimiterRegistry rateLimiterRegistry) {
+//        logger.info("Registering RateLimiterInterceptor");
+//        return new RateLimiterInterceptor(rateLimiterRegistry);
+//    }
 
 }

@@ -13,8 +13,14 @@ package vn.edu.iuh.fit.roomservice.service;
  */
 
 import feign.FeignException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +35,7 @@ import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.exception.BadRequestException;
 import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
+import vn.edu.iuh.fit.roomservice.exception.TooManyRequestsException;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
@@ -45,6 +52,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RoomService {
+
+    private static final Logger log = LoggerFactory.getLogger(RoomService.class);
 
     private final RoomRepository roomRepository;
     private final AddressClient addressClient;
@@ -498,14 +507,26 @@ public class RoomService {
 
     /**
      * Gets an address by ID from the address service
+     * With fallback handling for exceptions
      */
-    private AddressDTO getAddressById(Long addressId) {
-        try {
-            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(addressId);
-            return Objects.requireNonNull(response.getBody()).getData();
-        } catch (Exception e) {
-            throw new InternalServerErrorException("Error when getting address: " + e.getMessage());
+    @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "getAddressByIdFallback")
+    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressByIdFallback")
+    @Retry(name = "addressServiceRetry", fallbackMethod = "getAddressByIdFallback")
+    public AddressDTO getAddressById(Long addressId) {
+        ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(addressId);
+        return Objects.requireNonNull(response.getBody()).getData();
+    }
+
+    /**
+     * Fallback method for getAddressById
+     */
+    public AddressDTO getAddressByIdFallback(Long addressId, Exception e) {
+        log.warn("Fallback for getAddressById triggered: {}", e.getMessage());
+        if (e instanceof RequestNotPermitted) {
+            throw new TooManyRequestsException("Too many requests, please try again later.");
         }
+        // Return null or empty address for UI graceful degradation
+        return null;
     }
 
     /**
@@ -523,7 +544,8 @@ public class RoomService {
             }
             return Objects.requireNonNull(response.getBody()).getData();
         } catch (Exception e) {
-            throw new InternalServerErrorException("Error when processing address: " + e.getMessage());
+            System.err.println("Error when processing address: " + e.getMessage());
+            return null;
         }
     }
 
