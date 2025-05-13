@@ -40,4 +40,10 @@ public class FeignClientConfig {
             }
         };
     }
+
+    @Bean
+    public RequestInterceptor rateLimiterInterceptor() {
+        return new RateLimiterInterceptor();
+    }
+
 }

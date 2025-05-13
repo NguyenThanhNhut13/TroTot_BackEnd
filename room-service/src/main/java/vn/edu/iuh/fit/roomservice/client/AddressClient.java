@@ -14,8 +14,6 @@ package vn.edu.iuh.fit.roomservice.client;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,16 +21,13 @@ import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 
-import java.util.Collections;
 import java.util.List;
 
-@FeignClient(name = "address-service")
+@FeignClient(name = "address-service", fallbackFactory = AddressClientFallbackFactory.class)
 public interface AddressClient {
 
-    Logger log = LoggerFactory.getLogger(AddressClient.class);
-
     @GetMapping("/api/v1/addresses/search")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "searchAddressFallback")
+    @CircuitBreaker(name = "addressService")
     @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(
             @RequestParam(required = false) String street,
@@ -40,116 +35,31 @@ public interface AddressClient {
             @RequestParam(required = false) String province);
 
     @PostMapping("/api/v1/addresses")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "addAddressFallback")
+    @CircuitBreaker(name = "addressService")
     ResponseEntity<BaseResponse<AddressDTO>> addAddress(@RequestBody AddressDTO address);
 
     @GetMapping("/api/v1/addresses/{id}")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressByIdFallback")
+    @CircuitBreaker(name = "addressService")
     @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<AddressDTO>> getAddressById(@PathVariable Long id);
 
     @PutMapping("/api/v1/addresses/{id}")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "updateAddressFallback")
+    @CircuitBreaker(name = "addressService")
     ResponseEntity<BaseResponse<AddressDTO>> updateAddress(@PathVariable Long id, @RequestBody AddressDTO newAddress);
 
     @PostMapping("/api/v1/addresses/batch")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressesByIdsFallback")
+    @CircuitBreaker(name = "addressService")
     @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIds(@RequestBody List<Long> ids);
 
     @PostMapping("/api/v1/addresses/batch/summary")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressSummaryFallback")
-    @Retry(name = "addressServiceRetry")
+    @CircuitBreaker(name = "addressService")
+//    @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids);
 
     // Test retry
     @GetMapping("/api/v1/addresses/test-retry")
     @Retry(name = "addressServiceRetry")
     ResponseEntity<BaseResponse<String>> testRetry();
-
-
-    default ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddressFallback(
-            String street, String district, String province, Throwable t) {
-
-        log.error("Fallback triggered for searchAddresses: {}", t.getMessage());
-
-        BaseResponse<List<AddressDTO>> fallbackResponse = new BaseResponse<>(
-                false,
-                "Service is temporarily unavailable. This is a fallback response.",
-                Collections.emptyList()
-        );
-
-        return ResponseEntity.ok(fallbackResponse);
-    }
-
-    default ResponseEntity<BaseResponse<AddressDTO>> addAddressFallback(
-            AddressDTO address, Throwable t) {
-
-        log.error("Fallback triggered for addAddress: {}", t.getMessage());
-
-        BaseResponse<AddressDTO> fallbackResponse = new BaseResponse<>(
-                false,
-                "Service is temporarily unavailable. Unable to add address.",
-                null
-        );
-
-        return ResponseEntity.ok(fallbackResponse);
-    }
-
-    default ResponseEntity<BaseResponse<AddressDTO>> getAddressByIdFallback(
-            Long id, Throwable t) {
-
-        log.error("Fallback triggered for getAddressById: {}", t.getMessage());
-
-        BaseResponse<AddressDTO> fallbackResponse = new BaseResponse<>(
-                false,
-                "Service is temporarily unavailable. Unable to retrieve address.",
-                null
-        );
-
-        return ResponseEntity.ok(fallbackResponse);
-    }
-
-    default ResponseEntity<BaseResponse<AddressDTO>> updateAddressFallback(
-            Long id, AddressDTO newAddress, Throwable t) {
-
-        log.error("Fallback triggered for updateAddress: {}", t.getMessage());
-
-        BaseResponse<AddressDTO> fallbackResponse = new BaseResponse<>(
-                false,
-                "Service is temporarily unavailable. Unable to update address.",
-                null
-        );
-
-        return ResponseEntity.ok(fallbackResponse);
-    }
-
-    default ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIdsFallback(
-            List<Long> ids, Throwable t) {
-
-        log.error("Fallback triggered for getAddressesByIds: {}", t.getMessage());
-
-        BaseResponse<List<AddressDTO>> fallbackResponse = new BaseResponse<>(
-                false,
-                "Service is temporarily unavailable. Unable to retrieve addresses by IDs.",
-                Collections.emptyList()
-        );
-
-        return ResponseEntity.ok(fallbackResponse);
-    }
-
-    default ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummaryFallback(
-            List<Long> ids, Throwable t) {
-
-        log.error("Fallback triggered for getAddressSummary: {}", t.getMessage());
-
-        BaseResponse<List<AddressSummaryDTO>> fallbackResponse = new BaseResponse<>(
-                false,
-                "Service is temporarily unavailable. Unable to retrieve address summaries.",
-                Collections.emptyList()
-        );
-
-        return ResponseEntity.ok(fallbackResponse);
-    }
 
 }
