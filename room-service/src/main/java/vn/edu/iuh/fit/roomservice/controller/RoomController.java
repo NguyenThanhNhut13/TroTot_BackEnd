@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.request.PushNotificationRequest;
+import vn.edu.iuh.fit.roomservice.model.dto.request.VideoReviewRequest;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
 import vn.edu.iuh.fit.roomservice.service.*;
@@ -118,15 +119,15 @@ public class RoomController {
 
             @RequestParam(required = false) List<String> amenities,
             @RequestParam(required = false) List<String> environment,
-            @RequestParam(required = false) List<String> targetAudience
+            @RequestParam(required = false) List<String> targetAudience,
 
-//            @RequestParam(required = false) Boolean hasVideoReview
+            @RequestParam(required = false) Boolean hasVideoReview
     ) {
         PageResponse<RoomListDTO> response = roomService.searchRooms(
                 page, size, sort,
                 street, district, city,
                 minPrice, maxPrice, areaRange, roomType,
-                amenities, environment, targetAudience
+                amenities, environment, targetAudience, hasVideoReview
         );
 
         return ResponseEntity.ok(
@@ -160,11 +161,21 @@ public class RoomController {
         );
     }
 
+    @PutMapping("/{roomId}/video-review")
+    public ResponseEntity<BaseResponse<Void>> updateVideoReview(@PathVariable Long roomId,
+                                                                @RequestBody VideoReviewRequest request) {
+        roomService.updateVideoReview(roomId, request.getVideoUrl());
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Video review updated successfully.", null)
+        );
+    }
+
     @GetMapping("/test-kafka")
     public ResponseEntity<String> testKafka() {
         kafkaTemplate.send("push-notification", "Test", "Hello from room-service!");
         return ResponseEntity.ok("Sent!");
     }
+
     @PostMapping("/notify")
     public ResponseEntity<BaseResponse<String>> sendPushNotification(
             @RequestBody PushNotificationRequest request
