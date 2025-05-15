@@ -535,8 +535,6 @@ public class RoomService {
                 .orElse(List.of()) // fallback empty
                 .stream()
                 .collect(Collectors.toMap(AddressDTO::getId, Function.identity()));
-
-        return Collections.emptyMap();
     }
 
     /**

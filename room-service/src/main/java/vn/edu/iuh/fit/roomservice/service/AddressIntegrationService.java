@@ -67,7 +67,11 @@ public class AddressIntegrationService {
         return addressClient.updateAddress(id, addressDTO);
     }
 
+    @RateLimiter(name = "addressRateLimiter", fallbackMethod = "fallbackSearchAddresses")
+    @Retry(name = "addressRetry", fallbackMethod = "fallbackSearchAddresses")
+    @CircuitBreaker(name = "addressCircuitBreaker", fallbackMethod = "fallbackSearchAddresses")
     public ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(String street, String district, String city) {
+        return addressClient.searchAddresses(street, district, city);
     }
 
     // Fallback method for getAddressSummary
@@ -90,7 +94,12 @@ public class AddressIntegrationService {
         return handleFallback(t, null);
     }
 
-    // Generic fallback handler to reduce code duplication
+    // Fallback method for searchAddresses
+    public ResponseEntity<BaseResponse<List<AddressDTO>>> fallbackSearchAddresses(String street, String district, String city, Throwable t) {
+        return handleFallback(t, Collections.emptyList());
+    }
+
+        // Generic fallback handler to reduce code duplication
     private <T> ResponseEntity<BaseResponse<T>> handleFallback(Throwable t, T defaultValue) {
         if (t instanceof RequestNotPermitted) {
             throw new TooManyRequestsException("You are sending too many requests, please try again later.");
