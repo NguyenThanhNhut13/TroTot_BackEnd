@@ -501,7 +501,8 @@ public class RoomService {
      * With fallback handling for exceptions
      */
     public AddressDTO getAddressById(Long addressId) {
-        return addressIntegrationService.getAddressById(addressId);
+        ResponseEntity<BaseResponse<AddressDTO>> response = addressIntegrationService.getAddressById(addressId);
+        return Objects.requireNonNull(response.getBody()).getData();
     }
 
     /**
