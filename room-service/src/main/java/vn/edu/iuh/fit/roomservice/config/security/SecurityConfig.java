@@ -62,7 +62,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/rooms/").permitAll()
                         // cho phép tất cả người dùng truy cập vào các endpoint này
-                        .requestMatchers(HttpMethod.POST, "/api/v1/rooms").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/rooms").hasAnyAuthority("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/rooms/**").hasAnyAuthority("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/rooms/{roomId}/video-review").hasAnyAuthority("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/rooms/bulk").permitAll()
