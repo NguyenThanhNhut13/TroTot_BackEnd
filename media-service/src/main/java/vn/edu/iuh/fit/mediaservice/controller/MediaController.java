@@ -52,4 +52,20 @@ public class MediaController {
         );
     }
 
+    @PostMapping("/video/upload")
+    public ResponseEntity<?> uploadVideo(@RequestParam("file") MultipartFile file) {
+        ImageUploadResponse response = cloudinaryService.uploadVideo(file); // Cần thêm phương thức uploadVideo trong CloudinaryService
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Upload video successfully.", response)
+        );
+    }
+
+    @GetMapping("/videos")
+    public ResponseEntity<?> getVideos() {
+        List<ImageUploadResponse> videos = cloudinaryService.getVideos(); // Cần thêm phương thức getVideos trong CloudinaryService
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Fetched videos successfully.", videos)
+        );
+    }
+
 }
