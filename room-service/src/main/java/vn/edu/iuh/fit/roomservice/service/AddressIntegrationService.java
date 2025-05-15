@@ -108,8 +108,29 @@ public class AddressIntegrationService {
         }
     }
 
-    // Fallback cho addAddress
+    // Fallback for addAddress
     public ResponseEntity<BaseResponse<AddressSummaryDTO>> fallbackAddAddress(AddressDTO addressDTO, Throwable t) {
+        if (t instanceof RequestNotPermitted) {
+            throw new TooManyRequestsException("Too many requests, please try again later.");
+        } else if (t instanceof CallNotPermittedException) {
+            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
+                    false,
+                    "Circuit breaker open. Please try again later.",
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+        } else {
+            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
+                    false,
+                    "Service temporarily unavailable: " + t.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // Fallback for updateAddress
+    public ResponseEntity<BaseResponse<AddressSummaryDTO>> fallbackUpdateAddress(Long id, AddressDTO addressDTO, Throwable t) {
         if (t instanceof RequestNotPermitted) {
             throw new TooManyRequestsException("Too many requests, please try again later.");
         } else if (t instanceof CallNotPermittedException) {
