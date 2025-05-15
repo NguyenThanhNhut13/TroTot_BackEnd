@@ -13,14 +13,8 @@ package vn.edu.iuh.fit.roomservice.service;
  */
 
 import feign.FeignException;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.ratelimiter.RequestNotPermitted;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.ws.rs.InternalServerErrorException;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +29,6 @@ import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.exception.BadRequestException;
 import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
-import vn.edu.iuh.fit.roomservice.exception.TooManyRequestsException;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
@@ -53,10 +46,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoomService {
 
-    private static final Logger log = LoggerFactory.getLogger(RoomService.class);
-
     private final RoomRepository roomRepository;
-    private final AddressClient addressClient;
+    private final AddressIntegrationService addressIntegrationService;
     private final RoomMapper roomMapper;
     private final ImageMapper imageMapper;
     private final AmenityRepository amenityRepository;
@@ -509,24 +500,8 @@ public class RoomService {
      * Gets an address by ID from the address service
      * With fallback handling for exceptions
      */
-    @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "getAddressByIdFallback")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressByIdFallback")
-    @Retry(name = "addressServiceRetry", fallbackMethod = "getAddressByIdFallback")
     public AddressDTO getAddressById(Long addressId) {
-        ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(addressId);
-        return Objects.requireNonNull(response.getBody()).getData();
-    }
-
-    /**
-     * Fallback method for getAddressById
-     */
-    public AddressDTO getAddressByIdFallback(Long addressId, Exception e) {
-        log.warn("Fallback for getAddressById triggered: {}", e.getMessage());
-        if (e instanceof RequestNotPermitted) {
-            throw new TooManyRequestsException("Too many requests, please try again later.");
-        }
-        // Return null or empty address for UI graceful degradation
-        return null;
+        return addressIntegrationService.getAddressById(addressId);
     }
 
     /**
@@ -534,15 +509,11 @@ public class RoomService {
      */
     private AddressDTO saveOrUpdateAddress(Long addressId, AddressDTO addressDTO) {
         try {
-            ResponseEntity<BaseResponse<AddressDTO>> response;
             if (addressId == null) {
-                // Create new address
-                response = addressClient.addAddress(addressDTO);
+                return addressIntegrationService.addAddress(addressDTO);
             } else {
-                // Update existing address
-                response = addressClient.updateAddress(addressId, addressDTO);
+                return addressIntegrationService.updateAddress(addressId, addressDTO);
             }
-            return Objects.requireNonNull(response.getBody()).getData();
         } catch (Exception e) {
             System.err.println("Error when processing address: " + e.getMessage());
             return null;
@@ -645,18 +616,15 @@ public class RoomService {
      * Gets all addresses for a list of rooms
      */
     private Map<Long, AddressSummaryDTO> getAddressMapForRooms(List<Long> addressIds) {
-        try {
-            long start = System.currentTimeMillis();
-            BaseResponse<List<AddressSummaryDTO>> response = addressClient.getAddressSummary(addressIds).getBody();
-            System.out.println("⏱️ Time to call addressClient.getAddressesByIds: " + (System.currentTimeMillis() - start) + "ms");
-            if (response != null && response.getData() != null) {
-                return response.getData().stream()
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(AddressSummaryDTO::getId, dto -> dto));
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to fetch address list: " + e.getMessage());
+        long start = System.currentTimeMillis();
+        BaseResponse<List<AddressSummaryDTO>> response = addressIntegrationService.getAddressSummary(addressIds).getBody();
+        System.out.println("⏱️ Time to call addressClient.getAddressesByIds: " + (System.currentTimeMillis() - start) + "ms");
+        if (response != null && response.getData() != null) {
+            return response.getData().stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(AddressSummaryDTO::getId, dto -> dto));
         }
+        System.out.println("Testttttttttttttttttttttt");
         return Map.of();
     }
 
