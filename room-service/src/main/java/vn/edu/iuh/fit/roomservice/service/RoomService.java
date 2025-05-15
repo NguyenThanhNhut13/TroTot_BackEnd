@@ -509,16 +509,15 @@ public class RoomService {
      * Save or update address through address service
      */
     private AddressDTO saveOrUpdateAddress(Long addressId, AddressDTO addressDTO) {
-        try {
-            if (addressId == null) {
-                return addressIntegrationService.addAddress(addressDTO);
-            } else {
-                return addressIntegrationService.updateAddress(addressId, addressDTO);
-            }
-        } catch (Exception e) {
-            System.err.println("Error when processing address: " + e.getMessage());
-            return null;
+        ResponseEntity<BaseResponse<AddressDTO>> response;
+        if (addressId == null) {
+            // Create new address
+            response = addressIntegrationService.addAddress(addressDTO);
+        } else {
+            // Update existing address
+            response = addressIntegrationService.updateAddress(addressId, addressDTO);
         }
+        return Objects.requireNonNull(response.getBody()).getData();
     }
 
     /**

@@ -35,6 +35,7 @@ public class AddressIntegrationService {
 
     private final AddressClient addressClient;
 
+    // getAddressSummary
     @RateLimiter(name = "addressRateLimiter", fallbackMethod = "fallbackGetAddressSummary")
     @Retry(name = "addressRetry", fallbackMethod = "fallbackGetAddressSummary")
     @CircuitBreaker(name = "addressCircuitBreaker", fallbackMethod = "fallbackGetAddressSummary")
@@ -42,6 +43,7 @@ public class AddressIntegrationService {
         return addressClient.getAddressSummary(ids);
     }
 
+    // getAddressById
     @RateLimiter(name = "addressRateLimiter", fallbackMethod = "fallbackGetAddressById")
     @Retry(name = "addressRetry", fallbackMethod = "fallbackGetAddressById")
     @CircuitBreaker(name = "addressCircuitBreaker", fallbackMethod = "fallbackGetAddressById")
@@ -49,19 +51,19 @@ public class AddressIntegrationService {
         return addressClient.getAddressById(id);
     }
 
-    // Thêm method addAddress
+    // addAddress
     @RateLimiter(name = "addressRateLimiter", fallbackMethod = "fallbackAddAddress")
     @Retry(name = "addressRetry", fallbackMethod = "fallbackAddAddress")
     @CircuitBreaker(name = "addressCircuitBreaker", fallbackMethod = "fallbackAddAddress")
-    public ResponseEntity<BaseResponse<AddressSummaryDTO>> addAddress(AddressDTO addressDTO) {
+    public ResponseEntity<BaseResponse<AddressDTO>> addAddress(AddressDTO addressDTO) {
         return addressClient.addAddress(addressDTO);
     }
 
-    // Thêm method updateAddress
+    // updateAddress
     @RateLimiter(name = "addressRateLimiter", fallbackMethod = "fallbackUpdateAddress")
     @Retry(name = "addressRetry", fallbackMethod = "fallbackUpdateAddress")
     @CircuitBreaker(name = "addressCircuitBreaker", fallbackMethod = "fallbackUpdateAddress")
-    public ResponseEntity<BaseResponse<AddressSummaryDTO>> updateAddress(Long id, AddressDTO addressDTO) {
+    public ResponseEntity<BaseResponse<AddressDTO>> updateAddress(Long id, AddressDTO addressDTO) {
         return addressClient.updateAddress(id, addressDTO);
     }
 
@@ -106,7 +108,26 @@ public class AddressIntegrationService {
         }
     }
 
-
+    // Fallback cho addAddress
+    public ResponseEntity<BaseResponse<AddressSummaryDTO>> fallbackAddAddress(AddressDTO addressDTO, Throwable t) {
+        if (t instanceof RequestNotPermitted) {
+            throw new TooManyRequestsException("Too many requests, please try again later.");
+        } else if (t instanceof CallNotPermittedException) {
+            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
+                    false,
+                    "Circuit breaker open. Please try again later.",
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+        } else {
+            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
+                    false,
+                    "Service temporarily unavailable: " + t.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 
 
 }
