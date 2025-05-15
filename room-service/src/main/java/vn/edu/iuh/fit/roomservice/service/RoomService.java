@@ -526,20 +526,17 @@ public class RoomService {
     private Map<Long, AddressDTO> fetchAddressMap(String street, String district, String city) {
         if (street == null && district == null && city == null) return null;
 
-        try {
-            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.searchAddresses(street, district, city);
+        ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressIntegrationService.searchAddresses(street, district, city);
 
-            return Optional.ofNullable(response)
-                    .filter(res -> res.getStatusCode().is2xxSuccessful())
-                    .map(ResponseEntity::getBody)
-                    .map(BaseResponse::getData)
-                    .orElse(List.of()) // fallback empty
-                    .stream()
-                    .collect(Collectors.toMap(AddressDTO::getId, Function.identity()));
-        } catch (Exception e) {
-            System.err.println("Error fetching addresses: " + e.getMessage());
-            return Collections.emptyMap();
-        }
+        return Optional.ofNullable(response)
+                .filter(res -> res.getStatusCode().is2xxSuccessful())
+                .map(ResponseEntity::getBody)
+                .map(BaseResponse::getData)
+                .orElse(List.of()) // fallback empty
+                .stream()
+                .collect(Collectors.toMap(AddressDTO::getId, Function.identity()));
+
+        return Collections.emptyMap();
     }
 
     /**

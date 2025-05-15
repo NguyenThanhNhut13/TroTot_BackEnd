@@ -51,9 +51,6 @@ public interface AddressClient {
     ResponseEntity<BaseResponse<List<AddressDTO>>> getAddressesByIds(@RequestBody List<Long> ids);
 
     @PostMapping("/api/v1/addresses/batch/summary")
-    @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "getAddressSummaryFallback")
-    @CircuitBreaker(name = "addressService", fallbackMethod = "getAddressSummaryFallback")
-    @Retry(name = "addressServiceRetry", fallbackMethod = "getAddressSummaryFallback")
     ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids);
 
     // Test retry

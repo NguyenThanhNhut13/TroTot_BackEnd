@@ -67,88 +67,50 @@ public class AddressIntegrationService {
         return addressClient.updateAddress(id, addressDTO);
     }
 
+    public ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(String street, String district, String city) {
+    }
+
+    // Fallback method for getAddressSummary
     public ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> fallbackGetAddressSummary(List<Long> ids, Throwable t) {
+        return handleFallback(t, Collections.emptyList());
+    }
+
+    // Fallback method for getAddressById
+    public ResponseEntity<BaseResponse<AddressDTO>> fallbackGetAddressById(Long id, Throwable t) {
+        return handleFallback(t, null);
+    }
+
+    // Fallback method for addAddress
+    public ResponseEntity<BaseResponse<AddressDTO>> fallbackAddAddress(AddressDTO addressDTO, Throwable t) {
+        return handleFallback(t, null);
+    }
+
+    // Fallback method for updateAddress
+    public ResponseEntity<BaseResponse<AddressDTO>> fallbackUpdateAddress(Long id, AddressDTO addressDTO, Throwable t) {
+        return handleFallback(t, null);
+    }
+
+    // Generic fallback handler to reduce code duplication
+    private <T> ResponseEntity<BaseResponse<T>> handleFallback(Throwable t, T defaultValue) {
         if (t instanceof RequestNotPermitted) {
             throw new TooManyRequestsException("You are sending too many requests, please try again later.");
         } else if (t instanceof CallNotPermittedException) {
-            BaseResponse<List<AddressSummaryDTO>> response = new BaseResponse<>(
+            BaseResponse<T> response = new BaseResponse<>(
                     false,
                     "Circuit breaker open. Please try again later.",
-                    Collections.emptyList()
+                    defaultValue
             );
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
         } else {
-            BaseResponse<List<AddressSummaryDTO>> response = new BaseResponse<>(
+            BaseResponse<T> response = new BaseResponse<>(
                     false,
                     "Service temporarily unavailable: " + t.getMessage(),
-                    Collections.emptyList()
+                    defaultValue
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
-    // Fallback for getAddressById
-    public ResponseEntity<BaseResponse<AddressSummaryDTO>> fallbackGetAddressById(Long id, Throwable t) {
-        if (t instanceof RequestNotPermitted) {
-            throw new TooManyRequestsException("Too many requests, please try again later.");
-        } else if (t instanceof CallNotPermittedException) {
-            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
-                    false,
-                    "Circuit breaker open. Please try again later.",
-                    null
-            );
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-        } else {
-            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
-                    false,
-                    "Service temporarily unavailable: " + t.getMessage(),
-                    null
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    // Fallback for addAddress
-    public ResponseEntity<BaseResponse<AddressSummaryDTO>> fallbackAddAddress(AddressDTO addressDTO, Throwable t) {
-        if (t instanceof RequestNotPermitted) {
-            throw new TooManyRequestsException("Too many requests, please try again later.");
-        } else if (t instanceof CallNotPermittedException) {
-            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
-                    false,
-                    "Circuit breaker open. Please try again later.",
-                    null
-            );
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-        } else {
-            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
-                    false,
-                    "Service temporarily unavailable: " + t.getMessage(),
-                    null
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    // Fallback for updateAddress
-    public ResponseEntity<BaseResponse<AddressSummaryDTO>> fallbackUpdateAddress(Long id, AddressDTO addressDTO, Throwable t) {
-        if (t instanceof RequestNotPermitted) {
-            throw new TooManyRequestsException("Too many requests, please try again later.");
-        } else if (t instanceof CallNotPermittedException) {
-            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
-                    false,
-                    "Circuit breaker open. Please try again later.",
-                    null
-            );
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-        } else {
-            BaseResponse<AddressSummaryDTO> response = new BaseResponse<>(
-                    false,
-                    "Service temporarily unavailable: " + t.getMessage(),
-                    null
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
 
 
 }
