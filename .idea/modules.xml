@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/TroTot_BackEnd.iml" filepath="$PROJECT_DIR$/.idea/TroTot_BackEnd.iml" />
-      <module fileurl="file://$PROJECT_DIR$/room-service/room-service.iml" filepath="$PROJECT_DIR$/room-service/room-service.iml" />
     </modules>
   </component>
 </project>
