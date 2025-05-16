@@ -75,9 +75,9 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("RATE_LIMIT_EXCEEDED", "Too many requests. Please try again later."));
     }
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(new ErrorResponse("INTERNAL_ERROR", "System error, please try again later."));
-//    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("INTERNAL_ERROR", "System error, please try again later."));
+    }
 }

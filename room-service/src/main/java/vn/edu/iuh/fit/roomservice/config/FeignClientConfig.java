@@ -14,6 +14,7 @@ package vn.edu.iuh.fit.roomservice.config;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import feign.codec.ErrorDecoder;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import vn.edu.iuh.fit.roomservice.client.FeignErrorDecoder;
 
 @Configuration
 public class FeignClientConfig {
@@ -43,10 +45,8 @@ public class FeignClientConfig {
         };
     }
 
-//    @Bean
-//    public RequestInterceptor rateLimiterInterceptor(RateLimiterRegistry rateLimiterRegistry) {
-//        logger.info("Registering RateLimiterInterceptor");
-//        return new RateLimiterInterceptor(rateLimiterRegistry);
-//    }
-
+    @Bean
+    public ErrorDecoder errorDecoder() {
+        return new FeignErrorDecoder();
+    }
 }

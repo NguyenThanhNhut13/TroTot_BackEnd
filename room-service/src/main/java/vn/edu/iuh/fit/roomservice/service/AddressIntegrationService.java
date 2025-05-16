@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
+import vn.edu.iuh.fit.roomservice.exception.TooManyRequestsException;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
@@ -43,7 +44,6 @@ public class AddressIntegrationService {
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackGetAddressSummary")
     @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
     public ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(List<Long> ids) {
-        log.debug("Calling getAddressSummary with ids: {}", ids);
         return addressClient.getAddressSummary(ids);
     }
 
@@ -52,7 +52,6 @@ public class AddressIntegrationService {
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackGetAddressById")
     @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
     public ResponseEntity<BaseResponse<AddressDTO>> getAddressById(Long id) {
-        log.debug("Calling getAddressById with id: {}", id);
         return addressClient.getAddressById(id);
     }
 
@@ -60,7 +59,6 @@ public class AddressIntegrationService {
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackAddAddress")
     @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
     public ResponseEntity<BaseResponse<AddressDTO>> addAddress(AddressDTO addressDTO) {
-        log.debug("Calling addAddress with data: {}", addressDTO);
         return addressClient.addAddress(addressDTO);
     }
 
@@ -68,7 +66,6 @@ public class AddressIntegrationService {
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackUpdateAddress")
     @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
     public ResponseEntity<BaseResponse<AddressDTO>> updateAddress(Long id, AddressDTO addressDTO) {
-        log.debug("Calling updateAddress with id: {} and data: {}", id, addressDTO);
         return addressClient.updateAddress(id, addressDTO);
     }
 
@@ -77,50 +74,36 @@ public class AddressIntegrationService {
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackSearchAddresses")
     @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
     public ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(String street, String district, String city) {
-        log.debug("Calling searchAddresses with street: {}, district: {}, city: {}", street, district, city);
         return addressClient.searchAddresses(street, district, city);
     }
 
     // Generic Rate Limiter fallback for all methods
-    public <T> ResponseEntity<BaseResponse<T>> rateLimiterFallback( Throwable t) {
-        log.warn("Rate limiter triggered: {}", t.getMessage());
-
-        BaseResponse<T> response = new BaseResponse<>(
-                false,
-                "Too many requests. Please try again later.",
-                null
-        );
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
-
+    public <T> ResponseEntity<BaseResponse<T>> rateLimiterFallback(Throwable t) throws TooManyRequestsException {
+        throw new TooManyRequestsException("Too many requests. Please try again later.");
     }
 
     // Fallback method for getAddressSummary
     public ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> fallbackGetAddressSummary(List<Long> ids, Throwable t) {
-        log.error("Fallback for getAddressSummary triggered by: {}", t.getMessage(), t);
         return handleServiceFallback(t, Collections.emptyList());
     }
 
     // Fallback method for getAddressById
     public ResponseEntity<BaseResponse<AddressDTO>> fallbackGetAddressById(Long id, Throwable t) {
-        log.error("Fallback for getAddressById triggered by: {}", t.getMessage(), t);
         return handleServiceFallback(t, null);
     }
 
     // Fallback method for addAddress
     public ResponseEntity<BaseResponse<AddressDTO>> fallbackAddAddress(AddressDTO addressDTO, Throwable t) {
-        log.error("Fallback for addAddress triggered by: {}", t.getMessage(), t);
         return handleServiceFallback(t, null);
     }
 
     // Fallback method for updateAddress
     public ResponseEntity<BaseResponse<AddressDTO>> fallbackUpdateAddress(Long id, AddressDTO addressDTO, Throwable t) {
-        log.error("Fallback for updateAddress triggered by: {}", t.getMessage(), t);
         return handleServiceFallback(t, null);
     }
 
     // Fallback method for searchAddresses
     public ResponseEntity<BaseResponse<List<AddressDTO>>> fallbackSearchAddresses(String street, String district, String city, Throwable t) {
-        log.error("Fallback for searchAddresses triggered by: {}", t.getMessage(), t);
         return handleServiceFallback(t, Collections.emptyList());
     }
 
@@ -134,8 +117,10 @@ public class AddressIntegrationService {
                     defaultValue
             );
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+        } else if (t instanceof TooManyRequestsException) {
+            throw (TooManyRequestsException) t;
         } else {
-            log.error("Service error: {}", t.getMessage(), t);
+            log.error("Service error: {}", t.getMessage());
             BaseResponse<T> response = new BaseResponse<>(
                     false,
                     "An unexpected error occurred: " + t.getMessage(),
