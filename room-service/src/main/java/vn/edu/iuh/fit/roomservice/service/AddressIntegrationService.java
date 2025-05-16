@@ -14,7 +14,6 @@ package vn.edu.iuh.fit.roomservice.service;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.*;
@@ -24,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.roomservice.client.AddressClient;
+import vn.edu.iuh.fit.roomservice.exception.ServiceUnavailableException;
 import vn.edu.iuh.fit.roomservice.exception.TooManyRequestsException;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressSummaryDTO;
@@ -40,7 +40,7 @@ public class AddressIntegrationService {
     private final AddressClient addressClient;
 
     // getAddressSummary - Rate Limiter before Circuit Breaker
-    @Retry(name = "addressServiceRetry", fallbackMethod = "fallbackGetAddressSummary")
+//    @Retry(name = "addressServiceRetry", fallbackMethod = "fallbackGetAddressSummary")
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackGetAddressSummary")
     @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
     public ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(List<Long> ids) {
@@ -50,7 +50,7 @@ public class AddressIntegrationService {
     // getAddressById - Rate Limiter before Circuit Breaker
     @Retry(name = "addressServiceRetry", fallbackMethod = "fallbackGetAddressById")
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackGetAddressById")
-    @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
+    @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallbackForGetAddressById")
     public ResponseEntity<BaseResponse<AddressDTO>> getAddressById(Long id) {
         return addressClient.getAddressById(id);
     }
@@ -70,16 +70,28 @@ public class AddressIntegrationService {
     }
 
     // searchAddresses - Rate Limiter before Circuit Breaker
-    @Retry(name = "addressServiceRetry", fallbackMethod = "fallbackSearchAddresses")
+//    @Retry(name = "addressServiceRetry", fallbackMethod = "fallbackSearchAddresses")
     @CircuitBreaker(name = "addressService", fallbackMethod = "fallbackSearchAddresses")
     @RateLimiter(name = "addressServiceRateLimiter", fallbackMethod = "rateLimiterFallback")
     public ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(String street, String district, String city) {
         return addressClient.searchAddresses(street, district, city);
     }
 
-    // Generic Rate Limiter fallback for all methods
-    public <T> ResponseEntity<BaseResponse<T>> rateLimiterFallback(Throwable t) throws TooManyRequestsException {
-        throw new TooManyRequestsException("Too many requests. Please try again later.");
+    // Specific Rate Limiter fallback for getAddressById - throws ServiceUnavailableException
+    public ResponseEntity<BaseResponse<AddressDTO>> rateLimiterFallbackForGetAddressById(Long id, Throwable t) throws ServiceUnavailableException {
+        log.warn("Rate limit exceeded for getAddressById: {}", t.getMessage());
+        throw new ServiceUnavailableException("Address service is not available. Please try again later.");
+    }
+
+    // Generic Rate Limiter fallback for all other methods - returns appropriate response
+    public <T> ResponseEntity<BaseResponse<T>> rateLimiterFallbackGeneric(Throwable t) {
+        log.warn("Rate limit exceeded: {}", t.getMessage());
+        BaseResponse<T> response = new BaseResponse<>(
+                false,
+                "Too many requests. Please try again later.",
+                null
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
     }
 
     // Fallback method for getAddressSummary
@@ -117,8 +129,8 @@ public class AddressIntegrationService {
                     defaultValue
             );
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-        } else if (t instanceof TooManyRequestsException) {
-            throw (TooManyRequestsException) t;
+        } else if (t instanceof ServiceUnavailableException) {
+            throw (ServiceUnavailableException) t;
         } else {
             log.error("Service error: {}", t.getMessage());
             BaseResponse<T> response = new BaseResponse<>(
