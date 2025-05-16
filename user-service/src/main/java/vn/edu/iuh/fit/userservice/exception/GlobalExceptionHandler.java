@@ -12,6 +12,7 @@ package vn.edu.iuh.fit.userservice.exception;
  * @version:    1.0
  */
 
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,6 +49,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> paymentFailedException(PaymentFailedException ex) {
         ErrorResponse errorResponse = new ErrorResponse("BAD_REQUEST", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.PAYMENT_REQUIRED);
+    }
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitException(RequestNotPermitted ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ErrorResponse("RATE_LIMIT_EXCEEDED", "Too many requests. Please try again later."));
     }
 
 //    @ExceptionHandler(Exception.class)
