@@ -12,24 +12,18 @@ package vn.edu.iuh.fit.roomservice.client;
  * @version:    1.0
  */
 
-import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.ratelimiter.RequestNotPermitted;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.roomservice.exception.TooManyRequestsException;
+import vn.edu.iuh.fit.roomservice.config.FeignClientConfig;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
 
-import java.util.Collections;
 import java.util.List;
 
-@FeignClient(name = "address-service")
+@FeignClient(name = "address-service", configuration = FeignClientConfig.class)
 public interface AddressClient {
 
     @GetMapping("/api/v1/addresses/search")

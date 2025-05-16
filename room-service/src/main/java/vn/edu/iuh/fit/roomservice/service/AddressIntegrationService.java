@@ -130,14 +130,4 @@ public class AddressIntegrationService {
         }
     }
 
-    // Helper method to extract throwable from parameters
-    private Throwable extractThrowable(Object[] args) {
-        if (args != null && args.length > 0) {
-            Object lastArg = args[args.length - 1];
-            if (lastArg instanceof Throwable) {
-                return (Throwable) lastArg;
-            }
-        }
-        return new Exception("Unknown rate limiting error");
-    }
 }
