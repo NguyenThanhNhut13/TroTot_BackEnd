@@ -12,6 +12,7 @@ package vn.edu.iuh.fit.roomservice.controller;
  * @version:    1.0
  */
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -44,6 +45,7 @@ public class RoomController {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @PostMapping
+    @RateLimiter(name = "saveRoomLimit")
     public ResponseEntity<?> saveRoom(@RequestBody RoomDTO room) {
         RoomDTO savedRoom = roomService.saveRoom(room);
         return ResponseEntity.ok(
@@ -52,6 +54,7 @@ public class RoomController {
     }
 
     @PutMapping("/{id}")
+    @RateLimiter(name = "updateRoomLimit")
     public ResponseEntity<?> updateRoom(@PathVariable Long id, @RequestBody RoomDTO room) {
         RoomDTO updatedRoom = roomService.updateRoom(id, room);
         return ResponseEntity.ok(
@@ -60,6 +63,7 @@ public class RoomController {
     }
 
     @GetMapping("/amenities")
+    @RateLimiter(name = "staticDataLimit")
     public ResponseEntity<BaseResponse<List<AmenityDTO>>> getAllAmenities() {
         List<AmenityDTO> data = amenityService.getAmenities();
         return ResponseEntity.ok(
@@ -68,6 +72,7 @@ public class RoomController {
     }
 
     @GetMapping("/surrounding-areas")
+    @RateLimiter(name = "staticDataLimit")
     public ResponseEntity<BaseResponse<List<SurroundingAreaDTO>>> getAllSurroundingAreas() {
         List<SurroundingAreaDTO> data = surroundingAreaService.getAllSurroundingAreas();
         return ResponseEntity.ok(
@@ -76,6 +81,7 @@ public class RoomController {
     }
 
     @GetMapping("/target-audiences")
+    @RateLimiter(name = "staticDataLimit")
     public ResponseEntity<BaseResponse<List<TargetAudienceDTO>>> getAllTargetAudiences() {
         List<TargetAudienceDTO> data = targetAudienceService.getAllTargetAudiences();
         return ResponseEntity.ok(
@@ -84,6 +90,7 @@ public class RoomController {
     }
 
     @GetMapping
+    @RateLimiter(name = "findAllRoomsLimit")
     public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> findAllRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -98,6 +105,7 @@ public class RoomController {
     }
 
     @GetMapping("/{id}")
+    @RateLimiter(name = "getRoomByIdLimit")
     public ResponseEntity<BaseResponse<RoomDTO>> findById(@PathVariable Long id) {
         RoomDTO data = roomService.findById(id);
         return ResponseEntity.ok(
@@ -106,6 +114,7 @@ public class RoomController {
     }
 
     @GetMapping("/search")
+    @RateLimiter(name = "searchRoomsLimit")
     public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> searchRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -157,7 +166,7 @@ public class RoomController {
     }
 
     @PostMapping("/bulk")
-
+    @RateLimiter(name = "findByIdsLimit")
     public ResponseEntity<BaseResponse<List<RoomListDTO>>> findByIds(@RequestBody List<Long> ids) {
         List<RoomListDTO> data = roomService.findByIds(ids);
         return ResponseEntity.ok(
