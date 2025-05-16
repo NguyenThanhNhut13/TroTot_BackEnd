@@ -33,7 +33,7 @@ public class AddressController {
 
     private final AddressService addressService;
     private final GeocodingService geocodingService;
-    private AtomicInteger callCounter = new AtomicInteger(0);
+    private final AtomicInteger callCounter = new AtomicInteger(0);
 
 
     @Operation(
@@ -43,6 +43,7 @@ public class AddressController {
     @ApiResponse(responseCode = "200", description = "Thêm địa chỉ thành công",
             content = @Content(schema = @Schema(implementation = Address.class)))
     @PostMapping
+    @RateLimiter(name = "addressServiceRateLimiter")
     public ResponseEntity<BaseResponse<Address>> addAddress(@RequestBody Address address) {
         String street = "Đường " + (address.getStreet() != null ? address.getStreet() : "");
         String fullAddress = String.format("%s, %s, %s, Việt Nam",
@@ -83,6 +84,7 @@ public class AddressController {
             content = @Content(schema = @Schema(implementation = Address.class)))
     @ApiResponse(responseCode = "404", description = "Không tìm thấy địa chỉ")
     @GetMapping("/{id}")
+    @RateLimiter(name = "addressServiceRateLimiter")
     public ResponseEntity<BaseResponse<Address>> getAddressById(@PathVariable Long id) {
         Optional<Address> address = addressService.findById(id);
         return address.map(value -> ResponseEntity.ok(BaseResponse.ok(value)))
@@ -96,6 +98,7 @@ public class AddressController {
     @ApiResponse(responseCode = "200", description = "Danh sách địa chỉ phù hợp",
             content = @Content(schema = @Schema(implementation = AddressDTO.class)))
     @GetMapping("/search")
+    @RateLimiter(name = "addressServiceRateLimiter")
     public ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(
             @RequestParam(required = false) String street,
             @RequestParam(required = false) String district,
