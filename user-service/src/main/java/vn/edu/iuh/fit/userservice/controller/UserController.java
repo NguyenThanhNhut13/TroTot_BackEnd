@@ -12,6 +12,7 @@ package vn.edu.iuh.fit.userservice.controller;
  * @version:    1.0
  */
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class UserController {
     private final UserProfileService userService;
 
     @PostMapping("/create")
+    @RateLimiter(name = "userServiceRateLimiter")
     public ResponseEntity<?> createUserInfo(@RequestBody RegisterRequest request) {
         userService.createUser(request);
         return ResponseEntity.ok(

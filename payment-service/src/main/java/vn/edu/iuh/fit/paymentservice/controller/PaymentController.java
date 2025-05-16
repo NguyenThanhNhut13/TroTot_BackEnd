@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.paymentservice.controller;
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -124,6 +125,7 @@ public class PaymentController {
 
     @Transactional
     @PostMapping("/deduct")
+    @RateLimiter(name = "paymentServiceRateLimiter")
     public BaseResponse<String> deduct(@RequestBody DeductRequest request) {
         return paymentService.deductFromWallet(request);
     }

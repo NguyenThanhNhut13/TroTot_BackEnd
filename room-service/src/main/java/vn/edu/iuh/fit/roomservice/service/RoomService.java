@@ -13,23 +13,29 @@ package vn.edu.iuh.fit.roomservice.service;
  */
 
 import feign.FeignException;
-import jakarta.ws.rs.InternalServerErrorException;
+import feign.RetryableException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.edu.iuh.fit.roomservice.client.AddressClient;
 import vn.edu.iuh.fit.roomservice.client.UserClient;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomStatus;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
-import vn.edu.iuh.fit.roomservice.exception.BadRequestException;
-import vn.edu.iuh.fit.roomservice.exception.RoomNotFoundException;
+import vn.edu.iuh.fit.roomservice.exception.*;
 import vn.edu.iuh.fit.roomservice.mapper.*;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
@@ -47,8 +53,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoomService {
 
+    private final Logger log = LoggerFactory.getLogger(RoomService.class);
     private final RoomRepository roomRepository;
-    private final AddressClient addressClient;
+    private final AddressIntegrationService addressIntegrationService;
     private final RoomMapper roomMapper;
     private final ImageMapper imageMapper;
     private final AmenityRepository amenityRepository;
@@ -80,27 +87,53 @@ public class RoomService {
         // Save room
         Room savedRoom = roomRepository.save(room);
 
-        try {
-            userClient.usePostSlot();
-        } catch (FeignException e) {
-            // Check for 400 error (Bad Request) from users-service
-            if (e.status() == 400) {
-                // Extract error message from service (JSON automatically converted to string)
-                String message = e.contentUTF8();
-                throw new BadRequestException(message);
-            }
-            // For non-400 errors, throw general error with different codes
-            throw new InternalServerErrorException("Error from user service: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
-            throw new InternalServerErrorException("Unexpected error when posting room!");
-        }
+        // Call user service with circuit breaker
+        useUserServicePostSlot();
 
         // Return room with address
         RoomDTO returnRoom = roomMapper.toDTO(savedRoom);
         returnRoom.setAddress(addressDTO);
         return returnRoom;
     }
+
+    @CircuitBreaker(name = "userService", fallbackMethod = "fallbackUsePostSlot")
+    @RateLimiter(name = "userServiceRateLimiter")
+    public void useUserServicePostSlot() {
+        try {
+            userClient.usePostSlot();
+        } catch (FeignException.ServiceUnavailable e) {
+            log.error("UserService is not available: {}", e.getMessage());
+            throw new ServiceUnavailableException("UserService is not available. Please try again later.");
+        } catch (RetryableException e) {
+            log.error("UserService not found or not registered with Eureka: {}", e.getMessage());
+            throw new ServiceUnavailableException("UserService is not active or registered. Please check again.");
+        } catch (FeignException e) {
+            log.error("Error calling UserService: {} ({})", e.getMessage(), e.status());
+            throw e;
+        }
+    }
+
+    /**
+     * Fallback method for useUserServicePostSlot
+     */
+    public void fallbackUsePostSlot(RoomDTO roomDTO, Throwable throwable) {
+        if (throwable instanceof RequestNotPermitted) {
+            // Rate limiter
+            throw new TooManyRequestsException("Rate limit exceeded when calling user service.");
+        } else if (throwable instanceof CallNotPermittedException) {
+            // Circuit breaker open (service error many times)
+            throw new ServiceUnavailableException("User service temporarily unavailable (circuit breaker open).");
+        } else if (throwable instanceof FeignException feignEx) {
+            if (feignEx.status() == 400) {
+                throw new BadRequestException("Bad request from user service: " + feignEx.contentUTF8());
+            }
+            throw new InternalServerErrorException("Error from user service: " + feignEx.getMessage());
+        } else {
+            // Other error
+            throw new InternalServerErrorException("Unexpected error: " + throwable.getMessage());
+        }
+    }
+
 
     public RoomDTO updateRoom(Long roomId, RoomDTO roomDTO) {
         // Check input data
@@ -173,13 +206,13 @@ public class RoomService {
             roomPage = roomRepository.findAllRoom(pageable);
         }
 
-        System.out.println("⏱️ Time to fetch Room from DB: " + (System.currentTimeMillis() - startFetchRoom) + "ms");
+//        System.out.println("⏱️ Time to fetch Room from DB: " + (System.currentTimeMillis() - startFetchRoom) + "ms");
 
         long startBuildRoomPage = System.currentTimeMillis();
         PageResponse<RoomListDTO> response = buildRoomPageResponse(roomPage);
-        System.out.println("⏱️ Time to build Room Page (with addresses): " + (System.currentTimeMillis() - startBuildRoomPage) + "ms");
+//        System.out.println("⏱️ Time to build Room Page (with addresses): " + (System.currentTimeMillis() - startBuildRoomPage) + "ms");
 
-        System.out.println("✅ Total time for findAllRooms: " + (System.currentTimeMillis() - totalStart) + "ms");
+//        System.out.println("✅ Total time for findAllRooms: " + (System.currentTimeMillis() - totalStart) + "ms");
 
         return response;
     }
@@ -499,33 +532,26 @@ public class RoomService {
 
     /**
      * Gets an address by ID from the address service
+     * With fallback handling for exceptions
      */
-    private AddressDTO getAddressById(Long addressId) {
-        try {
-            ResponseEntity<BaseResponse<AddressDTO>> response = addressClient.getAddressById(addressId);
-            return Objects.requireNonNull(response.getBody()).getData();
-        } catch (Exception e) {
-            throw new InternalServerErrorException("Error when getting address: " + e.getMessage());
-        }
+    public AddressDTO getAddressById(Long addressId) {
+        ResponseEntity<BaseResponse<AddressDTO>> response = addressIntegrationService.getAddressById(addressId);
+        return Objects.requireNonNull(response.getBody()).getData();
     }
 
     /**
      * Save or update address through address service
      */
     private AddressDTO saveOrUpdateAddress(Long addressId, AddressDTO addressDTO) {
-        try {
-            ResponseEntity<BaseResponse<AddressDTO>> response;
-            if (addressId == null) {
-                // Create new address
-                response = addressClient.addAddress(addressDTO);
-            } else {
-                // Update existing address
-                response = addressClient.updateAddress(addressId, addressDTO);
-            }
-            return Objects.requireNonNull(response.getBody()).getData();
-        } catch (Exception e) {
-            throw new InternalServerErrorException("Error when processing address: " + e.getMessage());
+        ResponseEntity<BaseResponse<AddressDTO>> response;
+        if (addressId == null) {
+            // Create new address
+            response = addressIntegrationService.addAddress(addressDTO);
+        } else {
+            // Update existing address
+            response = addressIntegrationService.updateAddress(addressId, addressDTO);
         }
+        return Objects.requireNonNull(response.getBody()).getData();
     }
 
     /**
@@ -534,20 +560,15 @@ public class RoomService {
     private Map<Long, AddressDTO> fetchAddressMap(String street, String district, String city) {
         if (street == null && district == null && city == null) return null;
 
-        try {
-            ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressClient.searchAddresses(street, district, city);
+        ResponseEntity<BaseResponse<List<AddressDTO>>> response = addressIntegrationService.searchAddresses(street, district, city);
 
-            return Optional.ofNullable(response)
-                    .filter(res -> res.getStatusCode().is2xxSuccessful())
-                    .map(ResponseEntity::getBody)
-                    .map(BaseResponse::getData)
-                    .orElse(List.of()) // fallback empty
-                    .stream()
-                    .collect(Collectors.toMap(AddressDTO::getId, Function.identity()));
-        } catch (Exception e) {
-            System.err.println("Error fetching addresses: " + e.getMessage());
-            return Collections.emptyMap();
-        }
+        return Optional.ofNullable(response)
+                .filter(res -> res.getStatusCode().is2xxSuccessful())
+                .map(ResponseEntity::getBody)
+                .map(BaseResponse::getData)
+                .orElse(List.of()) // fallback empty
+                .stream()
+                .collect(Collectors.toMap(AddressDTO::getId, Function.identity()));
     }
 
     /**
@@ -571,7 +592,7 @@ public class RoomService {
                         Image::getImageUrl,
                         (existing, replacement) -> existing // Giữ URL đầu tiên nếu trùng
                 ));
-        System.out.println("⏱️ Time to fetch Images: " + (System.currentTimeMillis() - startFetchImages) + "ms");
+//        System.out.println("⏱️ Time to fetch Images: " + (System.currentTimeMillis() - startFetchImages) + "ms");
 
         // Lấy danh sách addressId
         List<Long> addressIds = roomPage.getContent().stream()
@@ -579,12 +600,12 @@ public class RoomService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        System.out.println("⏱️ Time to extract Address IDs: " + (System.currentTimeMillis() - start) + "ms");
+//        System.out.println("⏱️ Time to extract Address IDs: " + (System.currentTimeMillis() - start) + "ms");
 
         // Gọi Address Service
         start = System.currentTimeMillis();
         Map<Long, AddressSummaryDTO> addressMap = addressIds.isEmpty() ? Map.of() : getAddressMapForRooms(addressIds);
-        System.out.println("⏱️ Time to fetch all Addresses: " + (System.currentTimeMillis() - start) + "ms");
+//        System.out.println("⏱️ Time to fetch all Addresses: " + (System.currentTimeMillis() - start) + "ms");
 
         // Map sang RoomListDTO
         start = System.currentTimeMillis();
@@ -624,17 +645,13 @@ public class RoomService {
      * Gets all addresses for a list of rooms
      */
     private Map<Long, AddressSummaryDTO> getAddressMapForRooms(List<Long> addressIds) {
-        try {
-            long start = System.currentTimeMillis();
-            BaseResponse<List<AddressSummaryDTO>> response = addressClient.getAddressSummary(addressIds).getBody();
-            System.out.println("⏱️ Time to call addressClient.getAddressesByIds: " + (System.currentTimeMillis() - start) + "ms");
-            if (response != null && response.getData() != null) {
-                return response.getData().stream()
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(AddressSummaryDTO::getId, dto -> dto));
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to fetch address list: " + e.getMessage());
+        long start = System.currentTimeMillis();
+        BaseResponse<List<AddressSummaryDTO>> response = addressIntegrationService.getAddressSummary(addressIds).getBody();
+        System.out.println("⏱️ Time to call addressClient.getAddressesByIds: " + (System.currentTimeMillis() - start) + "ms");
+        if (response != null && response.getData() != null) {
+            return response.getData().stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(AddressSummaryDTO::getId, dto -> dto));
         }
         return Map.of();
     }

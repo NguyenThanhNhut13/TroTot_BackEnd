@@ -12,10 +12,12 @@ package vn.edu.iuh.fit.roomservice.controller;
  * @version:    1.0
  */
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.roomservice.client.AddressClient;
 import vn.edu.iuh.fit.roomservice.enumvalue.RoomType;
 import vn.edu.iuh.fit.roomservice.model.dto.*;
 import vn.edu.iuh.fit.roomservice.model.dto.request.PushNotificationRequest;
@@ -25,6 +27,7 @@ import vn.edu.iuh.fit.roomservice.model.dto.response.PageResponse;
 import vn.edu.iuh.fit.roomservice.service.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
@@ -36,11 +39,13 @@ public class RoomController {
     private final SurroundingAreaService surroundingAreaService;
     private final TargetAudienceService targetAudienceService;
     private final PushNotificationProducer pushNotificationProducer;
+    private final AddressClient addressClient;
 
     //    Nguyễn Quân - Notification - Room service
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @PostMapping
+    @RateLimiter(name = "saveRoomLimit")
     public ResponseEntity<?> saveRoom(@RequestBody RoomDTO room) {
         RoomDTO savedRoom = roomService.saveRoom(room);
         return ResponseEntity.ok(
@@ -49,6 +54,7 @@ public class RoomController {
     }
 
     @PutMapping("/{id}")
+    @RateLimiter(name = "updateRoomLimit")
     public ResponseEntity<?> updateRoom(@PathVariable Long id, @RequestBody RoomDTO room) {
         RoomDTO updatedRoom = roomService.updateRoom(id, room);
         return ResponseEntity.ok(
@@ -57,6 +63,7 @@ public class RoomController {
     }
 
     @GetMapping("/amenities")
+    @RateLimiter(name = "staticDataLimit")
     public ResponseEntity<BaseResponse<List<AmenityDTO>>> getAllAmenities() {
         List<AmenityDTO> data = amenityService.getAmenities();
         return ResponseEntity.ok(
@@ -65,6 +72,7 @@ public class RoomController {
     }
 
     @GetMapping("/surrounding-areas")
+    @RateLimiter(name = "staticDataLimit")
     public ResponseEntity<BaseResponse<List<SurroundingAreaDTO>>> getAllSurroundingAreas() {
         List<SurroundingAreaDTO> data = surroundingAreaService.getAllSurroundingAreas();
         return ResponseEntity.ok(
@@ -73,6 +81,7 @@ public class RoomController {
     }
 
     @GetMapping("/target-audiences")
+    @RateLimiter(name = "staticDataLimit")
     public ResponseEntity<BaseResponse<List<TargetAudienceDTO>>> getAllTargetAudiences() {
         List<TargetAudienceDTO> data = targetAudienceService.getAllTargetAudiences();
         return ResponseEntity.ok(
@@ -81,6 +90,7 @@ public class RoomController {
     }
 
     @GetMapping
+    @RateLimiter(name = "findAllRoomsLimit")
     public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> findAllRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -95,6 +105,7 @@ public class RoomController {
     }
 
     @GetMapping("/{id}")
+    @RateLimiter(name = "getRoomByIdLimit")
     public ResponseEntity<BaseResponse<RoomDTO>> findById(@PathVariable Long id) {
         RoomDTO data = roomService.findById(id);
         return ResponseEntity.ok(
@@ -103,6 +114,7 @@ public class RoomController {
     }
 
     @GetMapping("/search")
+    @RateLimiter(name = "searchRoomsLimit")
     public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> searchRooms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -154,6 +166,7 @@ public class RoomController {
     }
 
     @PostMapping("/bulk")
+    @RateLimiter(name = "findByIdsLimit")
     public ResponseEntity<BaseResponse<List<RoomListDTO>>> findByIds(@RequestBody List<Long> ids) {
         List<RoomListDTO> data = roomService.findByIds(ids);
         return ResponseEntity.ok(
@@ -184,6 +197,16 @@ public class RoomController {
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Gửi thông báo thành công", "Đã gửi push notification đến Kafka topic")
         );
+    }
+
+    @GetMapping("/test-address-retry")
+    public ResponseEntity<String> testAddressRetry() {
+        ResponseEntity<BaseResponse<String>> response = addressClient.testRetry();
+        if (response.getStatusCode().is2xxSuccessful() && Objects.requireNonNull(response.getBody()).isSuccess()) {
+            return ResponseEntity.ok("Success: " + response.getBody().getData());
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).body("Failed: " + Objects.requireNonNull(response.getBody()).getMessage());
+        }
     }
 
 }
