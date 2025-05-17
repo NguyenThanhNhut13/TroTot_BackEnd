@@ -10,4 +10,4 @@ spring:
     config:
       server:
         native:
-          search-locations: optional:file:/etc/secrets
+          search-locations: optional:file:/etc/secrets/
