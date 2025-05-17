@@ -2,6 +2,6 @@
 
 **/.env
 */**/.env
-**/configurations/
-.idea/
-
+**/configurations/*
+**/kafka-cert/*
+.idea/*
