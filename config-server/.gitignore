@@ -43,6 +43,6 @@ config-server/src/main/resources/configurations/*
 !config-server/src/main/resources/configurations/.gitkeep
 
 # Ignore files in kafka-cert directory but not the directory itself
-config-server/src/main/resources/kafka-cert/*
+src/main/resources/kafka-cert/*
 # Keep .gitkeep file to preserve empty directory
-!config-server/src/main/resources/kafka-cert/.gitkeep
+!src/main/resources/kafka-cert/.gitkeep
