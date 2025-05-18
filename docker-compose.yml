@@ -23,6 +23,7 @@ services:
     environment:
       - HOSTNAME=discovery
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
     ports:
       - "8761:8761"
     depends_on:
@@ -43,6 +44,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
     ports:
       - "8222:8222"
     depends_on:
@@ -57,6 +59,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=address-service
     ports:
       - "8060:8060"
@@ -74,6 +77,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=notification-service
     ports:
       - "8020:8020"
@@ -97,6 +101,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=user-service
     ports:
       - "8090:8090"
@@ -120,6 +125,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=room-service
     ports:
       - "8070:8070"
@@ -147,6 +153,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=auth-service
     ports:
       - "8050:8050"
@@ -168,6 +175,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=media-service
     ports:
       - "8000:8000"
@@ -185,6 +193,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=payment-service
     ports:
       - "8040:8040"
@@ -204,6 +213,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=review-service
     ports:
       - "8030:8030"
@@ -221,6 +231,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=report-service
     ports:
       - "8010:8010"
@@ -238,7 +249,10 @@ services:
       dockerfile: Dockerfile
     environment:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=recommendation-service
+      - GATEWAY_URL=http://api-gateway:8222
+      - RECOMMEND_API_URL=http://recommend-service:5000
     ports:
       - "5000:5000"
     volumes:
