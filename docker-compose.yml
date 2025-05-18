@@ -7,9 +7,9 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./config-server/src/main/resources/configurations:/etc/secrets
+      - ./config-server/src/main/resources/configurations:/etc/secrets:ro 
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
       interval: 10s
@@ -26,7 +26,7 @@ services:
     ports:
       - "8761:8761"
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
     depends_on:
       config-server:
         condition: service_healthy
@@ -46,7 +46,7 @@ services:
     ports:
       - "8222:8222"
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -67,7 +67,7 @@ services:
       context: ./address-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -89,7 +89,7 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - JSON_FILE_PATH=/app/config/notification-config.json
@@ -114,7 +114,7 @@ services:
       context: ./user-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -136,7 +136,7 @@ services:
       context: ./room-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -158,7 +158,7 @@ services:
       context: ./auth-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -184,7 +184,7 @@ services:
       context: ./media-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -206,7 +206,7 @@ services:
       context: ./payment-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -228,7 +228,7 @@ services:
       context: ./review-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
@@ -250,7 +250,7 @@ services:
       context: ./report-service
       dockerfile: Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_PROFILES_ACTIVE=dev
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
