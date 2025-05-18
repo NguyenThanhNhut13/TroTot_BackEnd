@@ -2,6 +2,7 @@ import httpx
 import logging
 from typing import Optional, Dict, Any
 from fastapi import HTTPException
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class ServiceClient:
     def _discover_gateway(self) -> str:
         logger.info(f"Khám phá API Gateway: {self.gateway_app_name}")
         # Sử dụng URL đã xác nhận từ bạn
-        gateway_url = "http://localhost:8222"  # Đổi từ 192.168.100.1:8222 thành localhost:8222
+        gateway_url = os.getenv("GATEWAY_URL", "http://localhost:8222")  # Đổi từ 192.168.100.1:8222 thành localhost:8222
         logger.info(f"Tìm thấy API Gateway: {gateway_url}")
         return gateway_url.rstrip("/")
 
