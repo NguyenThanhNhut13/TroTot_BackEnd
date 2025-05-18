@@ -25,10 +25,10 @@ public class FirebaseConfig {
             String envPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
 
             if (envPath != null && !envPath.isBlank()) {
-                log.info("✅ Đang khởi tạo Firebase từ file ngoài: {}", envPath);
+                log.info("Đang khởi tạo Firebase từ file ngoài: {}", envPath);
                 serviceAccount = new FileInputStream(envPath);
             } else {
-                log.info("✅ Đang khởi tạo Firebase từ classpath: /tro-tot-443-firebase-adminsdk-fbsvc-14f6750dd1.json");
+                log.info("Đang khởi tạo Firebase từ classpath: /tro-tot-443-firebase-adminsdk-fbsvc-14f6750dd1.json");
                 serviceAccount = getClass().getResourceAsStream("/tro-tot-443-firebase-adminsdk-fbsvc-14f6750dd1.json");
 
                 if (serviceAccount == null) {
@@ -42,11 +42,11 @@ public class FirebaseConfig {
 
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
-                log.info("✅ Firebase đã được khởi tạo thành công.");
+                log.info("Firebase đã được khởi tạo thành công.");
             }
 
         } catch (IOException e) {
-            log.error("❌ Không thể khởi tạo Firebase: {}", e.getMessage(), e);
+            log.error("Không thể khởi tạo Firebase: {}", e.getMessage(), e);
             throw new IllegalStateException("Cannot initialize Firebase", e);
         }
     }
