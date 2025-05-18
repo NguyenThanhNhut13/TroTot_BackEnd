@@ -20,6 +20,9 @@ services:
     build:
       context: ./discovery
       dockerfile: Dockerfile
+    environment:
+      - HOSTNAME=discovery
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
     ports:
       - "8761:8761"
     depends_on:
@@ -38,6 +41,8 @@ services:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
     ports:
       - "8222:8222"
     depends_on:
@@ -50,6 +55,11 @@ services:
     build:
       context: ./address-service
       dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=address-service
+    ports:
+      - "8060:8060"
     depends_on:
       discovery:
         condition: service_healthy
@@ -58,24 +68,28 @@ services:
     networks:
       - trotot-network
 
-  # notification-service:
-  #   build:
-  #     context: ./notification-service
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./notification-service/config:/app/config
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #   networks:
-  #     - trotot-network
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    volumes:
+      - ./notification-service/config:/app/config
+    ports:
+      - "8020:8020"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
 
   # user-service:
   #   build:
   #     context: ./user-service
   #     dockerfile: Dockerfile
+  #   ports:
+  #   - "8060:8060"
   #   depends_on:
   #     discovery:
   #       condition: service_healthy
@@ -88,12 +102,16 @@ services:
     build:
       context: ./room-service
       dockerfile: Dockerfile
+    ports:
+      - "8070:8070"
     depends_on:
       discovery:
         condition: service_healthy
       config-server:
         condition: service_healthy
       address-service:
+        condition: service_started
+      notification-service:
         condition: service_started
     networks:
       - trotot-network

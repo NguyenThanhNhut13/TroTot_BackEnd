@@ -15,7 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class KafkaCertEnvLoader implements EnvironmentPostProcessor {
-    private static final String CONFIG_SERVER_BASE_URL = "http://localhost:8888";
+    private static final String CONFIG_SERVER_BASE_URL = System.getenv("CONFIG_SERVER_URL") != null 
+        ? System.getenv("CONFIG_SERVER_URL") 
+        : "http://localhost:8888";
 
     private File downloadCert(String filename) throws IOException {
         String url = CONFIG_SERVER_BASE_URL + "/certs/" + filename;

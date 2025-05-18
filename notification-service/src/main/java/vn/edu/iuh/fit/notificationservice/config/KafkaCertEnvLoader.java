@@ -2,7 +2,6 @@ package vn.edu.iuh.fit.notificationservice.config;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
@@ -12,7 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class KafkaCertEnvLoader implements EnvironmentPostProcessor {
-    private static final String CONFIG_SERVER_BASE_URL = "http://localhost:8888";
+    private static final String CONFIG_SERVER_BASE_URL = System.getenv("CONFIG_SERVER_URL") != null 
+    ? System.getenv("CONFIG_SERVER_URL") 
+    : "http://localhost:8888";
 
     private File downloadCert(String filename) throws IOException {
         String url = CONFIG_SERVER_BASE_URL + "/certs/" + filename;
