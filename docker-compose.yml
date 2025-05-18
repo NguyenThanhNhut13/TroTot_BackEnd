@@ -72,8 +72,9 @@ services:
     build:
       context: ./notification-service
       dockerfile: Dockerfile
-    volumes:
-      - ./notification-service/config:/app/config
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=notification-service
     ports:
       - "8020:8020"
     depends_on:
@@ -83,25 +84,43 @@ services:
         condition: service_healthy
     networks:
       - trotot-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8020/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  # user-service:
-  #   build:
-  #     context: ./user-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #   - "8060:8060"
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #   networks:
-  #     - trotot-network
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=user-service
+    ports:
+      - "8090:8090"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8090/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   room-service:
     build:
       context: ./room-service
       dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=room-service
     ports:
       - "8070:8070"
     depends_on:
@@ -110,95 +129,131 @@ services:
       config-server:
         condition: service_healthy
       address-service:
-        condition: service_started
+        condition: service_completed_successfully
       notification-service:
+        condition: service_completed_successfully
+    networks:
+      - trotot-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8070/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=auth-service
+    ports:
+      - "8050:8050"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      user-service:
         condition: service_started
     networks:
       - trotot-network
 
-  # auth-service:
-  #   build:
-  #     context: ./auth-service
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #     notification-service:
-  #       condition: service_started
-  #     user-service:
-  #       condition: service_started
-  #   networks:
-  #     - trotot-network
+  media-service:
+    build:
+      context: ./media-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=media-service
+    ports:
+      - "8000:8000"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
 
-  # media-service:
-  #   build:
-  #     context: ./media-service
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #   networks:
-  #     - trotot-network
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=payment-service
+    ports:
+      - "8040:8040"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      user-service:
+        condition: service_completed_successfully
+    networks:
+      - trotot-network
 
-  # payment-service:
-  #   build:
-  #     context: ./payment-service
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #   networks:
-  #     - trotot-network
+  review-service:
+    build:
+      context: ./review-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=review-service
+    ports:
+      - "8030:8030"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
 
-  # review-service:
-  #   build:
-  #     context: ./review-service
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #   networks:
-  #     - trotot-network
+  report-service:
+    build:
+      context: ./report-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=report-service
+    ports:
+      - "8010:8010"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
 
-  # report-service:
-  #   build:
-  #     context: ./report-service
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #   networks:
-  #     - trotot-network
-
-  # recommendation-service:
-  #   build:
-  #     context: ./recommendation-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5000:5000"
-  #   volumes:
-  #     - ./recommendation-service/models:/app/models
-  #   depends_on:
-  #     discovery:
-  #       condition: service_healthy
-  #     config-server:
-  #       condition: service_healthy
-  #     room-service:
-  #       condition: service_started
-  #     user-service:
-  #       condition: service_started
-  #   networks:
-  #     - trotot-network
+  recommendation-service:
+    build:
+      context: ./recommendation-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=recommendation-service
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./recommendation-service/models:/app/models
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      room-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    networks:
+      - trotot-network
 
 networks:
   trotot-network:
