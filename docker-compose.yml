@@ -79,6 +79,9 @@ services:
       - EUREKA_SERVER_URL=http://discovery:8761/eureka
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=notification-service
+    volumes:
+      - ./notification-service/src/main/resources/tro-tot-443-firebase-adminsdk-fbsvc-14f6750dd1.json:/etc/secrets/firebase.json:ro
+      - ./config-server/src/main/resources/kafka-cert:/etc/kafka/certs:ro
     ports:
       - "8020:8020"
     depends_on:

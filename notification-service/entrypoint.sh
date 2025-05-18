@@ -1,16 +1,24 @@
-#!/bin/bash
+#!/bin/sh
 
 echo "Starting Notification Service..."
 
-DEFAULT_CRED_PATH="/etc/secrets/tro-tot-443-firebase-adminsdk-fbsvc-14f6750dd1.json"
-
-export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$DEFAULT_CRED_PATH}"
-
-if [ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-  echo "Không tìm thấy Firebase credential tại: $GOOGLE_APPLICATION_CREDENTIALS"
-  exit 1
+# Check for Firebase credentials
+if [ -f "/etc/secrets/firebase.json" ]; then
+  echo "Using Firebase credentials from mounted volume"
+  export GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/firebase.json
+else
+  echo "WARNING: Firebase credentials not found"
 fi
 
-echo "Đang sử dụng Firebase credentials từ: $GOOGLE_APPLICATION_CREDENTIALS"
+# Check for Kafka certificates
+if [ -f "/etc/kafka/certs/client-keystore.p12" ] && [ -f "/etc/kafka/certs/client-truststore.p12" ]; then
+  echo "Using Kafka certificates from mounted volume"
+  export SSL_KEYSTORE_PATH=/etc/kafka/certs/client-keystore.p12
+  export SSL_TRUSTSTORE_PATH=/etc/kafka/certs/client-truststore.p12
+  echo "Using certificates from $SSL_KEYSTORE_PATH and $SSL_TRUSTSTORE_PATH"
+else
+  echo "No mounted Kafka certificates found - will try Config Server"
+fi
 
-exec java ${JAVA_OPTS} -jar notification-service.jar "$@"
+# Start the application
+exec java ${JAVA_OPTS} -jar notification-service.jar
