@@ -63,14 +63,17 @@ services:
     networks:
       - trotot-network
 
-  room-service:
+  notification-service:
     build:
-      context: ./room-service
+      context: ./notification-service
       dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - JSON_FILE_PATH=/app/config/notification-config.json
+    volumes:
+      - ./notification-service/config:/app/config
     depends_on:
       - discovery
       - config-server
@@ -91,6 +94,21 @@ services:
     networks:
       - trotot-network
 
+  room-service:
+    build:
+      context: ./room-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+      - notification-service
+    networks:
+      - trotot-network
+
   auth-service:
     build:
       context: ./auth-service
@@ -102,23 +120,8 @@ services:
     depends_on:
       - discovery
       - config-server
-    networks:
-      - trotot-network
-
-  notification-service:
-    build:
-      context: ./notification-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-      - JSON_FILE_PATH=/app/config/notification-config.json
-    volumes:
-      - ./notification-service/config:/app/config
-    depends_on:
-      - discovery
-      - config-server
+      - notification-service
+      - user-service
     networks:
       - trotot-network
 
@@ -190,6 +193,9 @@ services:
       - ./recommendation-service/models:/app/models
     depends_on:
       - discovery
+      - config-server
+      - room-service
+      - user-service
     networks:
       - trotot-network
 
