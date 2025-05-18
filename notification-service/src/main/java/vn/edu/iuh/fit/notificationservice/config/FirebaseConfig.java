@@ -5,16 +5,19 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 @Configuration
-@Slf4j
 public class FirebaseConfig {
 
-    @PostConstruct
+    private static final Logger log = LoggerFactory.getLogger(FirebaseConfig.class);
+
     @PostConstruct
     public void initFirebase() {
         FirebaseOptions options;

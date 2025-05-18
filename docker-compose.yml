@@ -105,99 +105,99 @@ services:
     depends_on:
       - discovery
       - config-server
-      - notification-service
+      # - notification-service
     networks:
       - trotot-network
 
-  auth-service:
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      - discovery
-      - config-server
-      - notification-service
-      - user-service
-    networks:
-      - trotot-network
+  # auth-service:
+  #   build:
+  #     context: ./auth-service
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+  #     - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+  #   depends_on:
+  #     - discovery
+  #     - config-server
+  #     - notification-service
+  #     - user-service
+  #   networks:
+  #     - trotot-network
 
-  media-service:
-    build:
-      context: ./media-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      - discovery
-      - config-server
-    networks:
-      - trotot-network
+  # media-service:
+  #   build:
+  #     context: ./media-service
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+  #     - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+  #   depends_on:
+  #     - discovery
+  #     - config-server
+  #   networks:
+  #     - trotot-network
 
-  payment-service:
-    build:
-      context: ./payment-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      - discovery
-      - config-server
-    networks:
-      - trotot-network
+  # payment-service:
+  #   build:
+  #     context: ./payment-service
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+  #     - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+  #   depends_on:
+  #     - discovery
+  #     - config-server
+  #   networks:
+  #     - trotot-network
 
-  review-service:
-    build:
-      context: ./review-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      - discovery
-      - config-server
-    networks:
-      - trotot-network
+  # review-service:
+  #   build:
+  #     context: ./review-service
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+  #     - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+  #   depends_on:
+  #     - discovery
+  #     - config-server
+  #   networks:
+  #     - trotot-network
 
-  report-service:
-    build:
-      context: ./report-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      - discovery
-      - config-server
-    networks:
-      - trotot-network
+  # report-service:
+  #   build:
+  #     context: ./report-service
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+  #     - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+  #   depends_on:
+  #     - discovery
+  #     - config-server
+  #   networks:
+  #     - trotot-network
       
-  recommendation-service:
-    build:
-      context: ./recommendation-service
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    environment:
-      - EUREKA_SERVER=http://discovery:8761/eureka/
-    volumes:
-      - ./recommendation-service/models:/app/models
-    depends_on:
-      - discovery
-      - config-server
-      - room-service
-      - user-service
-    networks:
-      - trotot-network
+  # recommendation-service:
+  #   build:
+  #     context: ./recommendation-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     - EUREKA_SERVER=http://discovery:8761/eureka/
+  #   volumes:
+  #     - ./recommendation-service/models:/app/models
+  #   depends_on:
+  #     - discovery
+  #     - config-server
+  #     - room-service
+  #     - user-service
+  #   networks:
+  #     - trotot-network
 
 networks:
   trotot-network:
