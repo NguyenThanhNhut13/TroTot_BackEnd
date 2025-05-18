@@ -1,5 +1,14 @@
 server:
   port: 8888
+  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
 
 spring:
   profiles:
@@ -10,6 +19,4 @@ spring:
     config:
       server:
         native:
-          search-locations: >
-            optional:file:/etc/secrets/,
-            classpath:/configurations
+          search-locations: optional:file:/etc/secrets/,classpath:/configurations
