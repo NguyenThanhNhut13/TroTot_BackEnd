@@ -1,5 +1,4 @@
 services:
-  # Infrastructure services
   config-server:
     build:
       context: ./config-server
@@ -7,17 +6,15 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./config-server/src/main/resources/configurations:/etc/secrets:ro 
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - ./config-server/src/main/resources/configurations:/etc/secrets:ro
+    networks:
+      - trotot-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 60s
-    networks:
-      - trotot-network
+      start_period: 10s
 
   discovery:
     build:
@@ -25,19 +22,17 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8761:8761"
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
     depends_on:
       config-server:
         condition: service_healthy
+    networks:
+      - trotot-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+      start_period: 10s
 
   api-gateway:
     build:
@@ -45,249 +40,147 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8222:8222"
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
       discovery:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8222/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     networks:
       - trotot-network
 
-  # Core services
   address-service:
     build:
       context: ./address-service
       dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
       discovery:
         condition: service_healthy
       config-server:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8060/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     networks:
       - trotot-network
 
-  notification-service:
-    build:
-      context: ./notification-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-      - JSON_FILE_PATH=/app/config/notification-config.json
-    volumes:
-      - ./notification-service/config:/app/config
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8020/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+  # notification-service:
+  #   build:
+  #     context: ./notification-service
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./notification-service/config:/app/config
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #   networks:
+  #     - trotot-network
 
-  user-service:
-    build:
-      context: ./user-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+  # user-service:
+  #   build:
+  #     context: ./user-service
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #   networks:
+  #     - trotot-network
 
   room-service:
     build:
       context: ./room-service
       dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     depends_on:
       discovery:
         condition: service_healthy
       config-server:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8070/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      address-service:
+        condition: service_started
     networks:
       - trotot-network
 
-  auth-service:
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      notification-service:
-        condition: service_healthy
-      user-service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8050/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+  # auth-service:
+  #   build:
+  #     context: ./auth-service
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #     notification-service:
+  #       condition: service_started
+  #     user-service:
+  #       condition: service_started
+  #   networks:
+  #     - trotot-network
 
-  media-service:
-    build:
-      context: ./media-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+  # media-service:
+  #   build:
+  #     context: ./media-service
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #   networks:
+  #     - trotot-network
 
-  payment-service:
-    build:
-      context: ./payment-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8040/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+  # payment-service:
+  #   build:
+  #     context: ./payment-service
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #   networks:
+  #     - trotot-network
 
-  review-service:
-    build:
-      context: ./review-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8030/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+  # review-service:
+  #   build:
+  #     context: ./review-service
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #   networks:
+  #     - trotot-network
 
-  report-service:
-    build:
-      context: ./report-service
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8010/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - trotot-network
+  # report-service:
+  #   build:
+  #     context: ./report-service
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #   networks:
+  #     - trotot-network
 
-  recommendation-service:
-    build:
-      context: ./recommendation-service
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    environment:
-      - EUREKA_SERVER=http://discovery:8761/eureka/
-    volumes:
-      - ./recommendation-service/models:/app/models
-    depends_on:
-      discovery:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      room-service:
-        condition: service_healthy
-      user-service:
-        condition: service_healthy
-    networks:
-      - trotot-network
+  # recommendation-service:
+  #   build:
+  #     context: ./recommendation-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - ./recommendation-service/models:/app/models
+  #   depends_on:
+  #     discovery:
+  #       condition: service_healthy
+  #     config-server:
+  #       condition: service_healthy
+  #     room-service:
+  #       condition: service_started
+  #     user-service:
+  #       condition: service_started
+  #   networks:
+  #     - trotot-network
 
 networks:
   trotot-network:

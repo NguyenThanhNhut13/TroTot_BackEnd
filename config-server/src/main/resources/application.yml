@@ -1,37 +1,13 @@
 server:
   port: 8888
-  
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
 
 spring:
   profiles:
-    active: dev
+    active: native
   application:
     name: config-server
-
----
-
-spring:
-  profiles: prod
   cloud:
     config:
       server:
         native:
-          search-locations: optional:file:/etc/secrets/
-
----
-
-spring:
-  profiles: dev
-  cloud:
-    config:
-      server:
-        native:
-          search-locations: classpath:/configurations
+          search-locations: optional:file:/etc/secrets/,classpath:/configurations
