@@ -1,64 +1,198 @@
-version: "3.8"
-
 services:
-  mariadb:
-    image: mariadb:latest
-    container_name: mariadb
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: sapassword
+  # Infrastructure services
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
     ports:
-      - "3307:3306"
+      - "8888:8888"
     volumes:
-      - mariadb_user_data:/var/lib/mysql
-    networks:
-      - microservices-net
-
-  redis:
-    image: redis:latest
-    container_name: redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    command: [ "redis-server", "--appendonly", "yes" ]
-    volumes:
-      - redis_data:/data
-    networks:
-      - microservices-net
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
-    container_name: zookeeper
-    restart: unless-stopped
-    ports:
-      - "2181:2181"
+      - ./config-server/secrets:/app/secrets
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
-      - microservices-net
+      - trotot-network
 
-  kafka:
-    image: confluentinc/cp-kafka:7.4.0
-    container_name: kafka
-    restart: unless-stopped
+  discovery:
+    build:
+      context: ./discovery
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
     depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      config-server:
+        condition: service_healthy
     networks:
-      - microservices-net
+      - trotot-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8222:8222"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+    networks:
+      - trotot-network
+
+  # Core services
+  address-service:
+    build:
+      context: ./address-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  room-service:
+    build:
+      context: ./room-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - JSON_FILE_PATH=/app/config/notification-config.json
+    volumes:
+      - ./notification-service/config:/app/config
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  media-service:
+    build:
+      context: ./media-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  review-service:
+    build:
+      context: ./review-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+
+  report-service:
+    build:
+      context: ./report-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      - discovery
+      - config-server
+    networks:
+      - trotot-network
+      
+  recommendation-service:
+    build:
+      context: ./recommendation-service
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - EUREKA_SERVER=http://discovery:8761/eureka/
+    volumes:
+      - ./recommendation-service/models:/app/models
+    depends_on:
+      - discovery
+    networks:
+      - trotot-network
 
 networks:
-  microservices-net:
+  trotot-network:
     driver: bridge
-
-volumes:
-  mariadb_user_data:
-  redis_data:
