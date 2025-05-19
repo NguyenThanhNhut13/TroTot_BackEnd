@@ -215,7 +215,7 @@ services:
       config-server:
         condition: service_healthy
       user-service:
-        condition: service_completed_successfully
+        condition: service_healthy
     networks:
       - trotot-network
 
