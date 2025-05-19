@@ -181,105 +181,105 @@ services:
     networks:
       - trotot-network
 
-#  media-service:
-#    build:
-#      context: ./media-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=media-service
-#    ports:
-#      - "8000:8000"
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#    networks:
-#      - trotot-network
-#
-#  payment-service:
-#    build:
-#      context: ./payment-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=payment-service
-#    ports:
-#      - "8040:8040"
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#      user-service:
-#        condition: service_completed_successfully
-#    networks:
-#      - trotot-network
-#
-#  review-service:
-#    build:
-#      context: ./review-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=review-service
-#    ports:
-#      - "8030:8030"
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#    networks:
-#      - trotot-network
-#
-#  report-service:
-#    build:
-#      context: ./report-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=report-service
-#    ports:
-#      - "8010:8010"
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#    networks:
-#      - trotot-network
-#
-#  recommendation-service:
-#    build:
-#      context: ./recommendation-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=recommendation-service
-#      - GATEWAY_URL=http://api-gateway:8222
-#      - RECOMMEND_API_URL=http://recommend-service:5000
-#    ports:
-#      - "5000:5000"
-#    volumes:
-#      - ./recommendation-service/models:/app/models
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#      room-service:
-#        condition: service_healthy
-#      user-service:
-#        condition: service_healthy
-#    networks:
-#      - trotot-network
+  media-service:
+    build:
+      context: ./media-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=media-service
+    ports:
+      - "8000:8000"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=payment-service
+    ports:
+      - "8040:8040"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      user-service:
+        condition: service_completed_successfully
+    networks:
+      - trotot-network
+
+  review-service:
+    build:
+      context: ./review-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=review-service
+    ports:
+      - "8030:8030"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
+
+  report-service:
+    build:
+      context: ./report-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=report-service
+    ports:
+      - "8010:8010"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
+
+  recommendation-service:
+    build:
+      context: ./recommendation-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=recommendation-service
+      - GATEWAY_URL=http://api-gateway:8222
+      - RECOMMEND_API_URL=http://recommend-service:5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./recommendation-service/models:/app/models
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      room-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    networks:
+      - trotot-network
 
 networks:
   trotot-network:
