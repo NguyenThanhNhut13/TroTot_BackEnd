@@ -13,9 +13,14 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy jar
-COPY --from=build /app/target/*.jar room-service.jar
+COPY --from=build /app/target/*.jar auth-service.jar
+
+# Create directory for certificates
+RUN mkdir -p /etc/kafka/certs
+
+# Copy entrypoint script
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8070
-
-# Direct command to run the jar without entrypoint script
-CMD ["java", "-jar", "room-service.jar"]
+ENTRYPOINT ["./entrypoint.sh"]
