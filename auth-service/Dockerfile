@@ -15,7 +15,12 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy jar
 COPY --from=build /app/target/*.jar auth-service.jar
 
-EXPOSE 8050
+# Create directory for certificates
+RUN mkdir -p /etc/kafka/certs
 
-# Direct command to run the jar without entrypoint script
-CMD ["java", "-jar", "auth-service.jar"]
+# Copy entrypoint script
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+EXPOSE 8050
+ENTRYPOINT ["./entrypoint.sh"]

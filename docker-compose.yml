@@ -101,80 +101,86 @@ services:
       retries: 5
       start_period: 10s
 
-#  user-service:
-#    build:
-#      context: ./user-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=user-service
-#    ports:
-#      - "8090:8090"
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#    networks:
-#      - trotot-network
-#    healthcheck:
-#      test: [ "CMD", "curl", "-f", "http://localhost:8090/actuator/health" ]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#      start_period: 10s
-#
-#  room-service:
-#    build:
-#      context: ./room-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=room-service
-#    ports:
-#      - "8070:8070"
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#      address-service:
-#        condition: service_completed_successfully
-#      notification-service:
-#        condition: service_completed_successfully
-#    networks:
-#      - trotot-network
-#    healthcheck:
-#      test: [ "CMD", "curl", "-f", "http://localhost:8070/actuator/health" ]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#      start_period: 10s
-#
-#  auth-service:
-#    build:
-#      context: ./auth-service
-#      dockerfile: Dockerfile
-#    environment:
-#      - EUREKA_SERVER_URL=http://discovery:8761/eureka
-#      - CONFIG_SERVER_URL=http://config-server:8888
-#      - EUREKA_INSTANCE_HOSTNAME=auth-service
-#    ports:
-#      - "8050:8050"
-#    depends_on:
-#      discovery:
-#        condition: service_healthy
-#      config-server:
-#        condition: service_healthy
-#      notification-service:
-#        condition: service_healthy
-#      user-service:
-#        condition: service_started
-#    networks:
-#      - trotot-network
-#
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=user-service
+    ports:
+      - "8090:8090"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - trotot-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8090/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  room-service:
+    build:
+      context: ./room-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=room-service
+      - RENDER=false
+    volumes:
+      - ./config-server/src/main/resources/kafka-cert:/etc/kafka/certs:ro
+    ports:
+      - "8070:8070"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      address-service:
+        condition: service_started
+      notification-service:
+        condition: service_healthy
+    networks:
+      - trotot-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8070/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      - EUREKA_SERVER_URL=http://discovery:8761/eureka
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_INSTANCE_HOSTNAME=auth-service
+      - RENDER=false
+    volumes:
+      - ./config-server/src/main/resources/kafka-cert:/etc/kafka/certs:ro
+    ports:
+      - "8050:8050"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    networks:
+      - trotot-network
+
 #  media-service:
 #    build:
 #      context: ./media-service

@@ -17,4 +17,4 @@ else
 fi
 
 # Start the application
-exec java ${JAVA_OPTS} -jar ${JAR_NAME:-app.jar}
+exec java ${JAVA_OPTS} -jar room-service.jar

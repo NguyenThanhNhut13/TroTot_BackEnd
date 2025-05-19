@@ -13,7 +13,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy jar
-COPY --from=build /app/target/*.jar auth-service.jar
+COPY --from=build /app/target/*.jar room-service.jar
 
 # Create directory for certificates
 RUN mkdir -p /etc/kafka/certs
