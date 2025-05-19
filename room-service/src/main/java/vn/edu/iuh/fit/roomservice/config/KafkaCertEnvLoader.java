@@ -21,6 +21,7 @@ public class KafkaCertEnvLoader implements EnvironmentPostProcessor {
 
     private File downloadCert(String filename) throws IOException {
         String url = CONFIG_SERVER_BASE_URL + "/certs/" + filename;
+        System.out.println("Attempting to download certificate from: " + url);
         InputStream in = new URL(url).openStream();
         File tempFile = File.createTempFile("cert-", ".p12");
         tempFile.deleteOnExit();
@@ -28,23 +29,46 @@ public class KafkaCertEnvLoader implements EnvironmentPostProcessor {
         try (OutputStream out = new FileOutputStream(tempFile)) {
             in.transferTo(out);
         }
+        System.out.println("Certificate downloaded successfully to: " + tempFile.getAbsolutePath());
 
         return tempFile;
     }
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
-        try {
-            File keystore = downloadCert("client-keystore.p12");
-            File truststore = downloadCert("client-truststore.p12");
-
-            Map<String, Object> props = new HashMap<>();
-            props.put("SSL_KEYSTORE_PATH", keystore.getAbsolutePath());
-            props.put("SSL_TRUSTSTORE_PATH", truststore.getAbsolutePath());
-
-            environment.getPropertySources().addFirst(new MapPropertySource("ssl-cert-paths", props));
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load certs from config server", e);
+        // Check if environment variables are already set by the entrypoint script
+        String keystorePath = System.getenv("SSL_KEYSTORE_PATH");
+        String truststorePath = System.getenv("SSL_TRUSTSTORE_PATH");
+        
+        Map<String, Object> props = new HashMap<>();
+        
+        if (keystorePath != null && truststorePath != null) {
+            System.out.println("Using pre-configured certificate paths:");
+            System.out.println("  Keystore: " + keystorePath);
+            System.out.println("  Truststore: " + truststorePath);
+            
+            // Use the existing paths
+            props.put("SSL_KEYSTORE_PATH", keystorePath);
+            props.put("SSL_TRUSTSTORE_PATH", truststorePath);
+        } else {
+            try {
+                System.out.println("No certificate paths found in environment, downloading from config server");
+                File keystore = downloadCert("client-keystore.p12");
+                File truststore = downloadCert("client-truststore.p12");
+                
+                props.put("SSL_KEYSTORE_PATH", keystore.getAbsolutePath());
+                props.put("SSL_TRUSTSTORE_PATH", truststore.getAbsolutePath());
+            } catch (IOException e) {
+                // Make it less fatal in Docker environments
+                if ("docker".equals(System.getenv("SPRING_PROFILES_ACTIVE"))) {
+                    System.err.println("WARNING: Failed to load certificates: " + e.getMessage());
+                    return;
+                } else {
+                    throw new RuntimeException("Failed to load certs from config server", e);
+                }
+            }
         }
+        
+        environment.getPropertySources().addFirst(new MapPropertySource("ssl-cert-paths", props));
     }
 }

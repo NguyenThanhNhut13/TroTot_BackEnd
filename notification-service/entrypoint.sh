@@ -2,22 +2,25 @@
 
 echo "Starting Notification Service..."
 
-# Check for Firebase credentials
-if [ -f "/etc/secrets/firebase.json" ]; then
-  echo "Using Firebase credentials from mounted volume"
-  export GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/firebase.json
+# Log Render environment
+if [ "${RENDER}" = "true" ]; then
+  echo "Running in Render environment"
 else
-  echo "WARNING: Firebase credentials not found"
+  echo "Running in non-Render environment"
 fi
 
-# Check for Kafka certificates
-if [ -f "/etc/kafka/certs/client-keystore.p12" ] && [ -f "/etc/kafka/certs/client-truststore.p12" ]; then
-  echo "Using Kafka certificates from mounted volume"
-  export SSL_KEYSTORE_PATH=/etc/kafka/certs/client-keystore.p12
-  export SSL_TRUSTSTORE_PATH=/etc/kafka/certs/client-truststore.p12
-  echo "Using certificates from $SSL_KEYSTORE_PATH and $SSL_TRUSTSTORE_PATH"
+# Log Firebase credentials path
+if [ -f "${GOOGLE_APPLICATION_CREDENTIALS}" ]; then
+  echo "Using Firebase credentials from ${GOOGLE_APPLICATION_CREDENTIALS}"
 else
-  echo "No mounted Kafka certificates found - will try Config Server"
+  echo "WARNING: Firebase credentials not found at ${GOOGLE_APPLICATION_CREDENTIALS}"
+fi
+
+# Log Kafka certificates
+if [ -f "/etc/kafka/certs/client-keystore.p12" ] && [ -f "/etc/kafka/certs/client-truststore.p12" ]; then
+  echo "Using Kafka certificates from /etc/kafka/certs"
+else
+  echo "No mounted Kafka certificates found - will fetch from Config Server"
 fi
 
 # Start the application

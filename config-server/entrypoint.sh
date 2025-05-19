@@ -2,12 +2,16 @@
 
 echo "Starting Config Server..."
 
-# Optional: liệt kê secret để debug
+# Log contents of /etc/secrets for debugging
 echo "Contents of /etc/secrets:"
-ls /etc/secrets
+ls -l /etc/secrets 2>/dev/null || echo "Directory /etc/secrets is empty or does not exist"
 
-# Đặt biến môi trường để Spring Boot đọc từ file config & cert
+# Log contents of /etc/kafka/certs for debugging
+echo "Contents of /etc/kafka/certs:"
+ls -l /etc/kafka/certs 2>/dev/null || echo "Directory /etc/kafka/certs is empty or does not exist"
+
+# Set environment variable for Spring Boot to read config from /etc/secrets
 export SPRING_CONFIG_ADDITIONAL_LOCATION=file:/etc/secrets/
 
-# Khởi động Spring Boot app
+# Start the Spring Boot application
 exec java -jar config-server.jar
