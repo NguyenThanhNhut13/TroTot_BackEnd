@@ -11,7 +11,7 @@ import vn.edu.iuh.fit.reviewservice.service.ReviewService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/api/v1/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
