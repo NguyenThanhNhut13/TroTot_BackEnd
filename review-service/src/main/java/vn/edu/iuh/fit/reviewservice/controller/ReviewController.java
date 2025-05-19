@@ -42,5 +42,10 @@ public class ReviewController {
     public ResponseEntity<BaseResponse<ReviewDTO>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(new BaseResponse<>(true, "Success", reviewService.getById(id)));
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<BaseResponse<List<ReviewDTO>>> getByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(new BaseResponse<>(true, "Success", reviewService.getByUserId(userId)));
+    }
 }
 
