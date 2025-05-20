@@ -127,11 +127,12 @@ class ActionSearchRoom(Action):
                 title = room.get("title", "Phòng trọ")
                 price = room.get("price", 0)
                 area = room.get("area", "?")
+                imageUrls = room.get("imageUrls", "?")
 
                 address = room.get("address", {}) or {}
 
                 reply += (
-                    f"\n ID_Room: {idRoom} – 🏠 *{title}* – {price:,.0f}đ – {area}m²"
+                    f"\n ID_Room: {idRoom} – 🏠 {title} – {price:,.0f}đ – {area}m² – {imageUrls}"
                 )
 
             dispatcher.utter_message(text=reply)

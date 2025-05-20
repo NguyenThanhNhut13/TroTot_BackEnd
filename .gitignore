@@ -4,4 +4,6 @@
 */**/.env
 **/configurations/
 .idea/
+check-text/env/
+config-server/src/main/resources/kafka-cert/
 

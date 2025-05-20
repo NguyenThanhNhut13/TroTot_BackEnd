@@ -23,4 +23,15 @@
 # Convert JSON sang yml để train 
 0) python convert_to_yaml.py
 
+# REST API CHAT BOX - BẮT ĐẦU TỪ ĐÂY
+0) pip install fastapi uvicorn
+1) pip install requests
+2) Chạy server actions:
+    .venv\Scripts\activate
+    rasa run actions --debug
+3) Chạy API: 
+    .venv\Scripts\activate
+    rasa run --enable-api --cors "*" --debug
+
+
 
