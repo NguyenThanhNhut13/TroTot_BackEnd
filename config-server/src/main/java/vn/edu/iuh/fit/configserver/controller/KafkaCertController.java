@@ -17,6 +17,7 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/certs")
 public class KafkaCertController {
+    private static final String SECRETS_DIR = "/etc/secrets";
     private static final String CERTS_DIR = "/etc/kafka/certs";
     private static final String CLASSPATH_DIR = "kafka-cert/";
 
@@ -26,11 +27,16 @@ public class KafkaCertController {
         String contentType;
 
         // Check mounted directory first (Docker Compose/Render)
-        File file = new File(CERTS_DIR, filename);
+        File file = new File(SECRETS_DIR, filename);
         if (file.exists()) {
             resource = new FileSystemResource(file);
-        } else {
-            // Fallback to classpath (local)
+        }
+        // Fallback to mounted certs directory (Docker Compose/Render)
+        else if (new File(CERTS_DIR, filename).exists()) {
+            resource = new FileSystemResource(new File(CERTS_DIR, filename));
+        }
+        // Fallback to classpath (local)
+        else {
             resource = new ClassPathResource(CLASSPATH_DIR + filename);
             if (!resource.exists()) {
                 return ResponseEntity.notFound().build();
