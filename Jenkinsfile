@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent none
 
   environment {
     DOCKERHUB_CREDENTIALS = credentials('dockerhub')
@@ -9,9 +9,9 @@ pipeline {
 
   stages {
     stage('Detect Changes') {
+      agent { label 'master' }
       steps {
         script {
-          // Thêm quyền thực thi cho detect-changes.sh
           sh 'chmod +x detect-changes.sh'
           changedServices = sh(script: './detect-changes.sh', returnStdout: true).trim().tokenize()
           if (changedServices.size() == 0) {
@@ -28,7 +28,7 @@ pipeline {
         axes {
           axis {
             name 'SERVICE'
-            values 'address-service', 'api-gateway', 'auth-service', 'discovery', 'media-service', 'notification-service', 'payment-service', 'recommendation-service', 'report-service', 'review-service', 'room-service', 'user-service'
+            values 'address-service', 'api-gateway', 'auth-service', 'chatbox', 'config-server', 'discovery', 'media-service', 'notification-service', 'payment-service', 'recommendation-service', 'report-service', 'review-service', 'room-service', 'user-service'
           }
         }
 
@@ -38,6 +38,12 @@ pipeline {
 
         stages {
           stage('Build') {
+            agent {
+              docker {
+                image 'docker:20.10'
+                args '-v /var/run/docker.sock:/var/run/docker.sock'
+              }
+            }
             steps {
               dir("${SERVICE}") {
                 sh """
@@ -48,6 +54,12 @@ pipeline {
           }
 
           stage('Push') {
+            agent {
+              docker {
+                image 'docker:20.10'
+                args '-v /var/run/docker.sock:/var/run/docker.sock'
+              }
+            }
             steps {
               withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                 sh """
@@ -59,6 +71,7 @@ pipeline {
           }
 
           stage('Deploy to Render') {
+            agent { label 'master' }
             steps {
               withCredentials([string(credentialsId: "render-${SERVICE}", variable: 'DEPLOY_HOOK')]) {
                 sh """
