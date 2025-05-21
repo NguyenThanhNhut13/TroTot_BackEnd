@@ -11,6 +11,8 @@ pipeline {
     stage('Detect Changes') {
       steps {
         script {
+          // Thêm quyền thực thi cho detect-changes.sh
+          sh 'chmod +x detect-changes.sh'
           changedServices = sh(script: './detect-changes.sh', returnStdout: true).trim().tokenize()
           if (changedServices.size() == 0) {
             echo "No service changed. Skipping pipeline."
