@@ -2,13 +2,27 @@ pipeline {
   agent any
 
   environment {
-    DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub')
     DOCKER_REPO = 'nguyenthanhnhut13/trotot_backend'
     IMAGE_TAG = '1.0'
   }
 
   stages {
+    stage('Check Branch') {
+      when {
+        not { branch 'feature/deploy' }
+      }
+      steps {
+        script {
+          echo "Pipeline only runs on feature/deploy branch. Current branch is ${env.BRANCH_NAME}. Skipping."
+          currentBuild.result = 'SUCCESS'
+          return
+        }
+      }
+    }
+
     stage('Detect Changes') {
+      when { branch 'feature/deploy' }
       steps {
         script {
           changedServices = sh(script: './detect-changes.sh', returnStdout: true).trim().tokenize()
@@ -22,6 +36,7 @@ pipeline {
     }
 
     stage('Build & Push Images') {
+      when { branch 'feature/deploy' }
       matrix {
         axes {
           axis {
@@ -47,7 +62,7 @@ pipeline {
 
           stage('Push') {
             steps {
-              withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+              withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                 sh """
                   echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                   docker push ${DOCKER_REPO}-${SERVICE}:${IMAGE_TAG}
