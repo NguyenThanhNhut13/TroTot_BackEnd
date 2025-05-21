@@ -9,7 +9,7 @@ pipeline {
 
   stages {
     stage('Detect Changes') {
-      agent { label 'master' }
+      agent any // Chạy trên node mặc định
       steps {
         script {
           sh 'chmod +x detect-changes.sh'
@@ -41,7 +41,7 @@ pipeline {
             agent {
               docker {
                 image 'docker:20.10'
-                args '-v /var/run/docker.sock:/var/run/docker.sock'
+                args '-v //var/run/docker.sock:/var/run/docker.sock' // Sửa cho Windows
               }
             }
             steps {
@@ -57,7 +57,7 @@ pipeline {
             agent {
               docker {
                 image 'docker:20.10'
-                args '-v /var/run/docker.sock:/var/run/docker.sock'
+                args '-v //var/run/docker.sock:/var/run/docker.sock' // Sửa cho Windows
               }
             }
             steps {
@@ -71,7 +71,7 @@ pipeline {
           }
 
           stage('Deploy to Render') {
-            agent { label 'master' }
+            agent any // Chạy trên node mặc định
             steps {
               withCredentials([string(credentialsId: "render-${SERVICE}", variable: 'DEPLOY_HOOK')]) {
                 sh """
