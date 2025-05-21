@@ -9,20 +9,22 @@ pipeline {
 
   stages {
     stage('Check Branch') {
-      when {
-        not { branch 'feature/deploy' }
-      }
       steps {
         script {
-          echo "Pipeline only runs on feature/deploy branch. Current branch is ${env.BRANCH_NAME}. Skipping."
-          currentBuild.result = 'SUCCESS'
-          return
+          // Detect current branch if BRANCH_NAME is null
+          def branchName = env.BRANCH_NAME ?: sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+          if (branchName != 'feature/deploy') {
+            echo "Pipeline only runs on feature/deploy branch. Current branch is ${branchName}. Skipping."
+            currentBuild.result = 'SUCCESS'
+            return
+          }
+          env.BRANCH_NAME = branchName // Set BRANCH_NAME for later stages
         }
       }
     }
 
     stage('Detect Changes') {
-      when { branch 'feature/deploy' }
+      when { expression { env.BRANCH_NAME == 'feature/deploy' } }
       steps {
         script {
           changedServices = sh(script: './detect-changes.sh', returnStdout: true).trim().tokenize()
@@ -36,7 +38,7 @@ pipeline {
     }
 
     stage('Build & Push Images') {
-      when { branch 'feature/deploy' }
+      when { expression { env.BRANCH_NAME == 'feature/deploy' } }
       matrix {
         axes {
           axis {
