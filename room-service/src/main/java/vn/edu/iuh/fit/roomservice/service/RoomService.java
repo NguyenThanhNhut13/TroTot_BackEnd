@@ -29,6 +29,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -663,4 +664,33 @@ public class RoomService {
         room.setVideoUrl(videoUrl);
         roomRepository.save(room);
     }
+
+    // Get room by user
+    public PageResponse<RoomListDTO> getRoomByUser(int page, int size, String sort) {
+        // Get user ID from authentication
+        Long userId = getUserIdFromAuthentication();
+
+        // Create pageable object
+        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
+
+        // Get rooms with pagination
+        Page<Room> roomPage = roomRepository.findByUserId(userId, pageable);
+
+        return buildRoomPageResponse(roomPage);
+    }
+
+    // Helper method to extract user ID from authentication
+    private Long getUserIdFromAuthentication() {
+        Object principalObj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principalObj instanceof String principal)) {
+            throw new IllegalStateException("Invalid principal type");
+        }
+
+        try {
+            return Long.parseLong(principal);
+        } catch (NumberFormatException ex) {
+            throw new IllegalStateException("Principal is not a valid user ID", ex);
+        }
+    }
+
 }

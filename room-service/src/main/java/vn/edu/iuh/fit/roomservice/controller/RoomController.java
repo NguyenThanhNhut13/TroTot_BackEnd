@@ -209,4 +209,17 @@ public class RoomController {
         }
     }
 
+    @GetMapping("/by-user")
+    @RateLimiter(name = "getRoomByUserLimit")
+    public ResponseEntity<BaseResponse<PageResponse<RoomListDTO>>> getRoomByUser(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+
+        PageResponse<RoomListDTO> pagedRooms = roomService.getRoomByUser(page, size, sort);
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Get user rooms successful", pagedRooms)
+        );
+    }
+
 }
