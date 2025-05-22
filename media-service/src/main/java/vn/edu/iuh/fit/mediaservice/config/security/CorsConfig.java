@@ -4,7 +4,7 @@
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
-package vn.edu.iuh.fit.addressservice.config;
+package vn.edu.iuh.fit.mediaservice.config.security;
 /*
  * @description:
  * @author: Nguyen Thanh Nhut
