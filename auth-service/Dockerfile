@@ -20,6 +20,7 @@ RUN mkdir -p /etc/kafka/certs
 
 # Copy entrypoint script
 COPY entrypoint.sh .
+RUN sed -i 's/\r$//' entrypoint.sh
 RUN chmod +x entrypoint.sh
 
 EXPOSE 8050
