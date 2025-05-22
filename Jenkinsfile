@@ -1,5 +1,6 @@
+```groovy
 pipeline {
-  agent none
+  agent any
 
   environment {
     DOCKERHUB_CREDENTIALS = credentials('dockerhub')
@@ -9,16 +10,15 @@ pipeline {
 
   stages {
     stage('Detect Changes') {
-      agent any // Chạy trên node mặc định
       steps {
         script {
-          sh 'chmod +x detect-changes.sh'
-          changedServices = sh(script: './detect-changes.sh', returnStdout: true).trim().tokenize()
+          def changedServices = bat(script: 'powershell -File detect-changes.ps1', returnStdout: true).trim().tokenize()
           if (changedServices.size() == 0) {
             echo "No service changed. Skipping pipeline."
             currentBuild.result = 'SUCCESS'
             return
           }
+          env.CHANGED_SERVICES = changedServices.join(',')
         }
       }
     }
@@ -28,54 +28,41 @@ pipeline {
         axes {
           axis {
             name 'SERVICE'
-            values 'address-service', 'api-gateway', 'auth-service', 'chatbox', 'config-server', 'discovery', 'media-service', 'notification-service', 'payment-service', 'recommendation-service', 'report-service', 'review-service', 'room-service', 'user-service'
+            values 'address-service', 'api-gateway', 'auth-service', 'discovery', 'media-service', 'notification-service', 'payment-service', 'recommendation-service', 'report-service', 'review-service', 'room-service', 'user-service'
           }
         }
 
         when {
-          expression { changedServices.contains(SERVICE) }
+          expression { env.CHANGED_SERVICES.contains(SERVICE) }
         }
 
         stages {
           stage('Build') {
-            agent {
-              docker {
-                image 'docker:20.10'
-                args '-v //var/run/docker.sock:/var/run/docker.sock' // Sửa cho Windows
-              }
-            }
             steps {
               dir("${SERVICE}") {
-                sh """
-                  docker build -t ${DOCKER_REPO}-${SERVICE}:${IMAGE_TAG} .
+                bat """
+                  docker build -t %DOCKER_REPO%-%SERVICE%:%IMAGE_TAG% .
                 """
               }
             }
           }
 
           stage('Push') {
-            agent {
-              docker {
-                image 'docker:20.10'
-                args '-v //var/run/docker.sock:/var/run/docker.sock' // Sửa cho Windows
-              }
-            }
             steps {
               withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                sh """
-                  echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                  docker push ${DOCKER_REPO}-${SERVICE}:${IMAGE_TAG}
+                bat """
+                  echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                  docker push %DOCKER_REPO%-%SERVICE%:%IMAGE_TAG%
                 """
               }
             }
           }
 
           stage('Deploy to Render') {
-            agent any // Chạy trên node mặc định
             steps {
               withCredentials([string(credentialsId: "render-${SERVICE}", variable: 'DEPLOY_HOOK')]) {
-                sh """
-                  curl -X POST "${DEPLOY_HOOK}"
+                bat """
+                  curl -X POST "%DEPLOY_HOOK%"
                 """
               }
             }
@@ -85,3 +72,4 @@ pipeline {
     }
   }
 }
+```
