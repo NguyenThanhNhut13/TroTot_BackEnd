@@ -11,7 +11,7 @@ pipeline {
     stage('Detect Changes') {
       steps {
         script {
-          def changedServices = bat(script: 'powershell -File detect-changes.ps1', returnStdout: true).trim().tokenize()
+          def changedServices = bat(script: 'powershell -ExecutionPolicy Bypass -File detect-changes.ps1', returnStdout: true).trim().tokenize()
           if (changedServices.size() == 0) {
             echo "No service changed. Skipping pipeline."
             currentBuild.result = 'SUCCESS'
