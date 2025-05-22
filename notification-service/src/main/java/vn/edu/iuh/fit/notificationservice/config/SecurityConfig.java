@@ -15,7 +15,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import vn.edu.iuh.fit.notificationservice.filter.JwtAuthTokenFilter;
 
 @Configuration
-@EnableWebSecurity
 public class SecurityConfig {
     @Bean
     public ObjectMapper objectMapper() {
