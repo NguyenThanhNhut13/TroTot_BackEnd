@@ -47,10 +47,18 @@ public class VNPAYConfig {
         vnpParamsMap.put("vnp_OrderType", this.orderType);
         vnpParamsMap.put("vnp_Locale", "vn");
         vnpParamsMap.put("vnp_ReturnUrl", this.vnp_ReturnUrl);
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        
+        // Sử dụng múi giờ GMT+7 (giờ Việt Nam) cho Calendar
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT+7")); // Hoặc "Asia/Ho_Chi_Minh"
+
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        // Quan trọng: Set múi giờ cho SimpleDateFormat để đảm bảo định dạng đúng
+        formatter.setTimeZone(TimeZone.getTimeZone("GMT+7")); // Hoặc "Asia/Ho_Chi_Minh"
+
         String vnpCreateDate = formatter.format(calendar.getTime());
         vnpParamsMap.put("vnp_CreateDate", vnpCreateDate);
+
+        // Cộng thêm 15 phút cho thời gian hết hạn
         calendar.add(Calendar.MINUTE, 15);
         String vnp_ExpireDate = formatter.format(calendar.getTime());
         vnpParamsMap.put("vnp_ExpireDate", vnp_ExpireDate);
