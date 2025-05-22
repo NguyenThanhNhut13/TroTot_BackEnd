@@ -20,7 +20,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://fe-ktpm-le-tan-phats-projects-c916a385.vercel.app"],  # Cho phép origin từ localhost:3000
+    allow_origins=["http://localhost:3000", "https://fe-ktpm-le-tan-phats-projects-c916a385.vercel.app", "https://trotot-frontend.vercel.app"],  # Cho phép origin từ localhost:3000
     allow_credentials=True,
     allow_methods=["*"],  # Cho phép tất cả các phương thức (GET, POST, v.v.)
     allow_headers=["*"],  # Cho phép tất cả các header
