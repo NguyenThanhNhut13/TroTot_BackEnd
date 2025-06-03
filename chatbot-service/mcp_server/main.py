@@ -7,32 +7,44 @@ from contextlib import asynccontextmanager # Để quản lý lifespan events
 from config import ROOMSERVICE_API_BASE_URL
 from schemas import SearchRoomsArgs, ToolResponseData, TOOL_DEFINITION
 
-# --- Khai báo một context manager cho lifespan events ---
-# Đây là nơi bạn khởi tạo và đóng tài nguyên (như httpx.AsyncClient)
+# Cấu hình Loguru cho Production
+logger.remove()
+logger.add(
+    lambda msg: print(msg, end=""), # Log to console (stdout/stderr)
+    level="INFO", # Only log INFO and above in production
+    format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {message}",
+    colorize=False # No color in production logs
+)
+logger.add(
+    "mcp_server_debug.log",
+    rotation="10 MB",
+    compression="zip",
+    level="DEBUG", # Log DEBUG and above to file for detailed debugging
+    format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {file}:{line} | {message}"
+)
+
+# --- Khai báo context manager cho lifespan events ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Context manager cho các sự kiện khởi động và tắt ứng dụng FastAPI.
-    Khởi tạo httpx.AsyncClient khi app khởi động và đóng khi app tắt.
-    """
     logger.info("Starting up MCP Server...")
-    # Khởi tạo AsyncClient một lần
-    app.state.httpx_client = httpx.AsyncClient()
-    logger.info("httpx.AsyncClient initialized.")
-    yield # Ứng dụng sẽ chạy ở đây
-    # Đoạn code này sẽ chạy khi ứng dụng tắt
-    logger.info("Shutting down MCP Server...")
-    await app.state.httpx_client.aclose() # Đóng client một cách gọn gàng
-    logger.info("httpx.AsyncClient closed.")
+    try:
+        app.state.httpx_client = httpx.AsyncClient()
+        logger.info("httpx.AsyncClient initialized.")
+        yield # Ứng dụng sẽ chạy ở đây
+    finally:
+        logger.info("Shutting down MCP Server...")
+        if hasattr(app.state, 'httpx_client'):
+            await app.state.httpx_client.aclose()
+            logger.info("httpx.AsyncClient closed.")
 
 # Truyền lifespan vào FastAPI constructor
 app = FastAPI(
     title="MCP Server for Room Search",
-    description="Server trung gian để kết nối Gemini với Roomservice API.",
+    description="Server trung gian để kết nối Gemini với Roomservice API của bạn.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan # Gắn lifespan context manager vào ứng dụng
+    lifespan=lifespan
 )
 
 @app.get("/health", summary="Health check endpoint")
