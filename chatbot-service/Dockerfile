@@ -24,10 +24,11 @@ COPY mcp_server/ /app/mcp_server/
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV MCP_SERVER_PORT=5001
-ENV CHATBOT_PORT=5002
+ENV MCP_SERVER_PORT=5002  
+ENV CHATBOT_PORT=5001     
+ENV PORT=5001            
 ENV ROOMSERVICE_API_BASE_URL="https://trotot-backend-api-gateway-1-0.onrender.com"
-ENV MCP_SERVER_BASE_URL="http://localhost:5001"
+ENV MCP_SERVER_BASE_URL="http://localhost:5002" 
 
 # Create supervisor configuration
 RUN echo "[supervisord]\nnodaemon=true\n\n\
