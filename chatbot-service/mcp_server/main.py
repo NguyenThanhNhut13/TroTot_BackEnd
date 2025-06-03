@@ -3,6 +3,7 @@ from typing import List
 import httpx
 from loguru import logger
 from contextlib import asynccontextmanager # Để quản lý lifespan events
+import urllib.parse
 
 from config import ROOMSERVICE_API_BASE_URL
 from schemas import SearchRoomsArgs, ToolResponseData, TOOL_DEFINITION
@@ -74,33 +75,54 @@ async def search_rooms_tool_endpoint(args: SearchRoomsArgs):
         params['district'] = args.district
     if args.city is not None:
         params['city'] = args.city
-    if args.min_price is not None:
-        params['minPrice'] = args.min_price
-    if args.max_price is not None:
-        params['maxPrice'] = args.max_price
-    if args.area_range is not None:
-        params['areaRange'] = args.area_range
-    if args.room_type is not None:
-        params['roomType'] = args.room_type
-    if args.amenities is not None:
+    if hasattr(args, 'minPrice') and args.minPrice is not None:
+        params['minPrice'] = args.minPrice
+    if hasattr(args, 'maxPrice') and args.maxPrice is not None:
+        params['maxPrice'] = args.maxPrice
+    if hasattr(args, 'areaRange') and args.areaRange is not None:
+        params['areaRange'] = args.areaRange
+    if hasattr(args, 'roomType') and args.roomType is not None:
+        params['roomType'] = args.roomType
+    if hasattr(args, 'amenities') and args.amenities is not None:
         params['amenities'] = ",".join(args.amenities)
-    if args.environment is not None:
+    if hasattr(args, 'environment') and args.environment is not None:
         params['environment'] = ",".join(args.environment)
-    if args.target_audience is not None:
-        params['targetAudience'] = ",".join(args.target_audience)
-    if args.has_video_review is not None:
-        params['hasVideoReview'] = args.has_video_review
+    if hasattr(args, 'targetAudience') and args.targetAudience is not None:
+        params['targetAudience'] = ",".join(args.targetAudience)
+    if hasattr(args, 'hasVideoReview') and args.hasVideoReview is not None:
+        params['hasVideoReview'] = args.hasVideoReview
 
+    # Log the exact URL that will be used
     roomservice_url = f"{ROOMSERVICE_API_BASE_URL}/api/v1/rooms/search"
-    logger.info(f"Calling roomservice API: {roomservice_url} with params: {params}")
+    logger.info(f"Base URL: {roomservice_url} with params: {params}")
+    
+    # Construct the full URL with encoded parameters
+    encoded_params = "&".join([f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items()])
+    full_url = f"{roomservice_url}?{encoded_params}"
+    logger.info(f"Full URL with encoded params: {full_url}")
 
     try:
-        # Sử dụng httpx_client đã được khởi tạo sẵn trong app.state
-        response = await app.state.httpx_client.get(roomservice_url, params=params, timeout=10.0)
+        # Use direct URL instead of relying on httpx params encoding
+        response = await app.state.httpx_client.get(
+            roomservice_url, 
+            params=params, 
+            timeout=10.0
+        )
         response.raise_for_status()
-        room_data = response.json()
-        logger.info(f"Received {len(room_data)} rooms from roomservice.")
+        raw_data = response.json()
 
+        # Check the structure and extract the list part if needed
+        if isinstance(raw_data, dict) and "data" in raw_data:
+            room_data = raw_data["data"]  # Extract just the data array
+        elif isinstance(raw_data, dict) and "results" in raw_data:
+            room_data = raw_data["results"]  # Common API pattern
+        elif not isinstance(raw_data, list):
+            # If it's not already a list and doesn't have a data field, wrap it
+            room_data = [raw_data]
+        else:
+            room_data = raw_data
+
+        logger.info(f"Received {len(room_data)} rooms from roomservice.")
         return ToolResponseData(success=True, data=room_data)
 
     except httpx.RequestError as e:

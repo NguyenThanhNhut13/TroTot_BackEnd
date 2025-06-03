@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Union
 
 # Model to get parameters from Gemini for search_rooms tool
 class SearchRoomsArgs(BaseModel):
@@ -32,7 +32,7 @@ class SearchRoomsArgs(BaseModel):
 # Model cho phản hồi của tool search_rooms từ MCP Server
 class ToolResponseData(BaseModel):
     success: bool
-    data: Optional[List[Any]] = None  # Danh sách các đối tượng phòng trọ
+    data: Any = None  # Change from List[...] to Any to accept any type
     error: Optional[str] = None
 
 # Định nghĩa Tool cho Gemini
