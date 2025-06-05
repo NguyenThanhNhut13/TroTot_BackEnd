@@ -14,7 +14,6 @@ package vn.edu.iuh.fit.roomservice.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import vn.edu.iuh.fit.roomservice.config.FeignClientConfig;
 import vn.edu.iuh.fit.roomservice.model.dto.response.BaseResponse;
@@ -24,4 +23,5 @@ public interface UserClient {
 
     @PostMapping("/api/v1/users/use-post-slot")
     ResponseEntity<BaseResponse<Integer>> usePostSlot();
+
 }

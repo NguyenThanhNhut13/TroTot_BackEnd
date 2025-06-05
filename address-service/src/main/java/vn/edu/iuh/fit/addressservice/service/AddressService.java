@@ -15,6 +15,7 @@ package vn.edu.iuh.fit.addressservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
+import vn.edu.iuh.fit.addressservice.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
 import vn.edu.iuh.fit.addressservice.repository.AddressRepository;
 
@@ -80,7 +81,7 @@ public class AddressService {
     }
 
     public List<AddressDTO> findByIds(List<Long> ids) {
-        List<Address> addresses = addressRepository.findAllById(ids);
+        List<Address> addresses = addressRepository.findProjectionsByIds(ids);
         return addresses.stream()
                 .map(address -> AddressDTO.builder()
                         .id(address.getId())
@@ -95,5 +96,9 @@ public class AddressService {
                 ).toList();
     }
 
+
+    public List<AddressSummaryDTO> getAddressSummary(List<Long> ids) {
+        return addressRepository.findAddressSummaryByIds(ids);
+    }
 
 }

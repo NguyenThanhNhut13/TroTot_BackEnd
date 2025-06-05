@@ -1,14 +1,18 @@
 package vn.edu.iuh.fit.addressservice.controller;
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.addressservice.dto.AddressDTO;
+import vn.edu.iuh.fit.addressservice.dto.AddressSummaryDTO;
 import vn.edu.iuh.fit.addressservice.entity.Address;
 import vn.edu.iuh.fit.addressservice.entity.Coordinates;
 import vn.edu.iuh.fit.addressservice.service.AddressService;
@@ -17,7 +21,10 @@ import vn.edu.iuh.fit.addressservice.util.BaseResponse;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
+@Slf4j
 @Tag(name = "Address Controller", description = "Quản lý thông tin địa chỉ và xử lý tọa độ thông qua dịch vụ Geocoding")
 @RestController
 @RequestMapping("/api/v1/addresses")
@@ -26,6 +33,7 @@ public class AddressController {
 
     private final AddressService addressService;
     private final GeocodingService geocodingService;
+    private final AtomicInteger callCounter = new AtomicInteger(0);
 
 
     @Operation(
@@ -35,6 +43,7 @@ public class AddressController {
     @ApiResponse(responseCode = "200", description = "Thêm địa chỉ thành công",
             content = @Content(schema = @Schema(implementation = Address.class)))
     @PostMapping
+    @RateLimiter(name = "addressServiceRateLimiter")
     public ResponseEntity<BaseResponse<Address>> addAddress(@RequestBody Address address) {
         String street = "Đường " + (address.getStreet() != null ? address.getStreet() : "");
         String fullAddress = String.format("%s, %s, %s, Việt Nam",
@@ -75,6 +84,7 @@ public class AddressController {
             content = @Content(schema = @Schema(implementation = Address.class)))
     @ApiResponse(responseCode = "404", description = "Không tìm thấy địa chỉ")
     @GetMapping("/{id}")
+    @RateLimiter(name = "addressServiceRateLimiter")
     public ResponseEntity<BaseResponse<Address>> getAddressById(@PathVariable Long id) {
         Optional<Address> address = addressService.findById(id);
         return address.map(value -> ResponseEntity.ok(BaseResponse.ok(value)))
@@ -88,6 +98,7 @@ public class AddressController {
     @ApiResponse(responseCode = "200", description = "Danh sách địa chỉ phù hợp",
             content = @Content(schema = @Schema(implementation = AddressDTO.class)))
     @GetMapping("/search")
+    @RateLimiter(name = "addressServiceRateLimiter")
     public ResponseEntity<BaseResponse<List<AddressDTO>>> searchAddresses(
             @RequestParam(required = false) String street,
             @RequestParam(required = false) String district,
@@ -139,5 +150,28 @@ public class AddressController {
         List<AddressDTO> result = addressService.findByIds(ids);
         return ResponseEntity.ok(BaseResponse.ok(result));
     }
+
+    @PostMapping("/batch/summary")
+    @RateLimiter(name = "addressServiceRateLimiter")
+    public ResponseEntity<BaseResponse<List<AddressSummaryDTO>>> getAddressSummary(@RequestBody List<Long> ids) {
+        List<AddressSummaryDTO> result = addressService.getAddressSummary(ids);
+        return ResponseEntity.ok(BaseResponse.ok(result));
+    }
+
+    @GetMapping("/test-retry")
+    public ResponseEntity<BaseResponse<String>> testRetry() {
+        int callCount = callCounter.incrementAndGet();
+        if (callCount < 3) {
+            // Simulate temporary error for first two calls
+            log.info("Retry attempt: {}", callCount);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new BaseResponse<>(false, "Service temporarily unavailable", null));
+        } else {
+            // Reset counter after successful call
+            callCounter.set(0);
+            return ResponseEntity.ok(new BaseResponse<>(true, "Success", "Data from address-service"));
+        }
+    }
+
 
 }

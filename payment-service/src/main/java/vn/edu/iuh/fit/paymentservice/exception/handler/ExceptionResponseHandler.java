@@ -1,4 +1,5 @@
 package vn.edu.iuh.fit.paymentservice.exception.handler;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import vn.edu.iuh.fit.paymentservice.exception.code.ErrorCode;
 import vn.edu.iuh.fit.paymentservice.exception.custom.CustomException;
 
@@ -41,5 +42,15 @@ public class ExceptionResponseHandler extends ResponseEntityExceptionHandler {
                 details
         );
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<BaseResponse<?>> handleRateLimitException(RequestNotPermitted ex) {
+        BaseResponse<?> response = new BaseResponse<>(
+                false,
+                "Too many requests. Please try again later.",
+                null
+        );
+        return new ResponseEntity<>(response, HttpStatus.TOO_MANY_REQUESTS);
     }
 }

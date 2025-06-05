@@ -12,14 +12,12 @@ package vn.edu.iuh.fit.userservice.controller;
  * @version:    1.0
  */
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.BaseResponse;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.RoomListResponse;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.UserProfileResponse;
-import vn.edu.iuh.fit.userservice.model.dto.reponse.UserWishlistResponse;
+import vn.edu.iuh.fit.userservice.model.dto.reponse.*;
 import vn.edu.iuh.fit.userservice.model.dto.request.AddPostSlotRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.RegisterRequest;
 import vn.edu.iuh.fit.userservice.model.dto.request.UpdateUserProfileRequest;
@@ -36,6 +34,7 @@ public class UserController {
     private final UserProfileService userService;
 
     @PostMapping("/create")
+    @RateLimiter(name = "userServiceRateLimiter")
     public ResponseEntity<?> createUserInfo(@RequestBody RegisterRequest request) {
         userService.createUser(request);
         return ResponseEntity.ok(
@@ -93,6 +92,15 @@ public class UserController {
         List<RoomListResponse> wishlist = userService.getSavedRooms();
         return ResponseEntity.ok(
                 new BaseResponse<>(true, "Get list wishlist successfully!", wishlist)
+        );
+    }
+
+    @GetMapping("/wish-list/ids")
+    public ResponseEntity<BaseResponse<UserWishlistIdsResponse>> getWishListIdByUser() {
+
+        UserWishlistIdsResponse wishlistIds = userService.getWishListIdByUser();
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Fetched wishlist room IDs successfully!", wishlistIds)
         );
     }
 

@@ -58,6 +58,14 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("Not found"));
     }
 
+    @Override
+    public List<ReviewDTO> getByUserId(Long userId) {
+        return reviewRepository.findByUserId(userId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     private ReviewDTO toDTO(Review review) {
         UserDTO user = getUserFromService(review.getUserId());
 

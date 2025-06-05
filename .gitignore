@@ -2,6 +2,17 @@
 
 **/.env
 */**/.env
-**/configurations/
-.idea/
+**/configurations/*
+**/kafka-cert/*
+.idea/*
 
+# Python virtual environments
+venv/
+*/venv/
+**/venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+recommendation-service/venv/

@@ -9,6 +9,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import httpx
 from redis.asyncio import Redis
+from fastapi.middleware.cors import CORSMiddleware
+import os
 
 # Cấu hình logging
 logging.basicConfig(level=logging.INFO)
@@ -16,10 +18,19 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "https://fe-ktpm-le-tan-phats-projects-c916a385.vercel.app", "https://trotot-frontend.vercel.app"],  # Cho phép origin từ localhost:3000
+    allow_credentials=True,
+    allow_methods=["*"],  # Cho phép tất cả các phương thức (GET, POST, v.v.)
+    allow_headers=["*"],  # Cho phép tất cả các header
+)
+
 # Đọc cấu hình từ Config Server
 try:
+    config_server_url = os.getenv("CONFIG_SERVER_URL", "http://localhost:8888")
     config = load_config_from_config_server(
-        config_server_url="http://localhost:8888",
+        config_server_url=config_server_url,
         app_name="recommend-service"
     )
     PORT = config.get("server.port", 5000)
@@ -62,11 +73,12 @@ async def register_with_eureka():
         logger.error(f"Lỗi khi đăng ký với Eureka: {str(e)}")
         raise
 
+RECOMMEND_API_URL = os.getenv("RECOMMEND_API_URL", "http://localhost:5000")
 # Hàm gọi API train
 async def trigger_train():
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post("http://localhost:5000/api/v1/recommend/train")
+            response = await client.post(f"{RECOMMEND_API_URL}/api/v1/recommend/train")
             if response.status_code == 200:
                 logger.info("Huấn luyện mô hình thành công")
             else:

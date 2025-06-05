@@ -1,0 +1,3 @@
+**/src/main/resources/configurations/*
+**/src/main/resources/kafka-cert/*
+.env

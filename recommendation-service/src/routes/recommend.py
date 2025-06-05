@@ -7,6 +7,7 @@ from src.clients.config_client import load_config_from_config_server
 from src.clients.eureka_config import get_eureka_client
 from redis.asyncio import Redis
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +15,9 @@ router = APIRouter(prefix="/api/v1/recommend", tags=["recommend"])
 
 # Đọc cấu hình
 try:
+    config_server_url = os.getenv("CONFIG_SERVER_URL", "http://localhost:8888")
     config = load_config_from_config_server(
-        config_server_url="http://localhost:8888",
+        config_server_url=config_server_url,
         app_name="recommend-service"
     )
 except Exception as e:

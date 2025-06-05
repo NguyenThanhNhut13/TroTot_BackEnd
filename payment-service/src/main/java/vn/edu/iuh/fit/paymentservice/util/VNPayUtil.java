@@ -34,16 +34,12 @@ public class VNPayUtil {
     }
 
     public static String getIpAddress(HttpServletRequest request) {
-        String ipAdress;
-        try {
-            ipAdress = request.getHeader("X-FORWARDED-FOR");
-            if (ipAdress == null) {
-                ipAdress = request.getRemoteAddr();
-            }
-        } catch (Exception e) {
-            ipAdress = "Invalid IP:" + e.getMessage();
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            // Get the first IP in case of multiple proxies
+            return xForwardedFor.split(",")[0].trim();
         }
-        return ipAdress;
+        return request.getRemoteAddr();
     }
 
     public static String getRandomNumber(int len) {

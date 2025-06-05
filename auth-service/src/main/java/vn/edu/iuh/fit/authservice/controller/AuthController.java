@@ -16,15 +16,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.iuh.fit.authservice.enumerate.OtpPurpose;
 import vn.edu.iuh.fit.authservice.model.dto.request.*;
 import vn.edu.iuh.fit.authservice.model.dto.response.AccountInfoResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.BaseResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.LoginResponse;
 import vn.edu.iuh.fit.authservice.model.dto.response.TokenResponse;
 import vn.edu.iuh.fit.authservice.service.AuthService;
-import vn.edu.iuh.fit.authservice.service.JwtService;
-import vn.edu.iuh.fit.authservice.service.OtpService;
 
 import java.util.Map;
 
@@ -33,8 +30,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-    private final JwtService jwtService;
-    private final OtpService otpService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -126,6 +121,14 @@ public class AuthController {
             @RequestBody CredentialVerifyRequest request) {
         authService.verifyCredential(authHeader, request);
         return ResponseEntity.ok(new BaseResponse<>(true, "Credential updated successfully", null));
+    }
+
+    @PostMapping("/upgrade-role")
+    public ResponseEntity<?> upgradeToLandlord() {
+        authService.upgradeRoleToLandlord();
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, "Role upgraded to LANDLORD successfully.", null)
+        );
     }
 
 
