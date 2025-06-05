@@ -13,6 +13,7 @@ package vn.edu.iuh.fit.roomservice.mapper;
  */
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import vn.edu.iuh.fit.roomservice.model.dto.ImageDTO;
 import vn.edu.iuh.fit.roomservice.model.entity.Image;
 
@@ -21,6 +22,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ImageMapper {
     ImageDTO toDTO(Image roomImage);
+    @Mapping(target = "id", ignore = true)
     Image toEntity(ImageDTO roomImageDTO);
     List<ImageDTO> toDTOs(List<Image> images);
     List<Image> toEntities(List<ImageDTO> imageDTOs);

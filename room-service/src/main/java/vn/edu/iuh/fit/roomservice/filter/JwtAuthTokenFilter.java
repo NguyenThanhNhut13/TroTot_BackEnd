@@ -47,10 +47,6 @@ public class JwtAuthTokenFilter extends OncePerRequestFilter {
             String requestURI = request.getRequestURI();
             String method = request.getMethod();
 
-            if ("POST".equalsIgnoreCase(method) && requestURI.endsWith("/api/v1/rooms")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
             if (jwt != null && jwtService.validateToken(jwt)) {
 
                 // Lấy thông tin user từ JWT

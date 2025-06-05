@@ -21,6 +21,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -80,6 +81,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Object> {
             ServerHttpRequest request = exchange.getRequest();
 
             System.out.println("In api-gateway");
+
+            if (request.getMethod() == HttpMethod.OPTIONS) {
+                System.out.println("CORS Preflight (OPTIONS) request - allowing to pass without authentication.");
+                return chain.filter(exchange); // Cho phép yêu cầu OPTIONS đi qua ngay lập tức để globalcors xử lý
+            }
 
             if (isPublicEndpoint(request.getMethod().name(), request.getURI().getPath())) {
                 return chain.filter(exchange);

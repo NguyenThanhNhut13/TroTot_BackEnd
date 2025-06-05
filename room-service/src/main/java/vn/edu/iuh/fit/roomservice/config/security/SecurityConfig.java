@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -61,7 +62,6 @@ public class SecurityConfig {
                                 "/api/v1/rooms/surrounding-areas"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/rooms/").permitAll()
-                        // cho phép tất cả người dùng truy cập vào các endpoint này
                         .requestMatchers(HttpMethod.POST, "/api/v1/rooms").hasAnyAuthority("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/rooms/**").hasAnyAuthority("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/rooms/{roomId}/video-review").hasAnyAuthority("LANDLORD", "ADMIN")

@@ -35,4 +35,14 @@ build/
 **/.env
 
 config-server/src/main/resources/configurations/
-config-server/src/main/resources/kafka-cert
+config-server/src/main/resources/kafka-cert/
+
+# Ignore files in configurations directory but not the directory itself
+src/main/resources/configurations/*
+# Keep .gitkeep file to preserve empty directory
+!src/main/resources/configurations/.gitkeep
+
+# Ignore files in kafka-cert directory but not the directory itself
+src/main/resources/kafka-cert/*
+# Keep .gitkeep file to preserve empty directory
+!src/main/resources/kafka-cert/.gitkeep

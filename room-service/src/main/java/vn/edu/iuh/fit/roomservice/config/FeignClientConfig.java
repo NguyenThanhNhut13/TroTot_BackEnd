@@ -28,18 +28,19 @@ import vn.edu.iuh.fit.roomservice.client.FeignErrorDecoder;
 @Configuration
 public class FeignClientConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(FeignClientConfig.class);
-
     @Bean
     public RequestInterceptor requestInterceptor() {
-        return requestTemplate -> {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String authHeader = request.getHeader("Authorization");
+        return new RequestInterceptor() {
+            @Override
+            public void apply(RequestTemplate requestTemplate) {
+                ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                if (attributes != null) {
+                    HttpServletRequest request = attributes.getRequest();
+                    String authHeader = request.getHeader("Authorization");
 
-                if (authHeader != null) {
-                    requestTemplate.header("Authorization", authHeader); // Gửi lại JWT qua Feign
+                    if (authHeader != null) {
+                        requestTemplate.header("Authorization", authHeader); // Gửi lại JWT qua Feign
+                    }
                 }
             }
         };
