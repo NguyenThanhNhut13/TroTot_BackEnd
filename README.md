@@ -27,7 +27,6 @@ The platform follows a microservices architecture with the following components:
 - **Dedicated Databases**: Isolated databases for each service for scalability
 
 > ![System Architecture](https://github.com/NguyenThanhNhut13/TroTot_BackEnd/blob/main/Microservice-Architecture.svg)  
-_(You should add an architecture diagram to your repo and update this link)_
 
 ## 🔧 Microservice Components
 
